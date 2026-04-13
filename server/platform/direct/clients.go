@@ -73,7 +73,7 @@ func registerUpdateClient(s *mcpserver.MCPServer, client *Client, resolver *auth
 
 func registerGetAccountBalance(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_account_balance",
-		mcp.WithDescription("Получить баланс аккаунта Яндекс Директа. Возвращает Amount (остаток), AmountAvailableForTransfer, Discount."),
+		mcp.WithDescription("Получить финансовую информацию аккаунта Яндекс Директа: овердрафт, бонусы, гранты, настройки общего счёта, лимиты. Примечание: для аккаунтов с общим счётом (SHARED_ACCOUNT_ENABLED=YES) точный денежный остаток через API v5 недоступен — используй get_campaign_stats за период для оценки расхода."),
 		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
 		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
 	)
@@ -83,7 +83,7 @@ func registerGetAccountBalance(s *mcpserver.MCPServer, client *Client, resolver 
 		clientLogin := common.GetString(req, "client_login")
 
 		params := map[string]any{
-			"FieldNames": []string{"Login", "ClientId", "ClientInfo", "AccountQuality"},
+			"FieldNames": []string{"Login", "ClientId", "Currency", "OverdraftSumAvailable", "Bonuses", "Grants", "Settings", "Restrictions", "AccountQuality"},
 		}
 		raw, err := client.Call(ctx, token, "clients", "get", params, clientLogin)
 		if err != nil { return common.ErrorResult(err.Error()), nil }

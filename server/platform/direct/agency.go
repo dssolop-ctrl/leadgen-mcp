@@ -47,7 +47,7 @@ func registerGetAgencyClients(s *mcpserver.MCPServer, client *Client, resolver *
 		}
 
 		fieldNames := []string{
-			"Login", "ClientId", "ClientInfo", "Archived",
+			"Login", "ClientId", "ClientInfo", "Archived", "AccountQuality", "Phone", "Currency", "OverdraftSumAvailable", "Bonuses", "Grants",
 		}
 
 		params := map[string]any{
