@@ -2,6 +2,7 @@ package direct
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -19,6 +20,9 @@ func RegisterStatsTools(s *mcpserver.MCPServer, client *Client, resolver *auth.A
 	registerGetAdStats(s, client, resolver)
 	registerGetCriteriaStats(s, client, resolver)
 	registerGetSearchQueries(s, client, resolver)
+	registerGetAccountStats(s, client, resolver)
+	registerGetCustomReport(s, client, resolver)
+	registerGetReachFrequencyStats(s, client, resolver)
 }
 
 func registerGetCampaignStats(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
@@ -287,6 +291,185 @@ func truncateTSV(tsv string, maxRows int) string {
 
 func intToStr(n int) string {
 	return fmt.Sprintf("%d", n)
+}
+
+func registerGetAccountStats(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
+	tool := mcp.NewTool("get_account_stats",
+		mcp.WithDescription("Статистика по всему аккаунту за период (без разбивки по кампаниям). Суммарные показы, клики, расход."),
+		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("date_from", mcp.Description("Начало периода YYYY-MM-DD"), mcp.Required()),
+		mcp.WithString("date_to", mcp.Description("Конец периода YYYY-MM-DD"), mcp.Required()),
+		mcp.WithString("field_names", mcp.Description("Поля через запятую (по умолчанию: Impressions,Clicks,Cost,Ctr,AvgCpc)")),
+		mcp.WithString("goal_ids", mcp.Description("ID целей через запятую (опционально)")),
+		mcp.WithString("attribution", mcp.Description("Модель атрибуции (по умолчанию LYDC)")),
+	)
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		token, err := resolver.ResolveYandex(common.GetString(req, "account"))
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		clientLogin := common.GetString(req, "client_login")
+
+		var fieldNames []string
+		if userFields := common.GetStringSlice(req, "field_names"); len(userFields) > 0 {
+			fieldNames = userFields
+		} else {
+			fieldNames = []string{"Impressions", "Clicks", "Cost", "Ctr", "AvgCpc"}
+		}
+
+		params := map[string]any{
+			"SelectionCriteria": map[string]any{
+				"DateFrom": common.GetString(req, "date_from"),
+				"DateTo":   common.GetString(req, "date_to"),
+			},
+			"FieldNames":    fieldNames,
+			"ReportName":    fmt.Sprintf("account_%d", time.Now().UnixNano()),
+			"ReportType":    "ACCOUNT_PERFORMANCE_REPORT",
+			"DateRangeType": "CUSTOM_DATE",
+			"Format":        "TSV",
+			"IncludeVAT":    "YES",
+			"IncludeDiscount": "NO",
+		}
+
+		goalIDs := common.GetStringSlice(req, "goal_ids")
+		if len(goalIDs) > 0 {
+			params["Goals"] = goalIDs
+			attribution := common.GetString(req, "attribution")
+			if attribution == "" {
+				attribution = "LYDC"
+			}
+			params["AttributionModels"] = []string{attribution}
+		}
+
+		tsv, err := client.CallReport(ctx, token, params, clientLogin)
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		return common.TextResult(tsv), nil
+	})
+}
+
+func registerGetCustomReport(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
+	tool := mcp.NewTool("get_custom_report",
+		mcp.WithDescription("Произвольный отчёт Reports API. Позволяет запросить любой тип отчёта с любыми полями."),
+		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("report_type", mcp.Description("Тип: CAMPAIGN_PERFORMANCE_REPORT, ADGROUP_PERFORMANCE_REPORT, AD_PERFORMANCE_REPORT, CRITERIA_PERFORMANCE_REPORT, SEARCH_QUERY_PERFORMANCE_REPORT, REACH_AND_FREQUENCY_PERFORMANCE_REPORT и др."), mcp.Required()),
+		mcp.WithString("field_names", mcp.Description("Поля через запятую"), mcp.Required()),
+		mcp.WithString("date_from", mcp.Description("Начало периода YYYY-MM-DD"), mcp.Required()),
+		mcp.WithString("date_to", mcp.Description("Конец периода YYYY-MM-DD"), mcp.Required()),
+		mcp.WithString("filter_json", mcp.Description("JSON фильтров: [{\"Field\":\"CampaignId\",\"Operator\":\"IN\",\"Values\":[\"123\"]}]")),
+		mcp.WithString("goal_ids", mcp.Description("ID целей через запятую")),
+		mcp.WithString("attribution", mcp.Description("Модель атрибуции")),
+		mcp.WithNumber("limit", mcp.Description("Макс. строк (по умолчанию 200)")),
+	)
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		token, err := resolver.ResolveYandex(common.GetString(req, "account"))
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		clientLogin := common.GetString(req, "client_login")
+
+		criteria := map[string]any{
+			"DateFrom": common.GetString(req, "date_from"),
+			"DateTo":   common.GetString(req, "date_to"),
+		}
+		if filterJSON := common.GetString(req, "filter_json"); filterJSON != "" {
+			var filters any
+			if err := json.Unmarshal([]byte(filterJSON), &filters); err != nil {
+				return common.ErrorResult("invalid filter_json: " + err.Error()), nil
+			}
+			criteria["Filter"] = filters
+		}
+
+		params := map[string]any{
+			"SelectionCriteria": criteria,
+			"FieldNames":    common.GetStringSlice(req, "field_names"),
+			"ReportName":    fmt.Sprintf("custom_%d", time.Now().UnixNano()),
+			"ReportType":    common.GetString(req, "report_type"),
+			"DateRangeType": "CUSTOM_DATE",
+			"Format":        "TSV",
+			"IncludeVAT":    "YES",
+			"IncludeDiscount": "NO",
+		}
+
+		goalIDs := common.GetStringSlice(req, "goal_ids")
+		if len(goalIDs) > 0 {
+			params["Goals"] = goalIDs
+			attribution := common.GetString(req, "attribution")
+			if attribution == "" {
+				attribution = "LYDC"
+			}
+			params["AttributionModels"] = []string{attribution}
+		}
+
+		tsv, err := client.CallReport(ctx, token, params, clientLogin)
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		limit := common.GetInt(req, "limit")
+		if limit <= 0 {
+			limit = 200
+		}
+		tsv = truncateTSV(tsv, limit)
+		return common.TextResult(tsv), nil
+	})
+}
+
+func registerGetReachFrequencyStats(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
+	tool := mcp.NewTool("get_reach_frequency_stats",
+		mcp.WithDescription("Отчёт по охвату и частоте показов (REACH_AND_FREQUENCY_PERFORMANCE_REPORT)."),
+		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую"), mcp.Required()),
+		mcp.WithString("date_from", mcp.Description("Начало периода YYYY-MM-DD"), mcp.Required()),
+		mcp.WithString("date_to", mcp.Description("Конец периода YYYY-MM-DD"), mcp.Required()),
+		mcp.WithString("field_names", mcp.Description("Поля через запятую (по умолчанию: Impressions,ImpressionReach,AvgImpressionFrequency)")),
+	)
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		token, err := resolver.ResolveYandex(common.GetString(req, "account"))
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		clientLogin := common.GetString(req, "client_login")
+
+		var fieldNames []string
+		if userFields := common.GetStringSlice(req, "field_names"); len(userFields) > 0 {
+			fieldNames = userFields
+		} else {
+			fieldNames = []string{"CampaignId", "CampaignName", "Impressions", "ImpressionReach", "AvgImpressionFrequency"}
+		}
+
+		campaignIDs := common.GetStringSlice(req, "campaign_ids")
+
+		params := map[string]any{
+			"SelectionCriteria": map[string]any{
+				"DateFrom": common.GetString(req, "date_from"),
+				"DateTo":   common.GetString(req, "date_to"),
+				"Filter": []any{
+					map[string]any{
+						"Field":    "CampaignId",
+						"Operator": "IN",
+						"Values":   campaignIDs,
+					},
+				},
+			},
+			"FieldNames":    fieldNames,
+			"ReportName":    fmt.Sprintf("reach_%d", time.Now().UnixNano()),
+			"ReportType":    "REACH_AND_FREQUENCY_PERFORMANCE_REPORT",
+			"DateRangeType": "CUSTOM_DATE",
+			"Format":        "TSV",
+			"IncludeVAT":    "YES",
+			"IncludeDiscount": "NO",
+		}
+
+		tsv, err := client.CallReport(ctx, token, params, clientLogin)
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		return common.TextResult(tsv), nil
+	})
 }
 
 func hasField(fields []string, target string) bool {

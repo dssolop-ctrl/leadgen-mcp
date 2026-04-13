@@ -15,8 +15,43 @@ import (
 
 var geoCache = common.NewCache(6 * time.Hour)
 
-// RegisterGeoTools registers geo-related MCP tools.
+// RegisterGeoTools registers geo-related and dictionary MCP tools.
 func RegisterGeoTools(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
+	registerGetGeoRegions(s, client, resolver)
+	registerGetDictionaries(s, client, resolver)
+}
+
+func registerGetDictionaries(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
+	tool := mcp.NewTool("get_dictionaries",
+		mcp.WithDescription("Получить справочники Яндекс Директа: GeoRegions, TimeZones, Currencies, AdCategories, OperationSystemVersions, ProductivityAssertions, SupplySidePlatforms, Interests, AudienceDemographicProfiles, AudienceCriteriaTypes."),
+		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("dictionary_names", mcp.Description("Названия справочников через запятую: GeoRegions, TimeZones, Currencies, AdCategories, Interests"), mcp.Required()),
+	)
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		token, err := resolver.ResolveYandex(common.GetString(req, "account"))
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		clientLogin := common.GetString(req, "client_login")
+
+		names := common.GetStringSlice(req, "dictionary_names")
+		params := map[string]any{
+			"DictionaryNames": names,
+		}
+		raw, err := client.Call(ctx, token, "dictionaries", "get", params, clientLogin)
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		result, err := GetResult(raw)
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		return common.SafeTextResult(string(result)), nil
+	})
+}
+
+func registerGetGeoRegions(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_geo_regions",
 		mcp.WithDescription("Поиск регионов Яндекс Директа по названию. ОБЯЗАТЕЛЬНО укажи query для поиска. Возвращает до 20 результатов с GeoRegionId для таргетинга."),
 		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),

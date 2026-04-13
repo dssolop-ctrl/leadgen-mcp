@@ -2,6 +2,7 @@ package direct
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/leadgen-mcp/server/auth"
 	"github.com/leadgen-mcp/server/platform/common"
@@ -13,10 +14,12 @@ import (
 func RegisterKeywordTools(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	registerGetKeywords(s, client, resolver)
 	registerAddKeywords(s, client, resolver)
+	registerUpdateKeywords(s, client, resolver)
 	registerManageKeywords(s, client, resolver)
 	registerDeduplicateKeywords(s, client, resolver)
 	registerGetAutotargeting(s, client, resolver)
 	registerUpdateAutotargeting(s, client, resolver)
+	registerManageAutotargeting(s, client, resolver)
 }
 
 func registerGetKeywords(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
@@ -104,6 +107,38 @@ func registerAddKeywords(s *mcpserver.MCPServer, client *Client, resolver *auth.
 		}
 
 		raw, err := client.Call(ctx, token, "keywords", "add", params, clientLogin)
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		result, err := GetResult(raw)
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		return common.TextResult(string(result)), nil
+	})
+}
+
+func registerUpdateKeywords(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
+	tool := mcp.NewTool("update_keywords",
+		mcp.WithDescription("Обновить ключевые фразы: изменить текст фразы или назначить другую группу."),
+		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("keywords_json", mcp.Description("JSON массив: [{\"Id\":123,\"Keyword\":\"новая фраза\"}]"), mcp.Required()),
+	)
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		token, err := resolver.ResolveYandex(common.GetString(req, "account"))
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		clientLogin := common.GetString(req, "client_login")
+
+		var keywords any
+		if err := json.Unmarshal([]byte(common.GetString(req, "keywords_json")), &keywords); err != nil {
+			return common.ErrorResult("invalid keywords_json: " + err.Error()), nil
+		}
+
+		params := map[string]any{"Keywords": keywords}
+		raw, err := client.Call(ctx, token, "keywords", "update", params, clientLogin)
 		if err != nil {
 			return common.ErrorResult(err.Error()), nil
 		}
@@ -273,6 +308,38 @@ func registerUpdateAutotargeting(s *mcpserver.MCPServer, client *Client, resolve
 		}
 
 		raw, err := client.Call(ctx, token, "adgroups", "update", params, clientLogin)
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		result, err := GetResult(raw)
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		return common.TextResult(string(result)), nil
+	})
+}
+
+func registerManageAutotargeting(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
+	tool := mcp.NewTool("manage_autotargeting",
+		mcp.WithDescription("Управление автотаргетингом: suspend или resume ключевой фразы ---autotargeting."),
+		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("keyword_ids", mcp.Description("ID ключевых фраз автотаргетинга через запятую (получи через get_autotargeting)"), mcp.Required()),
+		mcp.WithString("action", mcp.Description("Действие: suspend или resume"), mcp.Required()),
+	)
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		token, err := resolver.ResolveYandex(common.GetString(req, "account"))
+		if err != nil {
+			return common.ErrorResult(err.Error()), nil
+		}
+		clientLogin := common.GetString(req, "client_login")
+
+		ids := parseIntSlice(common.GetStringSlice(req, "keyword_ids"))
+		action := common.GetString(req, "action")
+		params := map[string]any{
+			"SelectionCriteria": map[string]any{"Ids": ids},
+		}
+		raw, err := client.Call(ctx, token, "keywords", action, params, clientLogin)
 		if err != nil {
 			return common.ErrorResult(err.Error()), nil
 		}

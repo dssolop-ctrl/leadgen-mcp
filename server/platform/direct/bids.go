@@ -9,15 +9,16 @@ import (
 	mcpserver "github.com/mark3labs/mcp-go/server"
 )
 
-func RegisterKeywordBidTools(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
-	registerGetKeywordBids(s, client, resolver)
-	registerSetKeywordBids(s, client, resolver)
-	registerSetKeywordBidsAuto(s, client, resolver)
+// RegisterBidTools registers Bids service MCP tools.
+func RegisterBidTools(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
+	registerGetBids(s, client, resolver)
+	registerSetBids(s, client, resolver)
+	registerSetBidsAuto(s, client, resolver)
 }
 
-func registerGetKeywordBids(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
-	tool := mcp.NewTool("get_keyword_bids",
-		mcp.WithDescription("Получить ставки по ключевым фразам."),
+func registerGetBids(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
+	tool := mcp.NewTool("get_bids",
+		mcp.WithDescription("Получить ставки для ключевых фраз (устаревший сервис Bids). Для новых кампаний используй get_keyword_bids."),
 		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
 		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую")),
@@ -39,14 +40,14 @@ func registerGetKeywordBids(s *mcpserver.MCPServer, client *Client, resolver *au
 			criteria["AdGroupIds"] = ids
 		}
 		if ids := parseIntSlice(common.GetStringSlice(req, "keyword_ids")); len(ids) > 0 {
-			criteria["Ids"] = ids
+			criteria["KeywordIds"] = ids
 		}
 
 		params := map[string]any{
 			"SelectionCriteria": criteria,
-			"FieldNames":        []string{"KeywordId", "AdGroupId", "CampaignId", "ServingStatus", "StrategyPriority"},
+			"FieldNames":        []string{"KeywordId", "AdGroupId", "CampaignId", "Bid", "ContextBid"},
 		}
-		raw, err := client.Call(ctx, token, "keywordbids", "get", params, clientLogin)
+		raw, err := client.Call(ctx, token, "bids", "get", params, clientLogin)
 		if err != nil {
 			return common.ErrorResult(err.Error()), nil
 		}
@@ -58,9 +59,9 @@ func registerGetKeywordBids(s *mcpserver.MCPServer, client *Client, resolver *au
 	})
 }
 
-func registerSetKeywordBids(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
-	tool := mcp.NewTool("set_keyword_bids",
-		mcp.WithDescription("Установить ставки для ключевых фраз. Ставки в рублях (будут конвертированы в микроюниты)."),
+func registerSetBids(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
+	tool := mcp.NewTool("set_bids",
+		mcp.WithDescription("Установить ставки для ключевых фраз (сервис Bids). Ставки в рублях."),
 		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
 		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
 		mcp.WithString("keyword_ids", mcp.Description("ID ключевых фраз через запятую"), mcp.Required()),
@@ -82,16 +83,16 @@ func registerSetKeywordBids(s *mcpserver.MCPServer, client *Client, resolver *au
 		for _, id := range ids {
 			b := map[string]any{
 				"KeywordId": id,
-				"SearchBid": bid * 1000000,
+				"Bid":       bid * 1000000,
 			}
 			if contextBid > 0 {
-				b["NetworkBid"] = contextBid * 1000000
+				b["ContextBid"] = contextBid * 1000000
 			}
 			bids = append(bids, b)
 		}
 
-		params := map[string]any{"KeywordBids": bids}
-		raw, err := client.Call(ctx, token, "keywordbids", "set", params, clientLogin)
+		params := map[string]any{"Bids": bids}
+		raw, err := client.Call(ctx, token, "bids", "set", params, clientLogin)
 		if err != nil {
 			return common.ErrorResult(err.Error()), nil
 		}
@@ -103,15 +104,14 @@ func registerSetKeywordBids(s *mcpserver.MCPServer, client *Client, resolver *au
 	})
 }
 
-func registerSetKeywordBidsAuto(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
-	tool := mcp.NewTool("set_keyword_bids_auto",
-		mcp.WithDescription("Установить автоматические ставки для ключевых фраз (KeywordBids). Задаёт правило ставок с целевой позицией."),
+func registerSetBidsAuto(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
+	tool := mcp.NewTool("set_bids_auto",
+		mcp.WithDescription("Установить автоматические ставки для ключевых фраз (сервис Bids). Задаёт целевую позицию и ограничения."),
 		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
 		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
 		mcp.WithString("keyword_ids", mcp.Description("ID ключевых фраз через запятую"), mcp.Required()),
 		mcp.WithNumber("max_bid", mcp.Description("Максимальная ставка в рублях"), mcp.Required()),
-		mcp.WithString("target", mcp.Description("Цель: SEARCH_BY_TRAFFIC_VOLUME (по умолчанию)")),
-		mcp.WithNumber("traffic_volume", mcp.Description("Объём трафика 5-100 (по умолчанию 65)")),
+		mcp.WithString("position", mcp.Description("Целевая позиция: PREMIUMBLOCK (спецразмещение) или FOOTERBLOCK (гарантия)")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		token, err := resolver.ResolveYandex(common.GetString(req, "account"))
@@ -122,31 +122,21 @@ func registerSetKeywordBidsAuto(s *mcpserver.MCPServer, client *Client, resolver
 
 		ids := parseIntSlice(common.GetStringSlice(req, "keyword_ids"))
 		maxBid := common.GetInt(req, "max_bid")
-		trafficVol := common.GetInt(req, "traffic_volume")
-		if trafficVol <= 0 {
-			trafficVol = 65
+		position := common.GetString(req, "position")
+		if position == "" {
+			position = "PREMIUMBLOCK"
 		}
 
 		var bids []any
 		for _, id := range ids {
 			bids = append(bids, map[string]any{
 				"KeywordId": id,
-				"BiddingRule": map[string]any{
-					"SearchByTrafficVolume": map[string]any{
-						"TargetTrafficVolume": trafficVol,
-						"IncreasePercent":     0,
-					},
-				},
+				"Bid":       maxBid * 1000000,
 			})
 		}
-		if maxBid > 0 {
-			for i := range bids {
-				bids[i].(map[string]any)["SearchBid"] = maxBid * 1000000
-			}
-		}
 
-		params := map[string]any{"KeywordBids": bids}
-		raw, err := client.Call(ctx, token, "keywordbids", "setAuto", params, clientLogin)
+		params := map[string]any{"Bids": bids}
+		raw, err := client.Call(ctx, token, "bids", "setAuto", params, clientLogin)
 		if err != nil {
 			return common.ErrorResult(err.Error()), nil
 		}

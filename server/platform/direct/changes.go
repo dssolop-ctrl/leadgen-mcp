@@ -12,6 +12,7 @@ import (
 func RegisterChangeTools(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	registerCheckChanges(s, client, resolver)
 	registerCheckCampaignChanges(s, client, resolver)
+	registerCheckDictionaryChanges(s, client, resolver)
 }
 
 func registerCheckChanges(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
@@ -69,6 +70,29 @@ func registerCheckCampaignChanges(s *mcpserver.MCPServer, client *Client, resolv
 			"Timestamp": common.GetString(req, "timestamp"),
 		}
 		raw, err := client.Call(ctx, token, "changes", "checkCampaigns", params, clientLogin)
+		if err != nil { return common.ErrorResult(err.Error()), nil }
+		result, err := GetResult(raw)
+		if err != nil { return common.ErrorResult(err.Error()), nil }
+		return common.SafeTextResult(string(result)), nil
+	})
+}
+
+func registerCheckDictionaryChanges(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
+	tool := mcp.NewTool("check_dictionary_changes",
+		mcp.WithDescription("Проверить, обновились ли справочники (GeoRegions, TimeZones и др.) с указанного момента."),
+		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("timestamp", mcp.Description("Дата-время начала: YYYY-MM-DDTHH:MM:SSZ"), mcp.Required()),
+	)
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		token, err := resolver.ResolveYandex(common.GetString(req, "account"))
+		if err != nil { return common.ErrorResult(err.Error()), nil }
+		clientLogin := common.GetString(req, "client_login")
+
+		params := map[string]any{
+			"Timestamp": common.GetString(req, "timestamp"),
+		}
+		raw, err := client.Call(ctx, token, "changes", "checkDictionaries", params, clientLogin)
 		if err != nil { return common.ErrorResult(err.Error()), nil }
 		result, err := GetResult(raw)
 		if err != nil { return common.ErrorResult(err.Error()), nil }
