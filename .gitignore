@@ -1,0 +1,6 @@
+tokens.env
+.cache/
+data/serp-history/
+.DS_Store
+server/config.yaml
+__pycache__/

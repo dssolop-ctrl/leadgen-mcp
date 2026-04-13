@@ -1,0 +1,16 @@
+server:
+  port: 8080
+  bearer_token: ""
+
+accounts:
+  yandex:
+    - name: "default"
+      token: "y0_YOUR_YANDEX_OAUTH_TOKEN"
+      default: true
+    # - name: "client-x"
+    #   token: "y0_another_token"
+
+  vk:
+    - name: "default"
+      token: "YOUR_VK_ADS_TOKEN"
+      default: true

@@ -1,0 +1,7 @@
+leadgen-mcp
+leadgen-mcp.exe
+config.yaml
+*.exe
+.gitignore
+Makefile
+README.md

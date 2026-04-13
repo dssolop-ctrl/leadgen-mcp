@@ -1,0 +1,18 @@
+server:
+  port: 8080
+  bearer_token: "your-mcp-access-token"
+
+accounts:
+  yandex:
+    - name: "main"
+      token: "y0_your_yandex_oauth_token"
+      default: true
+    # - name: "client-x"
+    #   token: "y0_another_token"
+
+  vk:
+    - name: "main"
+      token: "vk_ads_api_token"
+      default: true
+    # - name: "agency"
+    #   token: "vk_another_token"
