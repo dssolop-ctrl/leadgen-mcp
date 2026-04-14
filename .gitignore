@@ -4,3 +4,13 @@ data/serp-history/
 .DS_Store
 server/config.yaml
 __pycache__/
+
+# Other AI agents (keep only .claude/)
+.agents/
+.cline/
+.codex/
+.cursor/
+.gemini/
+.openclaw/
+.windsurf/
+.vscode/
