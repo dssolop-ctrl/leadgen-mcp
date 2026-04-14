@@ -106,67 +106,6 @@ func (c *Client) CallReport(ctx context.Context, token string, params any, clien
 	return result, nil
 }
 
-const (
-	baseURLv4Live = "https://api.direct.yandex.ru/live/v4/json/"
-)
-
-// v4Request represents a Yandex Direct API v4 Live request body.
-type v4Request struct {
-	Method string `json:"method"`
-	Param  any    `json:"param,omitempty"`
-	Token  string `json:"token"`
-	Login  string `json:"login,omitempty"`
-}
-
-// CallV4 makes a request to Yandex Direct API v4 Live (for labels/tags).
-// Unlike v5, v4 uses token in body and returns {data, error_code, error_str, error_detail}.
-func (c *Client) CallV4(ctx context.Context, token, method string, params any, clientLogin ...string) (json.RawMessage, error) {
-	body := v4Request{
-		Method: method,
-		Param:  params,
-		Token:  token,
-	}
-
-	if len(clientLogin) > 0 && clientLogin[0] != "" {
-		body.Login = clientLogin[0]
-	}
-
-	var resp json.RawMessage
-	err := c.api.DoJSON(ctx, common.RequestOpts{
-		Method: "POST",
-		URL:    baseURLv4Live,
-		Body:   body,
-	}, &resp)
-
-	if err != nil {
-		return nil, fmt.Errorf("direct API v4 %s: %w", method, err)
-	}
-
-	// Check for v4 error envelope
-	if err := checkV4Error(resp); err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
-// checkV4Error checks the v4 response for errors.
-// v4 returns {error_code: N, error_str: "...", error_detail: "..."} where error_code=0 means success.
-func checkV4Error(raw json.RawMessage) error {
-	var envelope struct {
-		ErrorCode   int    `json:"error_code"`
-		ErrorStr    string `json:"error_str"`
-		ErrorDetail string `json:"error_detail"`
-	}
-	if err := json.Unmarshal(raw, &envelope); err != nil {
-		return nil // Can't parse — let caller handle
-	}
-	if envelope.ErrorCode != 0 {
-		return fmt.Errorf("API v4 error %d: %s (%s)", envelope.ErrorCode, envelope.ErrorStr, envelope.ErrorDetail)
-	}
-	return nil
-}
-
 // GetResult extracts the "result" field from a Direct API response.
 func GetResult(raw json.RawMessage) (json.RawMessage, error) {
 	var envelope struct {
