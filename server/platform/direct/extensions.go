@@ -158,8 +158,9 @@ func registerGetAdExtensions(s *mcpserver.MCPServer, client *Client, resolver *a
 		}
 
 		params := map[string]any{
-			"SelectionCriteria": criteria,
-			"FieldNames":       []string{"Id", "Type", "State", "Status", "StatusClarification", "Associated"},
+			"SelectionCriteria":          criteria,
+			"FieldNames":                 []string{"Id", "Type", "State", "Status", "StatusClarification", "Associated"},
+			"CalloutFieldNames": []string{"CalloutText"},
 		}
 
 		raw, err := client.Call(ctx, token, "adextensions", "get", params, clientLogin)
