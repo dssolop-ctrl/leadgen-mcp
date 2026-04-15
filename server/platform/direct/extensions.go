@@ -22,8 +22,8 @@ func RegisterExtensionTools(s *mcpserver.MCPServer, client *Client, resolver *au
 func registerGetSitelinks(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_sitelinks",
 		mcp.WithDescription("Получить наборы быстрых ссылок."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("sitelink_set_ids", mcp.Description("ID наборов через запятую")),
 	)
 
@@ -59,8 +59,8 @@ func registerGetSitelinks(s *mcpserver.MCPServer, client *Client, resolver *auth
 func registerAddSitelinks(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_sitelinks",
 		mcp.WithDescription("Создать набор быстрых ссылок. До 8 ссылок в наборе. Формат: title|description|href через точку с запятой."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("sitelinks", mcp.Description("Ссылки: title1|description1|href1;title2|description2|href2;... (title до 30, description до 60 символов)"), mcp.Required()),
 	)
 
@@ -108,8 +108,8 @@ func registerAddSitelinks(s *mcpserver.MCPServer, client *Client, resolver *auth
 func registerDeleteSitelinks(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("delete_sitelinks",
 		mcp.WithDescription("Удалить наборы быстрых ссылок."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("sitelink_set_ids", mcp.Description("ID наборов через запятую"), mcp.Required()),
 	)
 
@@ -140,8 +140,8 @@ func registerDeleteSitelinks(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerGetAdExtensions(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_ad_extensions",
 		mcp.WithDescription("Получить уточнения (callouts) для объявлений."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("ad_extension_ids", mcp.Description("ID уточнений через запятую")),
 	)
 
@@ -178,8 +178,8 @@ func registerGetAdExtensions(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerAddAdExtension(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_ad_extension",
 		mcp.WithDescription("Создать уточнение (callout) для объявлений. До 25 символов."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("callout_text", mcp.Description("Текст уточнения (до 25 символов)"), mcp.Required()),
 	)
 
@@ -215,8 +215,8 @@ func registerAddAdExtension(s *mcpserver.MCPServer, client *Client, resolver *au
 func registerDeleteAdExtensions(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("delete_ad_extensions",
 		mcp.WithDescription("Удалить уточнения."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("ad_extension_ids", mcp.Description("ID уточнений через запятую"), mcp.Required()),
 	)
 

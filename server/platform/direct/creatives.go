@@ -21,8 +21,8 @@ func RegisterCreativeTools(s *mcpserver.MCPServer, client *Client, resolver *aut
 func registerGetCreatives(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("creatives",
 		mcp.WithDescription("Получить креативы (видеодополнения, смарт-баннеры и др.)."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("creative_ids", mcp.Description("ID креативов через запятую (опционально)")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -56,8 +56,8 @@ func registerGetCreatives(s *mcpserver.MCPServer, client *Client, resolver *auth
 func registerGetAdVideos(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("ad_videos",
 		mcp.WithDescription("Получить видеодополнения для объявлений."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("video_ids", mcp.Description("ID видео через запятую (опционально)")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -91,8 +91,8 @@ func registerGetAdVideos(s *mcpserver.MCPServer, client *Client, resolver *auth.
 func registerGetTurboPages(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_turbo_pages",
 		mcp.WithDescription("Получить турбо-страницы для объявлений."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("turbo_page_ids", mcp.Description("ID турбо-страниц через запятую (опционально)")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -126,8 +126,8 @@ func registerGetTurboPages(s *mcpserver.MCPServer, client *Client, resolver *aut
 func registerGetLeads(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_leads",
 		mcp.WithDescription("Получить лиды (заявки) из турбо-страниц Яндекс Директа. Требуется turbo_page_ids."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("turbo_page_ids", mcp.Description("ID турбо-страниц через запятую"), mcp.Required()),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую (опционально)")),
 		mcp.WithString("date_from", mcp.Description("Дата начала YYYY-MM-DD")),
@@ -173,8 +173,8 @@ func registerGetLeads(s *mcpserver.MCPServer, client *Client, resolver *auth.Acc
 func registerGetBusinesses(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_businesses",
 		mcp.WithDescription("Получить организации из Яндекс Бизнеса, привязанные к аккаунту. Нужен хотя бы один фильтр: business_ids, name или url."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("business_ids", mcp.Description("ID организаций через запятую")),
 		mcp.WithString("name", mcp.Description("Фильтр по названию (поиск подстроки)")),
 		mcp.WithString("url", mcp.Description("Фильтр по URL сайта")),

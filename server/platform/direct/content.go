@@ -19,8 +19,8 @@ func RegisterContentTools(s *mcpserver.MCPServer, client *Client, resolver *auth
 func registerGetAdImages(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_ad_images",
 		mcp.WithDescription("Получить изображения для объявлений (РСЯ). Возвращает хеши для использования в ad_image_hash."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		token, err := resolver.ResolveYandex(common.GetString(req, "account"))
@@ -49,8 +49,8 @@ func registerGetAdImages(s *mcpserver.MCPServer, client *Client, resolver *auth.
 func registerGetVCards(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_vcards",
 		mcp.WithDescription("Получить визитки (адрес, телефон, компания) для объявлений."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("vcard_ids", mcp.Description("ID визиток через запятую (опционально)")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -83,8 +83,8 @@ func registerGetVCards(s *mcpserver.MCPServer, client *Client, resolver *auth.Ac
 func registerAddVCard(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_vcard",
 		mcp.WithDescription("Создать визитку для объявлений."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("company_name", mcp.Description("Название компании"), mcp.Required()),
 		mcp.WithString("phone_country", mcp.Description("Код страны (по умолчанию +7)")),
 		mcp.WithString("phone_city", mcp.Description("Код города"), mcp.Required()),
@@ -139,8 +139,8 @@ func registerAddVCard(s *mcpserver.MCPServer, client *Client, resolver *auth.Acc
 func registerDeleteVCards(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("delete_vcards",
 		mcp.WithDescription("Удалить визитки."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("vcard_ids", mcp.Description("ID визиток через запятую"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {

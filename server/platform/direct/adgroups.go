@@ -21,8 +21,8 @@ func RegisterAdGroupTools(s *mcpserver.MCPServer, client *Client, resolver *auth
 func registerGetAdGroups(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_adgroups",
 		mcp.WithDescription("Получить группы объявлений. Требуется campaign_id или adgroup_ids."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую"), mcp.Required()),
 		mcp.WithString("field_names", mcp.Description("Поля: Id, Name, CampaignId, Status, RegionIds, TrackingParams и т.д.")),
 		mcp.WithString("adgroup_ids", mcp.Description("ID групп через запятую (фильтр)")),
@@ -67,8 +67,8 @@ func registerGetAdGroups(s *mcpserver.MCPServer, client *Client, resolver *auth.
 func registerAddAdGroup(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_adgroup",
 		mcp.WithDescription("Создать группу объявлений. Автотаргетинг: целевые+узкие=ON, остальные=OFF."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID кампании"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Название группы"), mcp.Required()),
 		mcp.WithString("region_ids", mcp.Description("ID регионов через запятую"), mcp.Required()),
@@ -118,8 +118,8 @@ func registerAddAdGroup(s *mcpserver.MCPServer, client *Client, resolver *auth.A
 func registerUpdateAdGroup(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("update_adgroup",
 		mcp.WithDescription("Обновить группу объявлений. Частичное обновление. Основное применение — добавить tracking_params (UTM)."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("adgroup_id", mcp.Description("ID группы"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Новое название")),
 		mcp.WithString("region_ids", mcp.Description("Новые регионы через запятую")),

@@ -27,12 +27,12 @@ func RegisterCampaignTools(s *mcpserver.MCPServer, client *Client, resolver *aut
 func registerGetCampaigns(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_campaigns",
 		mcp.WithDescription("Получить список кампаний Яндекс Директа. Всегда фильтруй по states. Без фильтра вернёт ВСЕ включая архивные."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально, по умолчанию — default)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
-		mcp.WithString("states", mcp.Description("Фильтр по статусам через запятую: ON, SUSPENDED, OFF, ENDED, CONVERTED, ARCHIVED")),
-		mcp.WithString("field_names", mcp.Description("Поля через запятую: Id, Name, State, Status, DailyBudget, Statistics, и т.д. По умолчанию — все")),
-		mcp.WithNumber("limit", mcp.Description("Максимум кампаний (по умолчанию 100)")),
-		mcp.WithString("campaign_ids", mcp.Description("Фильтр по ID кампаний через запятую")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
+		mcp.WithString("states", mcp.Description("Статусы: ON, SUSPENDED, OFF, ENDED, ARCHIVED")),
+		mcp.WithString("field_names", mcp.Description("Поля: Id, Name, State, Status, DailyBudget и др.")),
+		mcp.WithNumber("limit", mcp.Description("Макс. кампаний (умолч 100)")),
+		mcp.WithString("campaign_ids", mcp.Description("ID кампаний")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -93,18 +93,18 @@ func registerGetCampaigns(s *mcpserver.MCPServer, client *Client, resolver *auth
 func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_campaign",
 		mcp.WithDescription("Создать кампанию в Яндекс Директе. Бюджет в РУБЛЯХ (недельный). Стратегия: начинай с WB_MAXIMUM_CONVERSION_RATE."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("name", mcp.Description("Название кампании"), mcp.Required()),
-		mcp.WithNumber("daily_budget_amount", mcp.Description("Недельный бюджет в рублях (число, НЕ микроюниты)"), mcp.Required()),
-		mcp.WithString("daily_budget_mode", mcp.Description("Режим бюджета: STANDARD или DISTRIBUTED (по умолчанию DISTRIBUTED)")),
+		mcp.WithNumber("daily_budget_amount", mcp.Description("Недельный бюджет в рублях"), mcp.Required()),
+		mcp.WithString("daily_budget_mode", mcp.Description("Режим: STANDARD или DISTRIBUTED (умолч)")),
 		mcp.WithString("search_strategy", mcp.Description("Стратегия поиска: WB_MAXIMUM_CONVERSION_RATE, AVERAGE_CPA, WB_MAXIMUM_CLICKS и др."), mcp.Required()),
 		mcp.WithString("network_strategy", mcp.Description("Стратегия сетей: SERVING_OFF (по умолчанию), NETWORK_DEFAULT, WB_MAXIMUM_CLICKS")),
-		mcp.WithNumber("goal_id", mcp.Description("ID цели Метрики для оптимизации (одна цель). Если нужно несколько — используй priority_goals, а сюда 0 или не передавай.")),
-		mcp.WithString("priority_goals", mcp.Description("Приоритетные цели JSON: [{\"goal_id\":123,\"value\":0},{\"goal_id\":456,\"value\":0}]. value — ценность конверсии в рублях (0 = не задана). При передаче GoalId в стратегии автоматически ставится 13.")),
-		mcp.WithString("counter_ids", mcp.Description("ID счётчиков Метрики через запятую")),
-		mcp.WithNumber("average_cpa", mcp.Description("Целевая цена конверсии (для стратегии AVERAGE_CPA)")),
-		mcp.WithString("start_date", mcp.Description("Дата начала (YYYY-MM-DD)")),
+		mcp.WithNumber("goal_id", mcp.Description("ID цели Метрики (одна). Для нескольких — priority_goals.")),
+		mcp.WithString("priority_goals", mcp.Description("Приоритетные цели JSON. При передаче GoalId ставится 13.")),
+		mcp.WithString("counter_ids", mcp.Description("ID счётчиков Метрики")),
+		mcp.WithNumber("average_cpa", mcp.Description("Целевая CPA (для AVERAGE_CPA)")),
+		mcp.WithString("start_date", mcp.Description("Начало (YYYY-MM-DD)")),
 		mcp.WithString("negative_keywords", mcp.Description("Минус-фразы через запятую")),
 		mcp.WithString("settings", mcp.Description("Настройки JSON: [{\"option\":\"ENABLE_AREA_OF_INTEREST_TARGETING\",\"value\":false}]")),
 	)
@@ -292,8 +292,8 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 func registerUpdateCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("update_campaign",
 		mcp.WithDescription("Обновить кампанию Яндекс Директа. Частичное обновление — указывай только изменяемые поля. Бюджет в РУБЛЯХ."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID кампании"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Новое название")),
 		mcp.WithNumber("daily_budget_amount", mcp.Description("Новый недельный бюджет в рублях")),
@@ -432,8 +432,8 @@ func registerUpdateCampaign(s *mcpserver.MCPServer, client *Client, resolver *au
 func registerManageCampaigns(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("manage_campaigns",
 		mcp.WithDescription("Массовое управление кампаниями: остановка, возобновление, архивация."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую"), mcp.Required()),
 		mcp.WithString("action", mcp.Description("Действие: suspend, resume, archive, unarchive, delete"), mcp.Required()),
 	)
@@ -444,8 +444,8 @@ func registerManageCampaigns(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerSuspendCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("suspend_campaign",
 		mcp.WithDescription("Остановить кампанию. Только для кампаний со статусом ON."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID кампании"), mcp.Required()),
 	)
 
@@ -455,8 +455,8 @@ func registerSuspendCampaign(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerResumeCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("resume_campaign",
 		mcp.WithDescription("Возобновить показы кампании. Только для кампаний со статусом SUSPENDED."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID кампании"), mcp.Required()),
 	)
 
@@ -466,8 +466,8 @@ func registerResumeCampaign(s *mcpserver.MCPServer, client *Client, resolver *au
 func registerArchiveCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("archive_campaign",
 		mcp.WithDescription("Архивировать кампанию. Сначала нужно остановить (suspend), потом архивировать."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID кампании"), mcp.Required()),
 	)
 

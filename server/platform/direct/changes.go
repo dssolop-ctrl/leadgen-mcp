@@ -18,8 +18,8 @@ func RegisterChangeTools(s *mcpserver.MCPServer, client *Client, resolver *auth.
 func registerCheckChanges(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("check_changes",
 		mcp.WithDescription("Проверить, какие кампании/группы/объявления изменились с указанной даты. Укажи хотя бы один из: campaign_ids, adgroup_ids, ad_ids."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("timestamp", mcp.Description("Дата-время начала: YYYY-MM-DDTHH:MM:SSZ"), mcp.Required()),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую (хотя бы один фильтр обязателен)")),
 		mcp.WithString("adgroup_ids", mcp.Description("ID групп через запятую")),
@@ -55,9 +55,9 @@ func registerCheckChanges(s *mcpserver.MCPServer, client *Client, resolver *auth
 
 func registerCheckCampaignChanges(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("check_campaign_changes",
-		mcp.WithDescription("Проверить какие кампании изменились с указанной даты. Возвращает типы изменений: SELF (параметры), CHILDREN (группы/объявления), STAT (статистика)."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithDescription("Изменения кампаний с даты. Типы: SELF (параметры), CHILDREN (группы/объявления), STAT."),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("campaign_ids", mcp.Description("Не используется (проверяются все кампании). Указывай для совместимости.")),
 		mcp.WithString("timestamp", mcp.Description("Дата-время начала: YYYY-MM-DDTHH:MM:SSZ"), mcp.Required()),
 	)
@@ -80,8 +80,8 @@ func registerCheckCampaignChanges(s *mcpserver.MCPServer, client *Client, resolv
 func registerCheckDictionaryChanges(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("check_dictionary_changes",
 		mcp.WithDescription("Проверить, обновились ли справочники (GeoRegions, TimeZones и др.) с указанного момента."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("timestamp", mcp.Description("Дата-время начала: YYYY-MM-DDTHH:MM:SSZ"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {

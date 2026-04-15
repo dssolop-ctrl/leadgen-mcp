@@ -32,8 +32,8 @@ func registerGetLabelsV4(s *mcpserver.MCPServer, client *Client, resolver *auth.
 			"Получить метки. Два режима: (1) campaign_ids → каталог меток кампании, "+
 				"(2) banner_ids → метки конкретных объявлений. "+
 				"API v4 Live: GetCampaignsTags / GetBannersTags."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую (до 10) — вернёт каталог меток")),
 		mcp.WithString("banner_ids", mcp.Description("ID объявлений через запятую (до 2000) — вернёт назначенные метки")),
 	)
@@ -85,8 +85,8 @@ func registerAddLabels(s *mcpserver.MCPServer, client *Client, resolver *auth.Ac
 				"Автоматически: получает каталог → создаёт недостающие → назначает на баннеры. "+
 				"Для отчётности обязательны: Лидген, <Тематика>, <Направление>. "+
 				"Нужен campaign_id (для каталога) и banner_ids (для назначения)."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)"), mcp.Required()),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города"), mcp.Required()),
 		mcp.WithString("campaign_id", mcp.Description("ID кампании (для каталога меток)"), mcp.Required()),
 		mcp.WithString("banner_ids", mcp.Description("ID объявлений через запятую (метки назначаются на них)"), mcp.Required()),
 		mcp.WithString("labels", mcp.Description("Метки через запятую. Пример: Лидген,Вторичка,Покупатель"), mcp.Required()),

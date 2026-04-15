@@ -20,8 +20,8 @@ func RegisterRetargetingTools(s *mcpserver.MCPServer, client *Client, resolver *
 func registerGetRetargetingLists(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_retargeting_lists",
 		mcp.WithDescription("Получить условия ретаргетинга и подбора аудитории."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("retargeting_list_ids", mcp.Description("ID списков через запятую (опционально)")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -54,8 +54,8 @@ func registerGetRetargetingLists(s *mcpserver.MCPServer, client *Client, resolve
 func registerAddRetargetingList(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_retargeting_list",
 		mcp.WithDescription("Создать условие ретаргетинга. rules_json — массив правил [{\"GoalId\":123,\"GoalType\":\"GOAL\"}]."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("name", mcp.Description("Название списка"), mcp.Required()),
 		mcp.WithString("description", mcp.Description("Описание")),
 		mcp.WithString("rules_json", mcp.Description("JSON массив правил: [{\"Items\":[{\"GoalId\":123,\"GoalType\":\"GOAL\"}],\"Operator\":\"ALL\"}]"), mcp.Required()),
@@ -96,8 +96,8 @@ func registerAddRetargetingList(s *mcpserver.MCPServer, client *Client, resolver
 func registerUpdateRetargetingList(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("update_retargeting_list",
 		mcp.WithDescription("Обновить условие ретаргетинга."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("retargeting_list_id", mcp.Description("ID списка"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Новое название")),
 		mcp.WithString("rules_json", mcp.Description("Новые правила (JSON)")),
@@ -137,8 +137,8 @@ func registerUpdateRetargetingList(s *mcpserver.MCPServer, client *Client, resol
 func registerDeleteRetargetingLists(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("delete_retargeting_lists",
 		mcp.WithDescription("Удалить условия ретаргетинга."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("retargeting_list_ids", mcp.Description("ID списков через запятую"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {

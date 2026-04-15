@@ -13,7 +13,7 @@ import (
 func RegisterPackageTools(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_get_packages",
 		mcp.WithDescription("Получить пакеты размещения VK Ads (форматы рекламы). 3858 = мультиформат (основной)."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {

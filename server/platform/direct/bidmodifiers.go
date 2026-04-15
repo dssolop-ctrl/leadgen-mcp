@@ -20,8 +20,8 @@ func RegisterBidModifierTools(s *mcpserver.MCPServer, client *Client, resolver *
 func registerGetBidModifiers(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_bid_modifiers",
 		mcp.WithDescription("Получить корректировки ставок (пол, возраст, устройство, регион, погода и др.) для кампаний."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -59,8 +59,8 @@ func registerGetBidModifiers(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerAddBidModifiers(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_bid_modifiers",
 		mcp.WithDescription("Добавить корректировку ставок. Типы: demographics (пол+возраст), regional (регион), mobile (мобильные), desktop (десктоп)."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID кампании"), mcp.Required()),
 		mcp.WithString("type", mcp.Description("Тип: DEMOGRAPHICS, REGIONAL, MOBILE, DESKTOP"), mcp.Required()),
 		mcp.WithString("adjustment_json", mcp.Description("JSON корректировки. Пример demographics: {\"Gender\":\"MALE\",\"Age\":\"AGE_25_34\",\"BidModifier\":120}. Пример mobile: {\"BidModifier\":50}"), mcp.Required()),
@@ -111,8 +111,8 @@ func registerAddBidModifiers(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerSetBidModifiers(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("set_bid_modifiers",
 		mcp.WithDescription("Изменить значение корректировки ставок."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("bid_modifier_id", mcp.Description("ID корректировки"), mcp.Required()),
 		mcp.WithNumber("bid_modifier", mcp.Description("Новое значение корректировки (процент, 0-1300)"), mcp.Required()),
 	)
@@ -146,8 +146,8 @@ func registerSetBidModifiers(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerDeleteBidModifiers(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("delete_bid_modifiers",
 		mcp.WithDescription("Удалить корректировки ставок."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("bid_modifier_ids", mcp.Description("ID корректировок через запятую"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {

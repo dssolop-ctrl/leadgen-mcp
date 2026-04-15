@@ -21,8 +21,8 @@ func RegisterFeedTools(s *mcpserver.MCPServer, client *Client, resolver *auth.Ac
 func registerGetFeeds(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_feeds",
 		mcp.WithDescription("Получить фиды (товарные каталоги) для динамических и смарт-объявлений."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("feed_ids", mcp.Description("ID фидов через запятую (опционально, без фильтра — все)")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -57,8 +57,8 @@ func registerGetFeeds(s *mcpserver.MCPServer, client *Client, resolver *auth.Acc
 func registerAddFeed(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_feed",
 		mcp.WithDescription("Добавить фид (товарный каталог)."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("name", mcp.Description("Название фида"), mcp.Required()),
 		mcp.WithString("business_type", mcp.Description("Тип бизнеса: RETAIL, HOTELS, REALTY, AUTOS, FLIGHTS"), mcp.Required()),
 		mcp.WithString("source_type", mcp.Description("Тип источника: URL или FILE"), mcp.Required()),
@@ -105,8 +105,8 @@ func registerAddFeed(s *mcpserver.MCPServer, client *Client, resolver *auth.Acco
 func registerUpdateFeed(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("update_feed",
 		mcp.WithDescription("Обновить параметры фида."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("feed_id", mcp.Description("ID фида"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Новое название фида")),
 		mcp.WithString("feed_json", mcp.Description("JSON с полями для обновления (Name, UrlFeed и т.д.)")),
@@ -150,8 +150,8 @@ func registerUpdateFeed(s *mcpserver.MCPServer, client *Client, resolver *auth.A
 func registerDeleteFeeds(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("delete_feeds",
 		mcp.WithDescription("Удалить фиды."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("feed_ids", mcp.Description("ID фидов через запятую"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {

@@ -20,8 +20,8 @@ func RegisterNegKeywordTools(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerGetNegKeywordSets(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_negative_keyword_sets",
 		mcp.WithDescription("Получить наборы минус-фраз (библиотека). Применяются к кампаниям."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("set_ids", mcp.Description("ID наборов через запятую (опционально)")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -48,8 +48,8 @@ func registerGetNegKeywordSets(s *mcpserver.MCPServer, client *Client, resolver 
 func registerAddNegKeywordSet(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_negative_keyword_set",
 		mcp.WithDescription("Создать набор минус-фраз."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("name", mcp.Description("Название набора"), mcp.Required()),
 		mcp.WithString("negative_keywords", mcp.Description("Минус-фразы через запятую"), mcp.Required()),
 	)
@@ -82,8 +82,8 @@ func registerAddNegKeywordSet(s *mcpserver.MCPServer, client *Client, resolver *
 func registerUpdateNegKeywordSet(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("update_negative_keyword_set",
 		mcp.WithDescription("Обновить набор минус-фраз."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("set_id", mcp.Description("ID набора"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Новое название")),
 		mcp.WithString("negative_keywords", mcp.Description("Новые минус-фразы через запятую")),
@@ -117,8 +117,8 @@ func registerUpdateNegKeywordSet(s *mcpserver.MCPServer, client *Client, resolve
 func registerDeleteNegKeywordSets(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("delete_negative_keyword_sets",
 		mcp.WithDescription("Удалить наборы минус-фраз."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("set_ids", mcp.Description("ID наборов через запятую"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {

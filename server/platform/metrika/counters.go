@@ -19,7 +19,7 @@ func RegisterCounterTools(s *mcpserver.MCPServer, client *Client, resolver *auth
 func registerGetCounters(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("metrika_get_counters",
 		mcp.WithDescription("Получить список счётчиков Яндекс Метрики."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -39,7 +39,7 @@ func registerGetCounters(s *mcpserver.MCPServer, client *Client, resolver *auth.
 func registerGetCounter(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("metrika_get_counter",
 		mcp.WithDescription("Получить информацию о конкретном счётчике Метрики."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("counter_id", mcp.Description("ID счётчика"), mcp.Required()),
 	)
 

@@ -28,16 +28,16 @@ func RegisterStatsTools(s *mcpserver.MCPServer, client *Client, resolver *auth.A
 func registerGetCampaignStats(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_campaign_stats",
 		mcp.WithDescription("Статистика кампаний за период. Без campaign_id/campaign_ids — по ВСЕМ кампаниям аккаунта. Для конверсий укажи goal_ids и добавь Conversions в field_names."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID одной кампании (опционально)")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую (опционально). Без фильтра — все кампании.")),
 		mcp.WithString("date_from", mcp.Description("Начало периода (YYYY-MM-DD)"), mcp.Required()),
 		mcp.WithString("date_to", mcp.Description("Конец периода (YYYY-MM-DD)"), mcp.Required()),
 		mcp.WithString("goal_ids", mcp.Description("ID целей через запятую. Получи из metrika_get_goals. Обязательно для Conversions/CostPerConversion.")),
-		mcp.WithString("attribution", mcp.Description("Модель атрибуции: LYDC (по умолчанию). Применяется только при наличии goal_ids.")),
-		mcp.WithString("field_names", mcp.Description("Поля через запятую. По умолчанию: CampaignName,Impressions,Clicks,Cost. Для конверсий: Conversions,CostPerConversion (+ укажи goal_ids)")),
-		mcp.WithNumber("limit", mcp.Description("Макс. строк в ответе (по умолчанию 200)")),
+		mcp.WithString("attribution", mcp.Description("Атрибуция: LYDC (умолч, при наличии goal_ids)")),
+		mcp.WithString("field_names", mcp.Description("Поля через запятую (умолч: CampaignName,Impressions,Clicks,Cost)")),
+		mcp.WithNumber("limit", mcp.Description("Макс. строк (умолч 200)")),
 	)
 
 	s.AddTool(tool, statsHandler(client, resolver, "CampaignId"))
@@ -46,14 +46,14 @@ func registerGetCampaignStats(s *mcpserver.MCPServer, client *Client, resolver *
 func registerGetAdGroupStats(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_adgroup_stats",
 		mcp.WithDescription("Статистика групп объявлений за период. Для конверсий укажи goal_ids."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID кампании"), mcp.Required()),
 		mcp.WithString("date_from", mcp.Description("Начало периода (YYYY-MM-DD)"), mcp.Required()),
 		mcp.WithString("date_to", mcp.Description("Конец периода (YYYY-MM-DD)"), mcp.Required()),
-		mcp.WithString("goal_ids", mcp.Description("ID целей через запятую. Обязательно для Conversions/CostPerConversion.")),
-		mcp.WithString("attribution", mcp.Description("Модель атрибуции (применяется только при наличии goal_ids)")),
-		mcp.WithString("field_names", mcp.Description("Поля через запятую (по умолчанию: Impressions,Clicks,Cost,Ctr,AvgCpc)")),
+		mcp.WithString("goal_ids", mcp.Description("ID целей через запятую (нужен для Conversions)")),
+		mcp.WithString("attribution", mcp.Description("Атрибуция (при наличии goal_ids)")),
+		mcp.WithString("field_names", mcp.Description("Поля (умолч: Impressions,Clicks,Cost,Ctr,AvgCpc)")),
 	)
 
 	s.AddTool(tool, statsHandler(client, resolver, "AdGroupId"))
@@ -62,14 +62,14 @@ func registerGetAdGroupStats(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerGetAdStats(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_ad_stats",
 		mcp.WithDescription("Статистика объявлений за период. Для A/B тестирования. Для конверсий укажи goal_ids."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID кампании"), mcp.Required()),
 		mcp.WithString("date_from", mcp.Description("Начало периода (YYYY-MM-DD)"), mcp.Required()),
 		mcp.WithString("date_to", mcp.Description("Конец периода (YYYY-MM-DD)"), mcp.Required()),
-		mcp.WithString("goal_ids", mcp.Description("ID целей через запятую. Обязательно для Conversions/CostPerConversion.")),
-		mcp.WithString("attribution", mcp.Description("Модель атрибуции (применяется только при наличии goal_ids)")),
-		mcp.WithString("field_names", mcp.Description("Поля через запятую (по умолчанию: Impressions,Clicks,Cost,Ctr,AvgCpc)")),
+		mcp.WithString("goal_ids", mcp.Description("ID целей через запятую (нужен для Conversions)")),
+		mcp.WithString("attribution", mcp.Description("Атрибуция (при наличии goal_ids)")),
+		mcp.WithString("field_names", mcp.Description("Поля (умолч: Impressions,Clicks,Cost,Ctr,AvgCpc)")),
 	)
 
 	s.AddTool(tool, statsHandler(client, resolver, "AdId"))
@@ -78,14 +78,14 @@ func registerGetAdStats(s *mcpserver.MCPServer, client *Client, resolver *auth.A
 func registerGetCriteriaStats(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_criteria_stats",
 		mcp.WithDescription("Статистика по ключевым фразам (критериям) за период. Для конверсий укажи goal_ids."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID кампании"), mcp.Required()),
 		mcp.WithString("date_from", mcp.Description("Начало периода (YYYY-MM-DD)"), mcp.Required()),
 		mcp.WithString("date_to", mcp.Description("Конец периода (YYYY-MM-DD)"), mcp.Required()),
-		mcp.WithString("goal_ids", mcp.Description("ID целей через запятую. Обязательно для Conversions/CostPerConversion.")),
-		mcp.WithString("attribution", mcp.Description("Модель атрибуции (применяется только при наличии goal_ids)")),
-		mcp.WithString("field_names", mcp.Description("Поля через запятую (по умолчанию: Impressions,Clicks,Cost,Ctr,AvgCpc)")),
+		mcp.WithString("goal_ids", mcp.Description("ID целей через запятую (нужен для Conversions)")),
+		mcp.WithString("attribution", mcp.Description("Атрибуция (при наличии goal_ids)")),
+		mcp.WithString("field_names", mcp.Description("Поля (умолч: Impressions,Clicks,Cost,Ctr,AvgCpc)")),
 	)
 
 	s.AddTool(tool, statsHandler(client, resolver, "CriteriaId"))
@@ -194,15 +194,15 @@ func statsHandler(client *Client, resolver *auth.AccountResolver, groupBy string
 func registerGetSearchQueries(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_search_queries",
 		mcp.WithDescription("Получить реальные поисковые запросы пользователей. По умолчанию топ-100 по кликам. Для конверсий укажи goal_ids."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую"), mcp.Required()),
 		mcp.WithString("date_from", mcp.Description("Начало периода (YYYY-MM-DD)"), mcp.Required()),
 		mcp.WithString("date_to", mcp.Description("Конец периода (YYYY-MM-DD)"), mcp.Required()),
-		mcp.WithString("goal_ids", mcp.Description("ID целей через запятую. Обязательно для Conversions/CostPerConversion.")),
-		mcp.WithString("attribution", mcp.Description("Модель атрибуции: LYDC (по умолчанию). Применяется только при наличии goal_ids.")),
-		mcp.WithString("field_names", mcp.Description("Поля через запятую. По умолчанию: Query,Impressions,Clicks,Cost")),
-		mcp.WithNumber("limit", mcp.Description("Макс. строк в ответе (по умолчанию 100)")),
+		mcp.WithString("goal_ids", mcp.Description("ID целей через запятую (нужен для Conversions)")),
+		mcp.WithString("attribution", mcp.Description("Атрибуция: LYDC (умолч, при наличии goal_ids)")),
+		mcp.WithString("field_names", mcp.Description("Поля (умолч: Query,Impressions,Clicks,Cost)")),
+		mcp.WithNumber("limit", mcp.Description("Макс. строк (умолч 100)")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -296,11 +296,11 @@ func intToStr(n int) string {
 func registerGetAccountStats(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_account_stats",
 		mcp.WithDescription("Статистика по всему аккаунту за период (без разбивки по кампаниям). Суммарные показы, клики, расход."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("date_from", mcp.Description("Начало периода YYYY-MM-DD"), mcp.Required()),
 		mcp.WithString("date_to", mcp.Description("Конец периода YYYY-MM-DD"), mcp.Required()),
-		mcp.WithString("field_names", mcp.Description("Поля через запятую (по умолчанию: Impressions,Clicks,Cost,Ctr,AvgCpc)")),
+		mcp.WithString("field_names", mcp.Description("Поля (умолч: Impressions,Clicks,Cost,Ctr,AvgCpc)")),
 		mcp.WithString("goal_ids", mcp.Description("ID целей через запятую (опционально)")),
 		mcp.WithString("attribution", mcp.Description("Модель атрибуции (по умолчанию LYDC)")),
 	)
@@ -353,8 +353,8 @@ func registerGetAccountStats(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerGetCustomReport(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_custom_report",
 		mcp.WithDescription("Произвольный отчёт Reports API. Позволяет запросить любой тип отчёта с любыми полями."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("report_type", mcp.Description("Тип: CAMPAIGN_PERFORMANCE_REPORT, ADGROUP_PERFORMANCE_REPORT, AD_PERFORMANCE_REPORT, CRITERIA_PERFORMANCE_REPORT, SEARCH_QUERY_PERFORMANCE_REPORT, REACH_AND_FREQUENCY_PERFORMANCE_REPORT и др."), mcp.Required()),
 		mcp.WithString("field_names", mcp.Description("Поля через запятую"), mcp.Required()),
 		mcp.WithString("date_from", mcp.Description("Начало периода YYYY-MM-DD"), mcp.Required()),
@@ -420,8 +420,8 @@ func registerGetCustomReport(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerGetReachFrequencyStats(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_reach_frequency_stats",
 		mcp.WithDescription("Отчёт по охвату и частоте показов (REACH_AND_FREQUENCY_PERFORMANCE_REPORT)."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую"), mcp.Required()),
 		mcp.WithString("date_from", mcp.Description("Начало периода YYYY-MM-DD"), mcp.Required()),
 		mcp.WithString("date_to", mcp.Description("Конец периода YYYY-MM-DD"), mcp.Required()),

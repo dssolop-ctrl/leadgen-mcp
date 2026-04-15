@@ -26,8 +26,8 @@ func RegisterHandlers(s *mcpserver.MCPServer, client *Client, resolver *auth.Acc
 
 func registerCheckSearchVolume(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("check_search_volume",
-		mcp.WithDescription("Проверить частотность фраз через Яндекс Вордстат. Показывает количество запросов в месяц + похожие фразы. До 128 фраз за раз."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithDescription("Частотность фраз через Вордстат: запросы/месяц + похожие фразы. До 128 фраз за раз."),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("phrases", mcp.Description("Фразы через запятую. Операторы: \"точная фраза\", [точный порядок]"), mcp.Required()),
 		mcp.WithString("region_ids", mcp.Description("ID регионов через запятую (опционально)")),
 	)
@@ -100,7 +100,7 @@ func registerCheckSearchVolume(s *mcpserver.MCPServer, client *Client, resolver 
 func registerWordstatDynamics(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("wordstat_dynamics",
 		mcp.WithDescription("Динамика запросов в Вордстате: тренды по дням/неделям/месяцам. Историческое с 2018 года."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("phrase", mcp.Description("Фраза для анализа"), mcp.Required()),
 		mcp.WithString("date_from", mcp.Description("Начало периода (YYYY-MM-DD)")),
 		mcp.WithString("date_to", mcp.Description("Конец периода (YYYY-MM-DD)")),
@@ -169,7 +169,7 @@ func registerWordstatDynamics(s *mcpserver.MCPServer, client *Client, resolver *
 func registerWordstatRegions(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("wordstat_regions",
 		mcp.WithDescription("Региональный спрос в Вордстате: индекс интереса по регионам."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("phrase", mcp.Description("Фраза для анализа"), mcp.Required()),
 	)
 
@@ -225,8 +225,8 @@ func registerWordstatRegions(s *mcpserver.MCPServer, client *Client, resolver *a
 
 func registerWordstatRegionsTree(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("wordstat_regions_tree",
-		mcp.WithDescription("Поиск регионов Вордстата по названию. ОБЯЗАТЕЛЬНО укажи query. Возвращает ID для фильтрации по регионам."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithDescription("Поиск регионов Вордстата. Возвращает ID для фильтрации."),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("query", mcp.Description("Название региона для поиска (например: Москва, Новосибирск)"), mcp.Required()),
 	)
 
@@ -288,7 +288,7 @@ type wordstatRegion struct {
 func registerWordstatUserInfo(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("wordstat_user_info",
 		mcp.WithDescription("Информация о квоте Вордстат API: дневные лимиты и оставшиеся запросы."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {

@@ -24,8 +24,8 @@ func RegisterTargetingTools(s *mcpserver.MCPServer, client *Client, resolver *au
 
 func registerVKGetTargetingsTree(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_get_targetings_tree",
-		mcp.WithDescription("Поиск интересов и хобби для таргетинга VK Ads по названию. ОБЯЗАТЕЛЬНО укажи query. Возвращает до 30 совпадений с ID для таргетинга."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithDescription("Поиск интересов VK Ads по названию. Возвращает ID для таргетинга."),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("query", mcp.Description("Название интереса для поиска (например: авто, недвижимость, спорт)"), mcp.Required()),
 	)
 
@@ -118,7 +118,7 @@ func searchJSON(raw json.RawMessage, query string, results *[]targetingNode, lim
 func registerVKGetRegions(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_get_regions",
 		mcp.WithDescription("Поиск регионов VK Ads по названию для гео-таргетинга. ОБЯЗАТЕЛЬНО укажи search."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("search", mcp.Description("Название региона/города (например: Москва, Краснодар)"), mcp.Required()),
 	)
 

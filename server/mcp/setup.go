@@ -5,6 +5,7 @@ import (
 
 	"github.com/leadgen-mcp/server/auth"
 	"github.com/leadgen-mcp/server/platform/direct"
+	"github.com/leadgen-mcp/server/platform/filters"
 	"github.com/leadgen-mcp/server/platform/metrika"
 	"github.com/leadgen-mcp/server/platform/vk"
 	"github.com/leadgen-mcp/server/platform/wordstat"
@@ -12,7 +13,7 @@ import (
 )
 
 // NewServer creates and configures the MCP server with all tools registered.
-func NewServer(resolver *auth.AccountResolver, logger *slog.Logger) *server.MCPServer {
+func NewServer(resolver *auth.AccountResolver, logger *slog.Logger, filterStore *filters.Store) *server.MCPServer {
 	s := server.NewMCPServer(
 		"leadgen-mcp",
 		"0.1.0",
@@ -35,6 +36,11 @@ func NewServer(resolver *auth.AccountResolver, logger *slog.Logger) *server.MCPS
 
 	// VK Ads (30 tools)
 	vk.RegisterTools(s, resolver, logger)
+
+	// Site filters — SQLite-backed landing URL builder (3 tools)
+	if filterStore != nil {
+		filters.RegisterTools(s, filterStore)
+	}
 
 	return s
 }

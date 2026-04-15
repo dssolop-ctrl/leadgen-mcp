@@ -24,8 +24,8 @@ func RegisterDynamicTools(s *mcpserver.MCPServer, client *Client, resolver *auth
 func registerGetDynamicAdTargets(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_dynamic_ad_targets",
 		mcp.WithDescription("Получить условия нацеливания для динамических объявлений."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("adgroup_ids", mcp.Description("ID групп через запятую"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -55,8 +55,8 @@ func registerGetDynamicAdTargets(s *mcpserver.MCPServer, client *Client, resolve
 func registerAddDynamicAdTargets(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_dynamic_ad_targets",
 		mcp.WithDescription("Добавить условие нацеливания для динамических объявлений."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("adgroup_id", mcp.Description("ID группы"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Название условия"), mcp.Required()),
 		mcp.WithString("conditions_json", mcp.Description("JSON условий: [{\"Operand\":\"PAGE_CONTENT\",\"Operator\":\"CONTAINS_ANY\",\"Arguments\":[\"купить\"]}]"), mcp.Required()),
@@ -97,8 +97,8 @@ func registerAddDynamicAdTargets(s *mcpserver.MCPServer, client *Client, resolve
 func registerManageDynamicAdTargets(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("manage_dynamic_ad_targets",
 		mcp.WithDescription("Управление условиями динамических объявлений: suspend, resume, delete."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("target_ids", mcp.Description("ID условий через запятую"), mcp.Required()),
 		mcp.WithString("action", mcp.Description("Действие: suspend, resume, delete"), mcp.Required()),
 	)
@@ -129,8 +129,8 @@ func registerManageDynamicAdTargets(s *mcpserver.MCPServer, client *Client, reso
 func registerSetDynamicAdTargetBids(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("set_dynamic_ad_target_bids",
 		mcp.WithDescription("Установить ставки для условий нацеливания динамических объявлений."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("bids_json", mcp.Description("JSON массив: [{\"WebpageId\":123,\"SearchBid\":5000000}]"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -161,8 +161,8 @@ func registerSetDynamicAdTargetBids(s *mcpserver.MCPServer, client *Client, reso
 func registerGetDynamicFeedAdTargets(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_dynamic_feed_ad_targets",
 		mcp.WithDescription("Получить фильтры для динамических объявлений по фиду (каталогу товаров)."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("adgroup_ids", mcp.Description("ID групп через запятую"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -192,8 +192,8 @@ func registerGetDynamicFeedAdTargets(s *mcpserver.MCPServer, client *Client, res
 func registerAddDynamicFeedAdTargets(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_dynamic_feed_ad_targets",
 		mcp.WithDescription("Добавить фильтр для динамических объявлений по фиду."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("adgroup_id", mcp.Description("ID группы"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Название фильтра"), mcp.Required()),
 		mcp.WithString("conditions_json", mcp.Description("JSON условий: [{\"Operand\":\"CATEGORY_ID\",\"Operator\":\"EQUALS_ANY\",\"Arguments\":[\"1\"]}]")),
@@ -233,8 +233,8 @@ func registerAddDynamicFeedAdTargets(s *mcpserver.MCPServer, client *Client, res
 func registerManageFeedAdTargets(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("manage_feed_ad_targets",
 		mcp.WithDescription("Управление фильтрами динамических объявлений по фиду: suspend, resume, delete."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("target_ids", mcp.Description("ID фильтров через запятую"), mcp.Required()),
 		mcp.WithString("action", mcp.Description("Действие: suspend, resume, delete"), mcp.Required()),
 	)
@@ -265,8 +265,8 @@ func registerManageFeedAdTargets(s *mcpserver.MCPServer, client *Client, resolve
 func registerSetDynamicFeedAdTargetBids(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("set_dynamic_feed_ad_target_bids",
 		mcp.WithDescription("Установить ставки для фильтров динамических объявлений по фиду."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("bids_json", mcp.Description("JSON массив: [{\"DynamicFeedAdTargetId\":123,\"SearchBid\":5000000}]"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {

@@ -27,7 +27,7 @@ func RegisterAudienceTools(s *mcpserver.MCPServer, client *Client, resolver *aut
 func registerVKCreateRemarketingCounter(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_create_remarketing_counter",
 		mcp.WithDescription("Создать пиксель/счётчик ретаргетинга VK."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("name", mcp.Description("Название счётчика"), mcp.Required()),
 	)
 
@@ -49,7 +49,7 @@ func registerVKCreateRemarketingCounter(s *mcpserver.MCPServer, client *Client, 
 func registerVKCreateCounterGoal(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_create_counter_goal",
 		mcp.WithDescription("Создать цель для счётчика VK: url_substring и т.д."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("counter_id", mcp.Description("ID счётчика"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Название цели"), mcp.Required()),
 		mcp.WithString("goal_type", mcp.Description("Тип: url_substring, url_match, и т.д."), mcp.Required()),
@@ -81,7 +81,7 @@ func registerVKCreateCounterGoal(s *mcpserver.MCPServer, client *Client, resolve
 func registerVKCreateRemarketingList(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_create_remarketing_list",
 		mcp.WithDescription("Создать список ретаргетинга из счётчика (напр. посетители за 30 дней)."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("counter_id", mcp.Description("ID счётчика"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Название списка"), mcp.Required()),
 		mcp.WithString("type", mcp.Description("Тип: positive (по умолчанию)")),
@@ -112,7 +112,7 @@ func registerVKCreateRemarketingList(s *mcpserver.MCPServer, client *Client, res
 func registerVKCreateSegment(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_create_segment",
 		mcp.WithDescription("Создать сегмент аудитории VK Ads."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("name", mcp.Description("Название сегмента"), mcp.Required()),
 		mcp.WithString("pass_condition", mcp.Description("Условие: or, and (по умолчанию or)")),
 		mcp.WithString("object_type", mcp.Description("Тип: remarketing_player, remarketing_vk_group, и т.д.")),
@@ -151,7 +151,7 @@ func registerVKCreateSegment(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerVKManageSegmentRelations(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_manage_segment_relations",
 		mcp.WithDescription("Обновить связи сегмента VK (добавить/удалить источники)."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("segment_id", mcp.Description("ID сегмента"), mcp.Required()),
 		mcp.WithString("object_type", mcp.Description("Тип: remarketing_player, remarketing_vk_group"), mcp.Required()),
 		mcp.WithNumber("source_id", mcp.Description("ID источника"), mcp.Required()),
@@ -185,7 +185,7 @@ func registerVKManageSegmentRelations(s *mcpserver.MCPServer, client *Client, re
 func registerVKCreateSearchPhrases(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_create_search_phrases",
 		mcp.WithDescription("Создать контекстные фразы VK. Автоматически создаётся сегмент — используй его segment_id в targetings.segments."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("name", mcp.Description("Название списка фраз"), mcp.Required()),
 		mcp.WithString("phrases", mcp.Description("Фразы через запятую"), mcp.Required()),
 		mcp.WithString("stop_phrases", mcp.Description("Минус-фразы через запятую")),
@@ -216,7 +216,7 @@ func registerVKCreateSearchPhrases(s *mcpserver.MCPServer, client *Client, resol
 func registerVKAddVKGroup(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_add_vk_group",
 		mcp.WithDescription("Зарегистрировать VK-сообщество для таргетинга. Используй object_id из vk_resolve_url."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("object_id", mcp.Description("ID VK-сообщества (из resolve_url)"), mcp.Required()),
 	)
 
@@ -241,7 +241,7 @@ func registerVKAddVKGroup(s *mcpserver.MCPServer, client *Client, resolver *auth
 func registerVKResolveURL(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_resolve_url",
 		mcp.WithDescription("Получить ID VK-сообщества по URL. Возвращает url_object_id = object_id."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("url", mcp.Description("URL VK-сообщества"), mcp.Required()),
 	)
 
@@ -267,7 +267,7 @@ func registerVKResolveURL(s *mcpserver.MCPServer, client *Client, resolver *auth
 func registerVKGetVKGroups(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_get_vk_groups",
 		mcp.WithDescription("Получить зарегистрированные VK-сообщества. Используй search для поиска."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("search", mcp.Description("Поиск по названию (обязательно)"), mcp.Required()),
 		mcp.WithNumber("limit", mcp.Description("Лимит (по умолчанию 50)")),
 		mcp.WithNumber("offset", mcp.Description("Смещение для пагинации")),

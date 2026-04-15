@@ -24,8 +24,8 @@ func RegisterGeoTools(s *mcpserver.MCPServer, client *Client, resolver *auth.Acc
 func registerGetDictionaries(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_dictionaries",
 		mcp.WithDescription("Получить справочники Яндекс Директа: GeoRegions, TimeZones, Currencies, AdCategories, OperationSystemVersions, ProductivityAssertions, SupplySidePlatforms, Interests, AudienceDemographicProfiles, AudienceCriteriaTypes."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("dictionary_names", mcp.Description("Названия справочников через запятую: GeoRegions, TimeZones, Currencies, AdCategories, Interests"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -53,9 +53,9 @@ func registerGetDictionaries(s *mcpserver.MCPServer, client *Client, resolver *a
 
 func registerGetGeoRegions(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_geo_regions",
-		mcp.WithDescription("Поиск регионов Яндекс Директа по названию. ОБЯЗАТЕЛЬНО укажи query для поиска. Возвращает до 20 результатов с GeoRegionId для таргетинга."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithDescription("Поиск регионов по названию. Возвращает GeoRegionId для таргетинга."),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("query", mcp.Description("Название региона/города для поиска (например: Новосибирск, Москва, Краснодарский край)"), mcp.Required()),
 	)
 

@@ -18,8 +18,8 @@ func RegisterClientTools(s *mcpserver.MCPServer, client *Client, resolver *auth.
 func registerGetClient(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_client",
 		mcp.WithDescription("Получить информацию о клиенте: логин, ФИО, email, баланс, настройки уведомлений."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		token, err := resolver.ResolveYandex(common.GetString(req, "account"))
@@ -40,8 +40,8 @@ func registerGetClient(s *mcpserver.MCPServer, client *Client, resolver *auth.Ac
 func registerUpdateClient(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("update_client",
 		mcp.WithDescription("Обновить настройки клиента: email для уведомлений, имя, язык."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("client_info", mcp.Description("Новое имя/фамилия клиента")),
 		mcp.WithString("email", mcp.Description("Новый email для уведомлений")),
 		mcp.WithString("phone", mcp.Description("Новый телефон")),
@@ -73,9 +73,9 @@ func registerUpdateClient(s *mcpserver.MCPServer, client *Client, resolver *auth
 
 func registerGetAccountBalance(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_account_balance",
-		mcp.WithDescription("Получить финансовую информацию аккаунта Яндекс Директа: овердрафт, бонусы, гранты, настройки общего счёта, лимиты. Примечание: для аккаунтов с общим счётом (SHARED_ACCOUNT_ENABLED=YES) точный денежный остаток через API v5 недоступен — используй get_campaign_stats за период для оценки расхода."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithDescription("Финансы аккаунта: овердрафт, бонусы, гранты, общий счёт. Точный остаток через API v5 недоступен — используй get_campaign_stats."),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		token, err := resolver.ResolveYandex(common.GetString(req, "account"))

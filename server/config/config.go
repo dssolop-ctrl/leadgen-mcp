@@ -15,6 +15,7 @@ type Config struct {
 type ServerConfig struct {
 	Port        int    `yaml:"port"`
 	BearerToken string `yaml:"bearer_token"`
+	DataDir     string `yaml:"data_dir"` // directory for SQLite databases (default: /app/data)
 }
 
 type AccountEntry struct {

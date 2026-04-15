@@ -64,7 +64,7 @@ func registerGetConversionValues(s *mcpserver.MCPServer, client *Client, metrCli
 				"Анализирует CPA по действующим кампаниям города. "+
 				"Если кампаний нет (новый город) — возвращает средние по сети. "+
 				"Результат: готовый JSON для priority_goals в add_campaign/update_campaign."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("client_login", mcp.Description("Логин клиента (город). Получи через get_agency_clients."), mcp.Required()),
 		mcp.WithString("counter_id", mcp.Description("ID счётчика Метрики города. Получи из config/counters.md."), mcp.Required()),
 		mcp.WithNumber("days", mcp.Description("Период для анализа в днях (по умолчанию 30)")),

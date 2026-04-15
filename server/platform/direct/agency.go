@@ -18,8 +18,8 @@ func RegisterAgencyTools(s *mcpserver.MCPServer, client *Client, resolver *auth.
 
 func registerGetAgencyClients(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_agency_clients",
-		mcp.WithDescription("Получить список клиентских аккаунтов агентства Яндекс Директ. Возвращает логины клиентов — используй их в параметре client_login других инструментов. ОБЯЗАТЕЛЬНО вызови первым при работе с агентским аккаунтом."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально, по умолчанию — default)")),
+		mcp.WithDescription("Список клиентов агентства. Возвращает логины для client_login. Вызови первым при работе с агентским аккаунтом."),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("logins", mcp.Description("Фильтр по логинам клиентов через запятую (опционально)")),
 		mcp.WithBoolean("archived", mcp.Description("Включить архивных клиентов (по умолчанию false)")),
 	)
@@ -72,7 +72,7 @@ func registerGetAgencyClients(s *mcpserver.MCPServer, client *Client, resolver *
 func registerAddAgencyClient(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_agency_client",
 		mcp.WithDescription("Создать нового клиента агентства."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("login", mcp.Description("Логин нового клиента"), mcp.Required()),
 		mcp.WithString("first_name", mcp.Description("Имя"), mcp.Required()),
 		mcp.WithString("last_name", mcp.Description("Фамилия"), mcp.Required()),
@@ -110,7 +110,7 @@ func registerAddAgencyClient(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerUpdateAgencyClient(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("update_agency_client",
 		mcp.WithDescription("Обновить настройки клиента агентства."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("login", mcp.Description("Логин клиента для обновления"), mcp.Required()),
 		mcp.WithString("client_info", mcp.Description("Новое имя/описание клиента")),
 		mcp.WithString("grants_json", mcp.Description("JSON прав: {\"Privilege\":\"EDIT_CAMPAIGNS\",\"Value\":\"YES\"}")),

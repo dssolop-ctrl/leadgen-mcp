@@ -19,8 +19,8 @@ func RegisterBidTools(s *mcpserver.MCPServer, client *Client, resolver *auth.Acc
 func registerGetBids(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_bids",
 		mcp.WithDescription("Получить ставки для ключевых фраз (устаревший сервис Bids). Для новых кампаний используй get_keyword_bids."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую")),
 		mcp.WithString("adgroup_ids", mcp.Description("ID групп через запятую")),
 		mcp.WithString("keyword_ids", mcp.Description("ID ключевых фраз через запятую")),
@@ -62,8 +62,8 @@ func registerGetBids(s *mcpserver.MCPServer, client *Client, resolver *auth.Acco
 func registerSetBids(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("set_bids",
 		mcp.WithDescription("Установить ставки для ключевых фраз (сервис Bids). Ставки в рублях."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("keyword_ids", mcp.Description("ID ключевых фраз через запятую"), mcp.Required()),
 		mcp.WithNumber("bid", mcp.Description("Ставка для поиска в рублях"), mcp.Required()),
 		mcp.WithNumber("context_bid", mcp.Description("Ставка для сетей в рублях (опционально)")),
@@ -107,8 +107,8 @@ func registerSetBids(s *mcpserver.MCPServer, client *Client, resolver *auth.Acco
 func registerSetBidsAuto(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("set_bids_auto",
 		mcp.WithDescription("Установить автоматические ставки для ключевых фраз (сервис Bids). Задаёт целевую позицию и ограничения."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("keyword_ids", mcp.Description("ID ключевых фраз через запятую"), mcp.Required()),
 		mcp.WithNumber("max_bid", mcp.Description("Максимальная ставка в рублях"), mcp.Required()),
 		mcp.WithString("position", mcp.Description("Целевая позиция: PREMIUMBLOCK (спецразмещение) или FOOTERBLOCK (гарантия)")),

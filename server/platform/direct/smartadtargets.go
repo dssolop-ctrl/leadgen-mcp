@@ -22,8 +22,8 @@ func RegisterSmartAdTargetTools(s *mcpserver.MCPServer, client *Client, resolver
 func registerGetSmartAdTargets(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_smart_ad_targets",
 		mcp.WithDescription("Получить фильтры смарт-баннеров."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("adgroup_ids", mcp.Description("ID групп через запятую"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -53,8 +53,8 @@ func registerGetSmartAdTargets(s *mcpserver.MCPServer, client *Client, resolver 
 func registerAddSmartAdTarget(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_smart_ad_target",
 		mcp.WithDescription("Добавить фильтр смарт-баннеров."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("adgroup_id", mcp.Description("ID группы"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Название фильтра"), mcp.Required()),
 		mcp.WithString("conditions_json", mcp.Description("JSON условий фильтра: [{\"Operand\":\"CATEGORY_ID\",\"Operator\":\"EQUALS_ANY\",\"Arguments\":[\"1\",\"2\"]}]")),
@@ -98,8 +98,8 @@ func registerAddSmartAdTarget(s *mcpserver.MCPServer, client *Client, resolver *
 func registerUpdateSmartAdTarget(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("update_smart_ad_target",
 		mcp.WithDescription("Обновить фильтр смарт-баннеров."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("target_id", mcp.Description("ID фильтра"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Новое название фильтра")),
 		mcp.WithString("conditions_json", mcp.Description("JSON новых условий фильтра")),
@@ -145,8 +145,8 @@ func registerUpdateSmartAdTarget(s *mcpserver.MCPServer, client *Client, resolve
 func registerManageSmartAdTargets(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("manage_smart_ad_targets",
 		mcp.WithDescription("Управление фильтрами смарт-баннеров: suspend, resume, delete."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("target_ids", mcp.Description("ID фильтров через запятую"), mcp.Required()),
 		mcp.WithString("action", mcp.Description("Действие: suspend, resume, delete"), mcp.Required()),
 	)
@@ -177,8 +177,8 @@ func registerManageSmartAdTargets(s *mcpserver.MCPServer, client *Client, resolv
 func registerSetSmartAdTargetBids(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("set_smart_ad_target_bids",
 		mcp.WithDescription("Установить ставки для фильтров смарт-баннеров."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("bids_json", mcp.Description("JSON массив: [{\"SmartAdTargetId\":123,\"ContextBid\":5000000}]"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {

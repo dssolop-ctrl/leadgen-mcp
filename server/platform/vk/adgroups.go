@@ -22,7 +22,7 @@ func RegisterAdGroupTools(s *mcpserver.MCPServer, client *Client, resolver *auth
 func registerVKGetAdGroups(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_get_ad_groups",
 		mcp.WithDescription("Получить группы объявлений VK Ads."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID кампании"), mcp.Required()),
 		mcp.WithNumber("limit", mcp.Description("Лимит")),
 		mcp.WithNumber("offset", mcp.Description("Смещение")),
@@ -55,7 +55,7 @@ func registerVKGetAdGroups(s *mcpserver.MCPServer, client *Client, resolver *aut
 func registerVKCreateAdGroup(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_create_ad_group",
 		mcp.WithDescription("Создать группу объявлений VK Ads. Минимум бюджет 300₽/день. package_id 3858 = мультиформат."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID кампании"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Название группы"), mcp.Required()),
 		mcp.WithNumber("package_id", mcp.Description("ID пакета размещения (3858 = мультиформат)"), mcp.Required()),
@@ -122,7 +122,7 @@ func registerVKCreateAdGroup(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerVKUpdateAdGroup(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_update_ad_group",
 		mcp.WithDescription("Обновить группу объявлений VK Ads: таргетинг, бюджет, название."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("ad_group_id", mcp.Description("ID группы"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Новое название")),
 		mcp.WithString("budget_limit_day", mcp.Description("Новый дневной бюджет")),
@@ -185,7 +185,7 @@ func registerVKUpdateAdGroup(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerVKManageAdGroups(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_manage_ad_groups",
 		mcp.WithDescription("Массовое управление группами VK Ads. До 200 ID."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("ad_group_ids", mcp.Description("ID групп через запятую"), mcp.Required()),
 		mcp.WithString("status", mcp.Description("Статус: active, blocked"), mcp.Required()),
 	)

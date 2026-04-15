@@ -35,8 +35,8 @@ type goalCondition struct {
 // RegisterGoalTools registers goal-related tools.
 func RegisterGoalTools(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("metrika_get_goals",
-		mcp.WithDescription("Получить цели счётчика Метрики. Без фильтра — все цели (может быть 100+). Используй conditions для поиска конкретных целей по условию."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithDescription("Цели счётчика Метрики. Без фильтра — все. Используй conditions для поиска."),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("counter_id", mcp.Description("ID счётчика"), mcp.Required()),
 		mcp.WithString("conditions", mcp.Description("Фильтр по conditions.url через запятую. Пример: form_sum_leads,received_real_calls,all_calls")),
 		mcp.WithString("goal_type", mcp.Description("Фильтр по типу цели: action, url, step, call, conditional_call")),

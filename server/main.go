@@ -10,6 +10,7 @@ import (
 	"github.com/leadgen-mcp/server/auth"
 	"github.com/leadgen-mcp/server/config"
 	mcpsetup "github.com/leadgen-mcp/server/mcp"
+	"github.com/leadgen-mcp/server/platform/filters"
 	"github.com/mark3labs/mcp-go/server"
 )
 
@@ -31,8 +32,21 @@ func main() {
 	// Create account resolver
 	resolver := auth.NewAccountResolver(cfg.Accounts)
 
+	// Open SQLite for site filters
+	dbPath := cfg.Server.DataDir + "/filters.db"
+	if cfg.Server.DataDir == "" {
+		dbPath = "/app/data/filters.db"
+	}
+	filterStore, err := filters.Open(dbPath)
+	if err != nil {
+		logger.Error("failed to open filters DB", "path", dbPath, "error", err)
+		os.Exit(1)
+	}
+	defer filterStore.Close()
+	logger.Info("filters DB opened", "path", dbPath)
+
 	// Create MCP server
-	mcpServer := mcpsetup.NewServer(resolver, logger)
+	mcpServer := mcpsetup.NewServer(resolver, logger, filterStore)
 
 	// Create SSE handler
 	sseHandler := server.NewSSEServer(mcpServer)

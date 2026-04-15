@@ -22,7 +22,7 @@ func RegisterCampaignTools(s *mcpserver.MCPServer, client *Client, resolver *aut
 func registerVKGetCampaigns(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_get_campaigns",
 		mcp.WithDescription("Получить список кампаний VK Ads."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("status", mcp.Description("Фильтр по статусу: active, blocked, deleted")),
 		mcp.WithNumber("limit", mcp.Description("Лимит (по умолчанию 50)")),
 		mcp.WithNumber("offset", mcp.Description("Смещение для пагинации")),
@@ -56,13 +56,13 @@ func registerVKGetCampaigns(s *mcpserver.MCPServer, client *Client, resolver *au
 func registerVKCreateCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_create_campaign",
 		mcp.WithDescription("Создать кампанию VK Ads. Бюджет в рублях (строка). Минимум 300₽/день. Нужна хотя бы 1 группа."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("name", mcp.Description("Название кампании"), mcp.Required()),
 		mcp.WithString("objective", mcp.Description("Цель: site_conversions, traffic, reach, и т.д."), mcp.Required()),
 		mcp.WithString("budget_limit_day", mcp.Description("Дневной бюджет в рублях (строка, мин. 300)")),
 		mcp.WithString("budget_limit", mcp.Description("Общий бюджет в рублях (строка)")),
-		mcp.WithString("start_date", mcp.Description("Дата начала (YYYY-MM-DD)")),
-		mcp.WithString("end_date", mcp.Description("Дата окончания (YYYY-MM-DD)")),
+		mcp.WithString("start_date", mcp.Description("Начало (YYYY-MM-DD)")),
+		mcp.WithString("end_date", mcp.Description("Конец (YYYY-MM-DD)")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -99,7 +99,7 @@ func registerVKCreateCampaign(s *mcpserver.MCPServer, client *Client, resolver *
 func registerVKUpdateCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_update_campaign",
 		mcp.WithDescription("Обновить кампанию VK Ads."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID кампании"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Новое название")),
 		mcp.WithString("budget_limit_day", mcp.Description("Новый дневной бюджет")),
@@ -136,7 +136,7 @@ func registerVKUpdateCampaign(s *mcpserver.MCPServer, client *Client, resolver *
 func registerVKManageCampaigns(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_manage_campaigns",
 		mcp.WithDescription("Массовое управление кампаниями VK: остановка, запуск, удаление. До 200 ID."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую"), mcp.Required()),
 		mcp.WithString("status", mcp.Description("Статус: active, blocked, deleted"), mcp.Required()),
 	)

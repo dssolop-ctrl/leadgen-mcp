@@ -2,6 +2,9 @@ package direct
 
 import (
 	"context"
+	"encoding/json"
+	"net/url"
+	"strings"
 
 	"github.com/leadgen-mcp/server/auth"
 	"github.com/leadgen-mcp/server/platform/common"
@@ -21,14 +24,14 @@ func RegisterAdTools(s *mcpserver.MCPServer, client *Client, resolver *auth.Acco
 func registerGetAds(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_ads",
 		mcp.WithDescription("Получить объявления. Фильтр по campaign_ids или adgroup_ids. Добавь states для фильтрации по статусу."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую")),
 		mcp.WithString("adgroup_ids", mcp.Description("ID групп через запятую")),
 		mcp.WithString("ad_ids", mcp.Description("ID объявлений через запятую")),
-		mcp.WithString("states", mcp.Description("Статусы через запятую: ON, OFF, SUSPENDED, OFF_BY_MONITORING, ARCHIVED")),
-		mcp.WithString("field_names", mcp.Description("Поля: Id, AdGroupId, CampaignId, State, Status, Type и т.д.")),
-		mcp.WithString("text_ad_field_names", mcp.Description("Поля TEXT_AD: Title, Title2, Text, Href, DisplayDomain, DisplayUrlPath, SitelinkSetId, AdImageHash, VCardId, AdExtensionIds, Mobile")),
+		mcp.WithString("states", mcp.Description("Статусы: ON, OFF, SUSPENDED, ARCHIVED")),
+		mcp.WithString("field_names", mcp.Description("Поля: Id, AdGroupId, CampaignId, State, Status, Type")),
+		mcp.WithString("text_ad_field_names", mcp.Description("Поля TEXT_AD: Title, Title2, Text, Href, SitelinkSetId, AdExtensionIds")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -72,15 +75,17 @@ func registerGetAds(s *mcpserver.MCPServer, client *Client, resolver *auth.Accou
 		if err != nil {
 			return common.ErrorResult(err.Error()), nil
 		}
-		return common.TextResult(string(result)), nil
+		// Compress: strip UTM params from Href to reduce response size (~50%).
+		compressed := stripUTMFromAdsResponse(result)
+		return common.TextResult(string(compressed)), nil
 	})
 }
 
 func registerAddAd(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_ad",
 		mcp.WithDescription("Создать текстовое объявление. Лимиты: Title 56, Title2 30, Text 81 символов."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("adgroup_id", mcp.Description("ID группы объявлений"), mcp.Required()),
 		mcp.WithString("title", mcp.Description("Заголовок 1 (до 56 символов)"), mcp.Required()),
 		mcp.WithString("title2", mcp.Description("Заголовок 2 (до 30 символов)")),
@@ -139,9 +144,9 @@ func registerAddAd(s *mcpserver.MCPServer, client *Client, resolver *auth.Accoun
 
 func registerUpdateAd(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("update_ad",
-		mcp.WithDescription("Обновить объявление. Частичное обновление — только указанные поля. Никогда не удаляй+пересоздавай — используй update."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithDescription("Обновить объявление. Частичное обновление — только указанные поля."),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("ad_id", mcp.Description("ID объявления"), mcp.Required()),
 		mcp.WithString("title", mcp.Description("Новый заголовок 1")),
 		mcp.WithString("title2", mcp.Description("Новый заголовок 2")),
@@ -202,8 +207,8 @@ func registerUpdateAd(s *mcpserver.MCPServer, client *Client, resolver *auth.Acc
 func registerManageAds(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("manage_ads",
 		mcp.WithDescription("Массовое управление объявлениями: остановка, возобновление, архивация."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("ad_ids", mcp.Description("ID объявлений через запятую"), mcp.Required()),
 		mcp.WithString("action", mcp.Description("Действие: suspend, resume, archive, unarchive"), mcp.Required()),
 	)
@@ -237,8 +242,8 @@ func registerManageAds(s *mcpserver.MCPServer, client *Client, resolver *auth.Ac
 func registerModerateAds(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("moderate_ads",
 		mcp.WithDescription("Отправить объявления на модерацию."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("ad_ids", mcp.Description("ID объявлений через запятую"), mcp.Required()),
 	)
 
@@ -264,4 +269,76 @@ func registerModerateAds(s *mcpserver.MCPServer, client *Client, resolver *auth.
 		}
 		return common.TextResult(string(result)), nil
 	})
+}
+
+// stripUTMFromAdsResponse removes utm_* query parameters from all Href fields
+// in the ads API response. UTM tracking is set via tracking_params at group level,
+// so the full Href URLs contain redundant UTM data (~300 chars each) that bloats
+// the response significantly (150-258 KB for large campaigns).
+func stripUTMFromAdsResponse(data json.RawMessage) json.RawMessage {
+	var resp map[string]json.RawMessage
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return data
+	}
+
+	adsRaw, ok := resp["Ads"]
+	if !ok {
+		return data
+	}
+
+	var ads []map[string]json.RawMessage
+	if err := json.Unmarshal(adsRaw, &ads); err != nil {
+		return data
+	}
+
+	for i, ad := range ads {
+		if textAdRaw, ok := ad["TextAd"]; ok {
+			var textAd map[string]json.RawMessage
+			if err := json.Unmarshal(textAdRaw, &textAd); err == nil {
+				if hrefRaw, ok := textAd["Href"]; ok {
+					var href string
+					if err := json.Unmarshal(hrefRaw, &href); err == nil {
+						cleaned := stripUTMParams(href)
+						if b, err := json.Marshal(cleaned); err == nil {
+							textAd["Href"] = b
+						}
+					}
+				}
+				if b, err := json.Marshal(textAd); err == nil {
+					ads[i]["TextAd"] = b
+				}
+			}
+		}
+	}
+
+	if b, err := json.Marshal(ads); err == nil {
+		resp["Ads"] = b
+	}
+	result, err := json.Marshal(resp)
+	if err != nil {
+		return data
+	}
+	return result
+}
+
+// stripUTMParams removes utm_source, utm_medium, utm_campaign, utm_content,
+// utm_term and yclid parameters from a URL string.
+func stripUTMParams(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	q := u.Query()
+	changed := false
+	for key := range q {
+		if strings.HasPrefix(key, "utm_") || key == "yclid" {
+			q.Del(key)
+			changed = true
+		}
+	}
+	if !changed {
+		return rawURL
+	}
+	u.RawQuery = q.Encode()
+	return u.String()
 }

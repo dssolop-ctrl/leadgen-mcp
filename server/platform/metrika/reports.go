@@ -26,15 +26,15 @@ func RegisterReportTools(s *mcpserver.MCPServer, client *Client, resolver *auth.
 func registerGetReport(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("metrika_get_report",
 		mcp.WithDescription("Универсальный отчёт Метрики. Любые метрики + группировки + фильтры."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("counter_id", mcp.Description("ID счётчика"), mcp.Required()),
 		mcp.WithString("date1", mcp.Description("Начало периода (YYYY-MM-DD)"), mcp.Required()),
 		mcp.WithString("date2", mcp.Description("Конец периода (YYYY-MM-DD)"), mcp.Required()),
-		mcp.WithString("metrics", mcp.Description("Метрики через запятую: ym:s:visits, ym:s:bounceRate, ym:s:pageDepth, ym:s:avgVisitDurationSeconds"), mcp.Required()),
-		mcp.WithString("dimensions", mcp.Description("Измерения через запятую: ym:s:date, ym:s:UTMSource, ym:s:UTMCampaign")),
-		mcp.WithString("filters", mcp.Description("Фильтры в формате API Метрики")),
-		mcp.WithString("sort", mcp.Description("Сортировка: -ym:s:visits, ym:s:date")),
-		mcp.WithNumber("limit", mcp.Description("Лимит строк (по умолчанию 100)")),
+		mcp.WithString("metrics", mcp.Description("Метрики: ym:s:visits, ym:s:bounceRate и др."), mcp.Required()),
+		mcp.WithString("dimensions", mcp.Description("Измерения: ym:s:date, ym:s:UTMSource и др.")),
+		mcp.WithString("filters", mcp.Description("Фильтры API Метрики")),
+		mcp.WithString("sort", mcp.Description("Сортировка")),
+		mcp.WithNumber("limit", mcp.Description("Лимит строк (умолч 100)")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -55,7 +55,7 @@ func registerGetReport(s *mcpserver.MCPServer, client *Client, resolver *auth.Ac
 func registerGetReportByTime(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("metrika_get_report_bytime",
 		mcp.WithDescription("Отчёт по временному ряду. Для графиков день/неделя/месяц."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("counter_id", mcp.Description("ID счётчика"), mcp.Required()),
 		mcp.WithString("date1", mcp.Description("Начало (YYYY-MM-DD)"), mcp.Required()),
 		mcp.WithString("date2", mcp.Description("Конец (YYYY-MM-DD)"), mcp.Required()),
@@ -85,7 +85,7 @@ func registerGetReportByTime(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerGetReportComparison(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("metrika_get_report_comparison",
 		mcp.WithDescription("Сравнение двух периодов в Метрике."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("counter_id", mcp.Description("ID счётчика"), mcp.Required()),
 		mcp.WithString("date1a", mcp.Description("Начало первого периода"), mcp.Required()),
 		mcp.WithString("date2a", mcp.Description("Конец первого периода"), mcp.Required()),
@@ -125,7 +125,7 @@ func registerGetReportComparison(s *mcpserver.MCPServer, client *Client, resolve
 func registerGetDirectReport(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("metrika_get_direct_report",
 		mcp.WithDescription("Отчёт по Яндекс Директу: визиты, отказы, глубина, конверсии после клика."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("counter_id", mcp.Description("ID счётчика"), mcp.Required()),
 		mcp.WithString("date1", mcp.Description("Начало (YYYY-MM-DD)"), mcp.Required()),
 		mcp.WithString("date2", mcp.Description("Конец (YYYY-MM-DD)"), mcp.Required()),
@@ -171,7 +171,7 @@ func registerGetDirectReport(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerGetTrafficSources(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("metrika_get_traffic_sources",
 		mcp.WithDescription("Источники трафика: Direct, organic, social, referral."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("counter_id", mcp.Description("ID счётчика"), mcp.Required()),
 		mcp.WithString("date1", mcp.Description("Начало (YYYY-MM-DD)"), mcp.Required()),
 		mcp.WithString("date2", mcp.Description("Конец (YYYY-MM-DD)"), mcp.Required()),
@@ -202,7 +202,7 @@ func registerGetTrafficSources(s *mcpserver.MCPServer, client *Client, resolver 
 func registerGetAudience(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("metrika_get_audience",
 		mcp.WithDescription("Аудитория: пол, возраст, устройства, гео."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("counter_id", mcp.Description("ID счётчика"), mcp.Required()),
 		mcp.WithString("date1", mcp.Description("Начало (YYYY-MM-DD)"), mcp.Required()),
 		mcp.WithString("date2", mcp.Description("Конец (YYYY-MM-DD)"), mcp.Required()),
@@ -234,7 +234,7 @@ func registerGetAudience(s *mcpserver.MCPServer, client *Client, resolver *auth.
 func registerGetPopularPages(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("metrika_get_popular_pages",
 		mcp.WithDescription("Популярные страницы сайта."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("counter_id", mcp.Description("ID счётчика"), mcp.Required()),
 		mcp.WithString("date1", mcp.Description("Начало (YYYY-MM-DD)"), mcp.Required()),
 		mcp.WithString("date2", mcp.Description("Конец (YYYY-MM-DD)"), mcp.Required()),
@@ -272,7 +272,7 @@ func registerGetPopularPages(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerGetGoalsReport(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("metrika_get_goals_report",
 		mcp.WithDescription("Отчёт по конверсиям (воронка)."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("counter_id", mcp.Description("ID счётчика"), mcp.Required()),
 		mcp.WithString("date1", mcp.Description("Начало (YYYY-MM-DD)"), mcp.Required()),
 		mcp.WithString("date2", mcp.Description("Конец (YYYY-MM-DD)"), mcp.Required()),

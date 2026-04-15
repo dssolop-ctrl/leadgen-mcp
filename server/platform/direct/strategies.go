@@ -21,8 +21,8 @@ func RegisterStrategyTools(s *mcpserver.MCPServer, client *Client, resolver *aut
 func registerGetStrategies(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_strategies",
 		mcp.WithDescription("Получить портфельные стратегии (пакетные стратегии для группы кампаний)."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("strategy_ids", mcp.Description("ID стратегий через запятую (опционально)")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -56,8 +56,8 @@ func registerGetStrategies(s *mcpserver.MCPServer, client *Client, resolver *aut
 func registerAddStrategy(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_strategy",
 		mcp.WithDescription("Создать портфельную стратегию."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("strategy_json", mcp.Description("JSON стратегии: {\"Name\":\"...\",\"Type\":\"...\",\"CounterId\":123,...}"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -88,8 +88,8 @@ func registerAddStrategy(s *mcpserver.MCPServer, client *Client, resolver *auth.
 func registerUpdateStrategy(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("update_strategy",
 		mcp.WithDescription("Обновить портфельную стратегию."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("strategy_json", mcp.Description("JSON стратегии с Id: {\"Id\":123,\"Name\":\"...\"}"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -120,8 +120,8 @@ func registerUpdateStrategy(s *mcpserver.MCPServer, client *Client, resolver *au
 func registerManageStrategies(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("manage_strategies",
 		mcp.WithDescription("Управление портфельными стратегиями: delete."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("strategy_ids", mcp.Description("ID стратегий через запятую"), mcp.Required()),
 		mcp.WithString("action", mcp.Description("Действие: delete"), mcp.Required()),
 	)

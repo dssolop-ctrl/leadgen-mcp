@@ -21,7 +21,7 @@ func RegisterStatsTools(s *mcpserver.MCPServer, client *Client, resolver *auth.A
 func registerVKGetStatistics(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_get_statistics",
 		mcp.WithDescription("Статистика VK Ads: показы, клики, расход, конверсии."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("object_type", mcp.Description("Тип: ad_plan, ad_group, banner"), mcp.Required()),
 		mcp.WithString("object_ids", mcp.Description("ID объектов через запятую"), mcp.Required()),
 		mcp.WithString("date_from", mcp.Description("Начало (YYYY-MM-DD)"), mcp.Required()),
@@ -60,7 +60,7 @@ func registerVKGetStatistics(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerVKGetGoalStatistics(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_get_goal_statistics",
 		mcp.WithDescription("Статистика по конверсиям VK Ads."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("object_type", mcp.Description("Тип: ad_plan, ad_group, banner"), mcp.Required()),
 		mcp.WithString("object_ids", mcp.Description("ID объектов через запятую"), mcp.Required()),
 		mcp.WithString("date_from", mcp.Description("Начало (YYYY-MM-DD)"), mcp.Required()),
@@ -95,7 +95,7 @@ func registerVKGetGoalStatistics(s *mcpserver.MCPServer, client *Client, resolve
 func registerVKGetProjection(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_get_projection",
 		mcp.WithDescription("Прогноз охвата VK Ads при разных ставках."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("ad_group_id", mcp.Description("ID группы для прогноза")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID кампании")),
 		mcp.WithString("budget", mcp.Description("Бюджет для прогноза")),

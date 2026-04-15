@@ -23,7 +23,7 @@ func RegisterBannerTools(s *mcpserver.MCPServer, client *Client, resolver *auth.
 func registerVKGetBanners(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_get_banners",
 		mcp.WithDescription("Получить объявления (баннеры) VK Ads."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("ad_group_id", mcp.Description("ID группы объявлений")),
 		mcp.WithNumber("campaign_id", mcp.Description("ID кампании")),
 		mcp.WithNumber("limit", mcp.Description("Лимит")),
@@ -61,17 +61,17 @@ func registerVKGetBanners(s *mcpserver.MCPServer, client *Client, resolver *auth
 func registerVKCreateBanner(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_create_banner",
 		mcp.WithDescription("Создать объявление VK Ads. ЗАПРЕЩЁН символ → — используй —, запятую, точку. Лимиты: title_40=40, text_90=90, text_long=220, title_30=30, about_company=115."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("ad_group_id", mcp.Description("ID группы"), mcp.Required()),
-		mcp.WithNumber("url_id", mcp.Description("ID URL (из vk_create_url)"), mcp.Required()),
+		mcp.WithNumber("url_id", mcp.Description("ID URL"), mcp.Required()),
 		mcp.WithString("title", mcp.Description("Заголовок (до 40 символов)"), mcp.Required()),
 		mcp.WithString("text", mcp.Description("Короткий текст (до 90 символов)"), mcp.Required()),
 		mcp.WithString("text_long", mcp.Description("Длинный текст (до 220 символов)")),
 		mcp.WithString("title_additional", mcp.Description("Дополнительный заголовок (до 30 символов)")),
 		mcp.WithString("about_company", mcp.Description("О компании (до 115 символов)")),
-		mcp.WithString("icon_id", mcp.Description("content_id иконки 256x256")),
-		mcp.WithString("image_id", mcp.Description("content_id изображения 600x600")),
-		mcp.WithString("image_vertical_id", mcp.Description("content_id вертикального 1080x1350 (рекомендуется)")),
+		mcp.WithString("icon_id", mcp.Description("content_id иконки")),
+		mcp.WithString("image_id", mcp.Description("content_id изображения")),
+		mcp.WithString("image_vertical_id", mcp.Description("content_id вертикального")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -120,7 +120,7 @@ func registerVKCreateBanner(s *mcpserver.MCPServer, client *Client, resolver *au
 func registerVKUpdateBanner(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_update_banner",
 		mcp.WithDescription("Обновить объявление VK Ads."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithNumber("banner_id", mcp.Description("ID объявления"), mcp.Required()),
 		mcp.WithString("title", mcp.Description("Новый заголовок")),
 		mcp.WithString("text", mcp.Description("Новый текст")),
@@ -166,7 +166,7 @@ func registerVKUpdateBanner(s *mcpserver.MCPServer, client *Client, resolver *au
 func registerVKManageBanners(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_manage_banners",
 		mcp.WithDescription("Массовое управление объявлениями VK: активация, остановка. До 200 ID."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("banner_ids", mcp.Description("ID объявлений через запятую"), mcp.Required()),
 		mcp.WithString("status", mcp.Description("Статус: active, blocked"), mcp.Required()),
 	)
@@ -193,7 +193,7 @@ func registerVKManageBanners(s *mcpserver.MCPServer, client *Client, resolver *a
 func registerVKRemoderateBanners(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("vk_remoderate_banners",
 		mcp.WithDescription("Повторно отправить объявления на модерацию."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("banner_ids", mcp.Description("ID объявлений через запятую"), mcp.Required()),
 	)
 

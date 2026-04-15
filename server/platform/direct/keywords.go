@@ -3,6 +3,7 @@ package direct
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/leadgen-mcp/server/auth"
 	"github.com/leadgen-mcp/server/platform/common"
@@ -25,8 +26,8 @@ func RegisterKeywordTools(s *mcpserver.MCPServer, client *Client, resolver *auth
 func registerGetKeywords(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_keywords",
 		mcp.WithDescription("Получить ключевые фразы. Фильтр по campaign_ids или adgroup_ids. По умолчанию первые 200."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую")),
 		mcp.WithString("adgroup_ids", mcp.Description("ID групп через запятую")),
 		mcp.WithString("field_names", mcp.Description("Поля: Id, Keyword, AdGroupId, CampaignId, Bid, State, Status")),
@@ -78,8 +79,8 @@ func registerGetKeywords(s *mcpserver.MCPServer, client *Client, resolver *auth.
 func registerAddKeywords(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_keywords",
 		mcp.WithDescription("Добавить ключевые фразы в группу объявлений. До 1000 фраз за раз."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("adgroup_id", mcp.Description("ID группы объявлений"), mcp.Required()),
 		mcp.WithString("keywords", mcp.Description("Ключевые фразы через запятую. Операторы: \"точная фраза\", +обязательное, -минус"), mcp.Required()),
 	)
@@ -121,8 +122,8 @@ func registerAddKeywords(s *mcpserver.MCPServer, client *Client, resolver *auth.
 func registerUpdateKeywords(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("update_keywords",
 		mcp.WithDescription("Обновить ключевые фразы: изменить текст фразы или назначить другую группу."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("keywords_json", mcp.Description("JSON массив: [{\"Id\":123,\"Keyword\":\"новая фраза\"}]"), mcp.Required()),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -153,8 +154,8 @@ func registerUpdateKeywords(s *mcpserver.MCPServer, client *Client, resolver *au
 func registerManageKeywords(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("manage_keywords",
 		mcp.WithDescription("Управление ключевыми фразами: остановка, возобновление, удаление."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("keyword_ids", mcp.Description("ID ключевых фраз через запятую"), mcp.Required()),
 		mcp.WithString("action", mcp.Description("Действие: suspend, resume, delete"), mcp.Required()),
 	)
@@ -188,8 +189,8 @@ func registerManageKeywords(s *mcpserver.MCPServer, client *Client, resolver *au
 func registerDeduplicateKeywords(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("deduplicate_keywords",
 		mcp.WithDescription("Проверить ключевые фразы на дублирование и каннибализацию между группами/кампаниями."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую"), mcp.Required()),
 	)
 
@@ -223,8 +224,8 @@ func registerDeduplicateKeywords(s *mcpserver.MCPServer, client *Client, resolve
 func registerGetAutotargeting(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_autotargeting",
 		mcp.WithDescription("Получить настройки автотаргетинга для групп объявлений. Категории: EXACT, ALTERNATIVE, BROADER, ACCESSORY, COMPETITOR."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("adgroup_ids", mcp.Description("ID групп через запятую"), mcp.Required()),
 	)
 
@@ -260,15 +261,15 @@ func registerGetAutotargeting(s *mcpserver.MCPServer, client *Client, resolver *
 
 func registerUpdateAutotargeting(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("update_autotargeting",
-		mcp.WithDescription("Обновить категории автотаргетинга. Рекомендация: EXACT=ON, ALTERNATIVE=ON, остальные=OFF."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
+		mcp.WithDescription("Обновить категории автотаргетинга. Находит ---autotargeting в группе, удаляет и пересоздаёт с нужными категориями. Рекомендация: EXACT+ALTERNATIVE=YES, остальные=NO."),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithNumber("adgroup_id", mcp.Description("ID группы"), mcp.Required()),
-		mcp.WithString("exact", mcp.Description("Целевые запросы: ON или OFF")),
-		mcp.WithString("alternative", mcp.Description("Узкие запросы: ON или OFF")),
-		mcp.WithString("broader", mcp.Description("Широкие запросы: ON или OFF")),
-		mcp.WithString("accessory", mcp.Description("Сопутствующие: ON или OFF")),
-		mcp.WithString("competitor", mcp.Description("Конкурентные: ON или OFF")),
+		mcp.WithString("exact", mcp.Description("Целевые: YES или NO (умолч YES)")),
+		mcp.WithString("alternative", mcp.Description("Узкие: YES или NO (умолч YES)")),
+		mcp.WithString("broader", mcp.Description("Широкие: YES или NO (умолч NO)")),
+		mcp.WithString("accessory", mcp.Description("Сопутствующие: YES или NO (умолч NO)")),
+		mcp.WithString("competitor", mcp.Description("Конкурентные: YES или NO (умолч NO)")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -277,39 +278,79 @@ func registerUpdateAutotargeting(s *mcpserver.MCPServer, client *Client, resolve
 			return common.ErrorResult(err.Error()), nil
 		}
 		clientLogin := common.GetString(req, "client_login")
-
 		adGroupID := common.GetInt(req, "adgroup_id")
 
-		// Autotargeting categories are configured via AdGroups.update
-		categories := map[string]any{}
-		if v := common.GetString(req, "exact"); v != "" {
-			categories["Exact"] = v
+		// Build categories array for Keywords.add
+		type catItem struct {
+			Category string `json:"Category"`
+			Value    string `json:"Value"`
 		}
-		if v := common.GetString(req, "alternative"); v != "" {
-			categories["Alternative"] = v
+		cats := []catItem{}
+		addCat := func(name, param, def string) {
+			v := common.GetString(req, param)
+			if v == "" {
+				v = def
+			}
+			cats = append(cats, catItem{Category: name, Value: v})
 		}
-		if v := common.GetString(req, "broader"); v != "" {
-			categories["Broader"] = v
+		addCat("EXACT", "exact", "YES")
+		addCat("ALTERNATIVE", "alternative", "YES")
+		addCat("BROADER", "broader", "NO")
+		addCat("ACCESSORY", "accessory", "NO")
+		addCat("COMPETITOR", "competitor", "NO")
+
+		// Step 1: Find existing ---autotargeting keyword in the group
+		getParams := map[string]any{
+			"SelectionCriteria": map[string]any{
+				"AdGroupIds": []int64{int64(adGroupID)},
+			},
+			"FieldNames": []string{"Id", "Keyword", "AdGroupId"},
 		}
-		if v := common.GetString(req, "accessory"); v != "" {
-			categories["Accessory"] = v
-		}
-		if v := common.GetString(req, "competitor"); v != "" {
-			categories["Competitor"] = v
+		getRaw, err := client.Call(ctx, token, "keywords", "get", getParams, clientLogin)
+		if err != nil {
+			return common.ErrorResult(fmt.Sprintf("get keywords: %v", err)), nil
 		}
 
-		params := map[string]any{
-			"AdGroups": []any{
+		// Parse to find ---autotargeting keyword ID
+		var getResp struct {
+			Result struct {
+				Keywords []struct {
+					Id      int64  `json:"Id"`
+					Keyword string `json:"Keyword"`
+				} `json:"Keywords"`
+			} `json:"result"`
+		}
+		if err := json.Unmarshal(getRaw, &getResp); err != nil {
+			return common.ErrorResult(fmt.Sprintf("parse keywords: %v", err)), nil
+		}
+
+		// Step 2: Delete existing autotargeting keyword if found
+		for _, kw := range getResp.Result.Keywords {
+			if kw.Keyword == "---autotargeting" {
+				delParams := map[string]any{
+					"SelectionCriteria": map[string]any{
+						"Ids": []int64{kw.Id},
+					},
+				}
+				_, _ = client.Call(ctx, token, "keywords", "delete", delParams, clientLogin)
+				break
+			}
+		}
+
+		// Step 3: Add autotargeting with desired categories
+		addParams := map[string]any{
+			"Keywords": []any{
 				map[string]any{
-					"Id":                       adGroupID,
-					"AutotargetingCategories":  categories,
+					"Keyword":                  "---autotargeting",
+					"AdGroupId":                adGroupID,
+					"AutotargetingCategories":  cats,
 				},
 			},
 		}
 
-		raw, err := client.Call(ctx, token, "adgroups", "update", params, clientLogin)
+		raw, err := client.Call(ctx, token, "keywords", "add", addParams, clientLogin)
 		if err != nil {
-			return common.ErrorResult(err.Error()), nil
+			return common.ErrorResult(fmt.Sprintf("add autotargeting: %v", err)), nil
 		}
 		result, err := GetResult(raw)
 		if err != nil {
@@ -322,8 +363,8 @@ func registerUpdateAutotargeting(s *mcpserver.MCPServer, client *Client, resolve
 func registerManageAutotargeting(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("manage_autotargeting",
 		mcp.WithDescription("Управление автотаргетингом: suspend или resume ключевой фразы ---autotargeting."),
-		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
-		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов)")),
+		mcp.WithString("account", mcp.Description("Аккаунт")),
+		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("keyword_ids", mcp.Description("ID ключевых фраз автотаргетинга через запятую (получи через get_autotargeting)"), mcp.Required()),
 		mcp.WithString("action", mcp.Description("Действие: suspend или resume"), mcp.Required()),
 	)
