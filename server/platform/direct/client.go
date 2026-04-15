@@ -120,6 +120,8 @@ type v4Request struct {
 
 // CallV4 makes a request to Yandex Direct API v4 Live (for labels/tags).
 // Unlike v5, v4 uses token in body and returns {data, error_code, error_str, error_detail}.
+// NOTE: v4 Live does NOT support porg-* logins (click.ru internal IDs).
+// For agency accounts, the token itself determines access — skip Login for porg-* logins.
 func (c *Client) CallV4(ctx context.Context, token, method string, params any, clientLogin ...string) (json.RawMessage, error) {
 	body := v4Request{
 		Method: method,
@@ -128,7 +130,11 @@ func (c *Client) CallV4(ctx context.Context, token, method string, params any, c
 	}
 
 	if len(clientLogin) > 0 && clientLogin[0] != "" {
-		body.Login = clientLogin[0]
+		login := clientLogin[0]
+		// Skip porg-* logins — v4 API doesn't understand them
+		if len(login) < 5 || login[:5] != "porg-" {
+			body.Login = login
+		}
 	}
 
 	var resp json.RawMessage

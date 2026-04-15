@@ -20,14 +20,15 @@ func RegisterAdTools(s *mcpserver.MCPServer, client *Client, resolver *auth.Acco
 
 func registerGetAds(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_ads",
-		mcp.WithDescription("Получить объявления. Фильтр по campaign_ids или adgroup_ids."),
+		mcp.WithDescription("Получить объявления. Фильтр по campaign_ids или adgroup_ids. Добавь states для фильтрации по статусу."),
 		mcp.WithString("account", mcp.Description("Имя аккаунта (опционально)")),
 		mcp.WithString("client_login", mcp.Description("Логин клиента (для агентских аккаунтов). Получи через get_agency_clients.")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний через запятую")),
 		mcp.WithString("adgroup_ids", mcp.Description("ID групп через запятую")),
 		mcp.WithString("ad_ids", mcp.Description("ID объявлений через запятую")),
-		mcp.WithString("field_names", mcp.Description("Поля: Id, AdGroupId, CampaignId, State, Status, и т.д.")),
-		mcp.WithString("text_ad_field_names", mcp.Description("Поля текстового объявления: Title, Title2, Text, Href, SitelinkSetId, AdExtensionIds, AdImageHash")),
+		mcp.WithString("states", mcp.Description("Статусы через запятую: ON, OFF, SUSPENDED, OFF_BY_MONITORING, ARCHIVED")),
+		mcp.WithString("field_names", mcp.Description("Поля: Id, AdGroupId, CampaignId, State, Status, Type и т.д.")),
+		mcp.WithString("text_ad_field_names", mcp.Description("Поля TEXT_AD: Title, Title2, Text, Href, DisplayDomain, DisplayUrlPath, SitelinkSetId, AdImageHash, VCardId, AdExtensionIds, Mobile")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -46,6 +47,9 @@ func registerGetAds(s *mcpserver.MCPServer, client *Client, resolver *auth.Accou
 		}
 		if ids := parseIntSlice(common.GetStringSlice(req, "ad_ids")); len(ids) > 0 {
 			criteria["Ids"] = ids
+		}
+		if states := common.GetStringSlice(req, "states"); len(states) > 0 {
+			criteria["States"] = states
 		}
 
 		params := map[string]any{

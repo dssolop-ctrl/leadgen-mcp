@@ -66,7 +66,8 @@
 
 ```
 1. Определи counter_id города из config/counters.md
-2. Вызови: metrika_get_goals(counter_id=<id>, account="etagi.agent")
+2. Вызови: metrika_get_goals(counter_id=<id>, account="etagi.agent", conditions="form_sum_leads,received_real_calls,all_calls")
+   → Вернёт только 2-3 нужных цели вместо 100+
 3. Найди ОБЕ цели:
    a) Ищи "Общая (все лиды)" (условие: form_sum_leads) → ВСЕГДА бери её ID
    b) Ищи "Коллтрекинг, реальный звонок" (условие: received_real_calls)
