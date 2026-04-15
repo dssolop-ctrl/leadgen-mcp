@@ -19,11 +19,16 @@ func NewServer(resolver *auth.AccountResolver, logger *slog.Logger) *server.MCPS
 		server.WithToolCapabilities(true),
 	)
 
-	// Yandex Direct (33 tools)
+	// Shared Metrika client (used by both Metrika tools and Direct benchmarks)
+	metrClient := metrika.NewClient(logger)
+
+	// Yandex Direct (33 tools + benchmarks + reference lookups)
 	direct.RegisterTools(s, resolver, logger)
+	direct.RegisterBenchmarkTools(s, direct.NewClient(logger), metrClient, resolver)
+	direct.RegisterReferenceTools(s)
 
 	// Yandex Metrika (11 tools)
-	metrika.RegisterTools(s, resolver, logger)
+	metrika.RegisterToolsWithClient(s, metrClient, resolver)
 
 	// Yandex Wordstat (5 tools)
 	wordstat.RegisterTools(s, resolver, logger)

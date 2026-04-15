@@ -33,5 +33,5 @@ func RegisterTools(s *mcpserver.MCPServer, resolver *auth.AccountResolver, logge
 	RegisterFeedTools(s, client, resolver)            // 4 tools (NEW)
 	RegisterStrategyTools(s, client, resolver)        // 4 tools (NEW)
 	RegisterCreativeTools(s, client, resolver)        // 5 tools (NEW: creatives, ad_videos, turbo_pages, leads, businesses)
-	RegisterLabelTools(s, client, resolver)            // 3 tools (NEW: get_labels, set_campaign_labels, add_labels — API v4 Live)
+	RegisterLabelTools(s, client, resolver)            // 2 tools: get_labels, add_labels — API v4 Live (banner-level tags)
 }

@@ -2,6 +2,7 @@ package direct
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -99,11 +100,13 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 		mcp.WithString("daily_budget_mode", mcp.Description("Режим бюджета: STANDARD или DISTRIBUTED (по умолчанию DISTRIBUTED)")),
 		mcp.WithString("search_strategy", mcp.Description("Стратегия поиска: WB_MAXIMUM_CONVERSION_RATE, AVERAGE_CPA, WB_MAXIMUM_CLICKS и др."), mcp.Required()),
 		mcp.WithString("network_strategy", mcp.Description("Стратегия сетей: SERVING_OFF (по умолчанию), NETWORK_DEFAULT, WB_MAXIMUM_CLICKS")),
-		mcp.WithNumber("goal_id", mcp.Description("ID цели Метрики для оптимизации конверсий")),
+		mcp.WithNumber("goal_id", mcp.Description("ID цели Метрики для оптимизации (одна цель). Если нужно несколько — используй priority_goals, а сюда 0 или не передавай.")),
+		mcp.WithString("priority_goals", mcp.Description("Приоритетные цели JSON: [{\"goal_id\":123,\"value\":0},{\"goal_id\":456,\"value\":0}]. value — ценность конверсии в рублях (0 = не задана). При передаче GoalId в стратегии автоматически ставится 13.")),
 		mcp.WithString("counter_ids", mcp.Description("ID счётчиков Метрики через запятую")),
 		mcp.WithNumber("average_cpa", mcp.Description("Целевая цена конверсии (для стратегии AVERAGE_CPA)")),
 		mcp.WithString("start_date", mcp.Description("Дата начала (YYYY-MM-DD)")),
 		mcp.WithString("negative_keywords", mcp.Description("Минус-фразы через запятую")),
+		mcp.WithString("settings", mcp.Description("Настройки JSON: [{\"option\":\"ENABLE_AREA_OF_INTEREST_TARGETING\",\"value\":false}]")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -150,6 +153,32 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 		goalID := common.GetInt(req, "goal_id")
 		avgCPA := common.GetInt(req, "average_cpa")
 
+		// Parse priority goals (multiple goals with conversion values)
+		var priorityGoals []map[string]any
+		if pgStr := common.GetString(req, "priority_goals"); pgStr != "" {
+			var pgItems []struct {
+				GoalID int64 `json:"goal_id"`
+				Value  int64 `json:"value"`
+			}
+			if err := json.Unmarshal([]byte(pgStr), &pgItems); err == nil && len(pgItems) > 0 {
+				for _, pg := range pgItems {
+					valueMicros := pg.Value * 1000000
+					// API minimum is 300000 micros (0.3 RUB). Default to 1 RUB if not specified.
+					if valueMicros < 300000 {
+						valueMicros = 1000000 // 1 RUB
+					}
+					item := map[string]any{
+						"GoalId":                 pg.GoalID,
+						"Value":                  valueMicros,
+						"IsMetrikaSourceOfValue": "NO",
+					}
+					priorityGoals = append(priorityGoals, item)
+				}
+				// When priority_goals is set, strategy GoalId should be 13 (= priority goals)
+				goalID = 13
+			}
+		}
+
 		switch searchStrategy {
 		case "WB_MAXIMUM_CLICKS":
 			searchSettings["WbMaximumClicks"] = map[string]any{
@@ -183,9 +212,18 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 			},
 		}
 
-		campaign["TextCampaign"] = map[string]any{
+		textCampaign := map[string]any{
 			"BiddingStrategy": biddingStrategy,
 		}
+
+		// Add PriorityGoals if specified
+		if len(priorityGoals) > 0 {
+			textCampaign["PriorityGoals"] = map[string]any{
+				"Items": priorityGoals,
+			}
+		}
+
+		campaign["TextCampaign"] = textCampaign
 
 		// Counter IDs
 		if counterIDs := common.GetStringSlice(req, "counter_ids"); len(counterIDs) > 0 {
@@ -203,6 +241,33 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 		if negKw := common.GetString(req, "negative_keywords"); negKw != "" {
 			campaign["NegativeKeywords"] = map[string]any{
 				"Items": strings.Split(negKw, ","),
+			}
+		}
+
+		// Campaign settings (e.g., ENABLE_AREA_OF_INTEREST_TARGETING)
+		if settingsStr := common.GetString(req, "settings"); settingsStr != "" {
+			var settingsItems []struct {
+				Option string `json:"option"`
+				Value  any    `json:"value"`
+			}
+			if err := json.Unmarshal([]byte(settingsStr), &settingsItems); err == nil && len(settingsItems) > 0 {
+				var settings []map[string]any
+				for _, s := range settingsItems {
+					valStr := "YES"
+					switch v := s.Value.(type) {
+					case bool:
+						if !v {
+							valStr = "NO"
+						}
+					case string:
+						valStr = v
+					}
+					settings = append(settings, map[string]any{
+						"Option": s.Option,
+						"Value":  valStr,
+					})
+				}
+				textCampaign["Settings"] = settings
 			}
 		}
 
@@ -233,7 +298,8 @@ func registerUpdateCampaign(s *mcpserver.MCPServer, client *Client, resolver *au
 		mcp.WithString("name", mcp.Description("Новое название")),
 		mcp.WithNumber("daily_budget_amount", mcp.Description("Новый недельный бюджет в рублях")),
 		mcp.WithString("search_strategy", mcp.Description("Новая стратегия поиска")),
-		mcp.WithNumber("goal_id", mcp.Description("Новая цель Метрики")),
+		mcp.WithNumber("goal_id", mcp.Description("Новая цель Метрики (одна). Для нескольких — используй priority_goals + goal_id=13.")),
+		mcp.WithString("priority_goals", mcp.Description("Приоритетные цели JSON: [{\"goal_id\":123,\"value\":0},{\"goal_id\":456,\"value\":0}]. value — ценность в рублях (0 = минимум 1₽). При передаче GoalId автоматически ставится 13.")),
 		mcp.WithNumber("average_cpa", mcp.Description("Целевая CPA (для стратегии AVERAGE_CPA)")),
 	)
 
@@ -260,28 +326,89 @@ func registerUpdateCampaign(s *mcpserver.MCPServer, client *Client, resolver *au
 			}
 		}
 
+		// Parse priority goals (multiple goals with conversion values)
+		var priorityGoals []map[string]any
+		if pgStr := common.GetString(req, "priority_goals"); pgStr != "" {
+			var pgItems []struct {
+				GoalID int64 `json:"goal_id"`
+				Value  int64 `json:"value"`
+			}
+			if err := json.Unmarshal([]byte(pgStr), &pgItems); err == nil && len(pgItems) > 0 {
+				for _, pg := range pgItems {
+					valueMicros := pg.Value * 1000000
+					if valueMicros < 300000 {
+						valueMicros = 1000000 // 1 RUB default
+					}
+					item := map[string]any{
+						"GoalId":                 pg.GoalID,
+						"Value":                  valueMicros,
+						"IsMetrikaSourceOfValue": "NO",
+						"Operation":              "SET",
+					}
+					priorityGoals = append(priorityGoals, item)
+				}
+			}
+		}
+
 		// Strategy updates
 		searchStrategy := common.GetString(req, "search_strategy")
 		goalID := common.GetInt(req, "goal_id")
 		avgCPA := common.GetInt(req, "average_cpa")
 
-		if searchStrategy != "" || goalID > 0 || avgCPA > 0 {
-			search := map[string]any{}
-			if searchStrategy != "" {
-				search["BiddingStrategyType"] = searchStrategy
-			}
-			if goalID > 0 {
-				search["GoalId"] = goalID
-			}
-			if avgCPA > 0 {
-				search["AverageCpa"] = avgCPA * 1000000
+		// When priority_goals is set, GoalId should be 13 (= optimize for priority goals)
+		if len(priorityGoals) > 0 && goalID == 0 {
+			goalID = 13
+		}
+
+		needTextCampaign := searchStrategy != "" || goalID > 0 || avgCPA > 0 || len(priorityGoals) > 0
+		if needTextCampaign {
+			textCampaign := map[string]any{}
+
+			if searchStrategy != "" || goalID > 0 || avgCPA > 0 {
+				search := map[string]any{}
+				if searchStrategy != "" {
+					search["BiddingStrategyType"] = searchStrategy
+				}
+
+				// GoalId and other params go inside the strategy-specific key
+				switch searchStrategy {
+				case "WB_MAXIMUM_CONVERSION_RATE":
+					stratSettings := map[string]any{}
+					if goalID > 0 {
+						stratSettings["GoalId"] = goalID
+					}
+					search["WbMaximumConversionRate"] = stratSettings
+				case "AVERAGE_CPA":
+					stratSettings := map[string]any{}
+					if goalID > 0 {
+						stratSettings["GoalId"] = goalID
+					}
+					if avgCPA > 0 {
+						stratSettings["AverageCpa"] = avgCPA * 1000000
+					}
+					search["AverageCpa"] = stratSettings
+				case "WB_MAXIMUM_CLICKS":
+					search["WbMaximumClicks"] = map[string]any{}
+				default:
+					// If no strategy specified but goalID changed, we still need the strategy type
+					// to know where to put GoalId — caller must provide search_strategy
+					if goalID > 0 {
+						search["GoalId"] = goalID
+					}
+				}
+
+				textCampaign["BiddingStrategy"] = map[string]any{
+					"Search": search,
+				}
 			}
 
-			campaign["TextCampaign"] = map[string]any{
-				"BiddingStrategy": map[string]any{
-					"Search": search,
-				},
+			if len(priorityGoals) > 0 {
+				textCampaign["PriorityGoals"] = map[string]any{
+					"Items": priorityGoals,
+				}
 			}
+
+			campaign["TextCampaign"] = textCampaign
 		}
 
 		params := map[string]any{
