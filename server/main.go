@@ -32,18 +32,22 @@ func main() {
 	// Create account resolver
 	resolver := auth.NewAccountResolver(cfg.Accounts)
 
-	// Open SQLite for site filters
-	dbPath := cfg.Server.DataDir + "/filters.db"
-	if cfg.Server.DataDir == "" {
-		dbPath = "/app/data/filters.db"
+	// Open SQLite for site filters.
+	// The exportPath lives next to the DB and acts as both the git-tracked seed
+	// (loaded when DB is empty) and the auto-updated dump after every user write.
+	dataDir := cfg.Server.DataDir
+	if dataDir == "" {
+		dataDir = "/app/data"
 	}
-	filterStore, err := filters.Open(dbPath)
+	dbPath := dataDir + "/filters.db"
+	exportPath := dataDir + "/filter_values.json"
+	filterStore, err := filters.Open(dbPath, exportPath)
 	if err != nil {
 		logger.Error("failed to open filters DB", "path", dbPath, "error", err)
 		os.Exit(1)
 	}
 	defer filterStore.Close()
-	logger.Info("filters DB opened", "path", dbPath)
+	logger.Info("filters DB opened", "path", dbPath, "seed", exportPath)
 
 	// Create MCP server
 	mcpServer := mcpsetup.NewServer(resolver, logger, filterStore)

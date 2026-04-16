@@ -4,32 +4,54 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	_ "modernc.org/sqlite"
 )
 
 // Store manages site filter data in SQLite.
+//
+// Persistence design:
+//   - SQLite journal_mode=delete + synchronous=full — each commit hits disk, no WAL
+//     lost-on-SIGKILL risk. This trades a bit of write throughput for robustness on
+//     Docker bind-mounts (Windows/macOS WSL2), which is the target deployment.
+//   - If exportPath is set, Open seeds an empty DB from that JSON file on first start
+//     (git-clone recovery path) and re-writes the file after every user write so the
+//     repo-tracked seed stays in sync with live data.
 type Store struct {
-	db *sql.DB
+	db         *sql.DB
+	exportPath string     // path to JSON seed / auto-export file; "" disables export.
+	exportMu   sync.Mutex // serializes atomic JSON writes.
 }
 
 // Open opens or creates the SQLite database at the given path.
-func Open(path string) (*Store, error) {
+// If exportPath is non-empty:
+//   - on empty DB (filter_values count == 0), server bulk-loads filter_values from it;
+//   - on every user write, server dumps current filter_values back to this path.
+// Seeding failures are logged but do not fail startup.
+func Open(path, exportPath string) (*Store, error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return nil, fmt.Errorf("create db dir: %w", err)
 	}
-	db, err := sql.Open("sqlite", path+"?_pragma=journal_mode(wal)")
+	// journal_mode=delete avoids WAL/-shm files, which behave poorly over Docker
+	// bind mounts on Windows/macOS. synchronous=full fsyncs each commit.
+	db, err := sql.Open("sqlite", path+"?_pragma=journal_mode(delete)&_pragma=synchronous(full)")
 	if err != nil {
 		return nil, fmt.Errorf("open sqlite: %w", err)
 	}
-	s := &Store{db: db}
+	s := &Store{db: db, exportPath: exportPath}
 	if err := s.migrate(); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("migrate: %w", err)
+	}
+	if err := s.loadSeedIfEmpty(); err != nil {
+		// Non-fatal — log and continue with an empty DB.
+		log.Printf("filters: seed load warning: %v", err)
 	}
 	return s, nil
 }
@@ -169,6 +191,9 @@ func (s *Store) UpsertFilterValue(citySlug, filterType, name, urlValue, aliases 
 		ON CONFLICT(city_slug, filter_type_id, url_value) DO UPDATE
 		SET name=excluded.name, aliases=excluded.aliases`,
 		citySlug, typeID, name, urlValue, aliases)
+	if err == nil {
+		s.exportAfterWrite()
+	}
 	return err
 }
 
@@ -348,7 +373,11 @@ func (s *Store) BulkUpsert(data []FilterValue) (int, error) {
 		}
 		count++
 	}
-	return count, tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return count, err
+	}
+	s.exportAfterWrite()
+	return count, nil
 }
 
 // Stats returns summary statistics about the database contents.
@@ -420,4 +449,84 @@ func (s *Store) ExportJSON() (string, error) {
 		return "", err
 	}
 	return string(b), nil
+}
+
+// ExportToFile atomically writes the current filter_values dump to exportPath.
+// Safe for concurrent callers (serialized via exportMu).
+// Writes to "<path>.tmp" then renames — rename is atomic inside a single
+// filesystem, and on Docker bind mounts both .tmp and target share the mount.
+func (s *Store) ExportToFile() error {
+	if s.exportPath == "" {
+		return nil
+	}
+	s.exportMu.Lock()
+	defer s.exportMu.Unlock()
+
+	data, err := s.ExportJSON()
+	if err != nil {
+		return fmt.Errorf("export json: %w", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(s.exportPath), 0o755); err != nil {
+		return fmt.Errorf("mkdir export: %w", err)
+	}
+	tmp := s.exportPath + ".tmp"
+	if err := os.WriteFile(tmp, []byte(data+"\n"), 0o644); err != nil {
+		return fmt.Errorf("write tmp: %w", err)
+	}
+	if err := os.Rename(tmp, s.exportPath); err != nil {
+		// Clean up the tmp on rename failure, then bubble the error.
+		_ = os.Remove(tmp)
+		return fmt.Errorf("rename: %w", err)
+	}
+	return nil
+}
+
+// exportAfterWrite is the post-commit hook used by write methods.
+// Export failures are logged but never propagated — they must not fail writes.
+func (s *Store) exportAfterWrite() {
+	if s.exportPath == "" {
+		return
+	}
+	if err := s.ExportToFile(); err != nil {
+		log.Printf("filters: export warning: %v", err)
+	}
+}
+
+// loadSeedIfEmpty bulk-loads exportPath into filter_values if the table is empty.
+// This is the git-clone recovery path: fresh DB + committed seed => working state.
+// No-op if exportPath is unset, DB already has rows, or the file doesn't exist.
+func (s *Store) loadSeedIfEmpty() error {
+	if s.exportPath == "" {
+		return nil
+	}
+	var count int
+	if err := s.db.QueryRow("SELECT COUNT(*) FROM filter_values").Scan(&count); err != nil {
+		return fmt.Errorf("count filter_values: %w", err)
+	}
+	if count > 0 {
+		return nil
+	}
+	raw, err := os.ReadFile(s.exportPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("read seed: %w", err)
+	}
+	if len(raw) == 0 {
+		return nil
+	}
+	var values []FilterValue
+	if err := json.Unmarshal(raw, &values); err != nil {
+		return fmt.Errorf("parse seed: %w", err)
+	}
+	if len(values) == 0 {
+		return nil
+	}
+	n, err := s.BulkUpsert(values)
+	if err != nil {
+		return fmt.Errorf("bulk upsert seed: %w", err)
+	}
+	log.Printf("filters: loaded seed from %s: %d values", s.exportPath, n)
+	return nil
 }

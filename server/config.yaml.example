@@ -1,6 +1,9 @@
 server:
   port: 8080
   bearer_token: ""
+  # Directory for SQLite DB (filters.db) and the JSON seed (filter_values.json).
+  # Matches the bind mount in docker-compose.yml (./server/data:/app/data).
+  data_dir: /app/data
 
 accounts:
   yandex:

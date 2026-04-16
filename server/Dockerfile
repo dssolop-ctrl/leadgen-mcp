@@ -22,8 +22,12 @@ COPY --from=builder /app/leadgen-mcp .
 
 EXPOSE 8080
 
-# /app/data — persistent volume for SQLite databases (filters.db)
-VOLUME ["/app/data"]
+# /app/data — data directory for SQLite DB and JSON seed file.
+# Mount this as a bind mount (see docker-compose.yml at repo root):
+#   ./server/data:/app/data
+# We intentionally do NOT declare VOLUME here — that caused Docker to create
+# anonymous volumes when `docker run` was invoked without -v, scattering data
+# across throwaway volumes.
 
 ENTRYPOINT ["./leadgen-mcp"]
 CMD ["-config", "/app/config.yaml"]

@@ -1,0 +1,16 @@
+[
+  {
+    "city_slug": "omsk",
+    "filter_type": "district",
+    "name": "Нефтяники",
+    "url_value": "82206",
+    "aliases": "нефтяники,нефтяник,город нефтяников"
+  },
+  {
+    "city_slug": "omsk",
+    "filter_type": "district",
+    "name": "Октябрьский",
+    "url_value": "82290",
+    "aliases": "октябрьский,октябрьский округ"
+  }
+]

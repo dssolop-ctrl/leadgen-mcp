@@ -1,0 +1,20 @@
+services:
+  leadgen-mcp:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: leadgen-mcp:latest
+    container_name: leadgen-mcp
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    volumes:
+      # Data directory — SQLite DB + JSON seed live here on the host.
+      # On first start with empty DB, server loads server/data/filter_values.json.
+      # After every upsert, server rewrites filter_values.json so it stays in sync.
+      - ./server/data:/app/data
+      # Config is read-only inside the container.
+      # NOTE: create server/config.yaml before first run:
+      #   cp server/config.yaml.example server/config.yaml
+      # then fill in your tokens.
+      - ./server/config.yaml:/app/config.yaml:ro

@@ -5,6 +5,14 @@ data/serp-history/
 server/config.yaml
 __pycache__/
 
+# SQLite runtime artifacts for filters MCP tool.
+# Canonical data lives in server/data/filter_values.json (tracked in git).
+server/data/filters.db
+server/data/filters.db-shm
+server/data/filters.db-wal
+server/data/filters.db-journal
+server/data/filter_values.json.tmp
+
 # Other AI agents (keep only .claude/)
 .agents/
 .cline/
