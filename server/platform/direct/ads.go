@@ -153,7 +153,7 @@ func registerUpdateAd(s *mcpserver.MCPServer, client *Client, resolver *auth.Acc
 		mcp.WithString("text", mcp.Description("Новый текст")),
 		mcp.WithString("href", mcp.Description("Новая ссылка")),
 		mcp.WithNumber("sitelink_set_id", mcp.Description("Новый ID набора быстрых ссылок")),
-		mcp.WithString("ad_extension_ids", mcp.Description("Новые ID уточнений через запятую")),
+		mcp.WithString("ad_extension_ids", mcp.Description("Новый набор ID уточнений через запятую (полная замена через CalloutSetting SET)")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -179,8 +179,18 @@ func registerUpdateAd(s *mcpserver.MCPServer, client *Client, resolver *auth.Acc
 		if slID := common.GetInt(req, "sitelink_set_id"); slID > 0 {
 			textAd["SitelinkSetId"] = slID
 		}
+		// API v5 TextAdUpdate не принимает AdExtensionIds напрямую (в отличие от TextAdAdd) —
+		// уточнения меняются через CalloutSetting с операциями ADD/REMOVE/SET.
+		// Передаём SET для полной замены набора.
 		if extIDs := parseIntSlice(common.GetStringSlice(req, "ad_extension_ids")); len(extIDs) > 0 {
-			textAd["AdExtensionIds"] = extIDs
+			items := make([]map[string]any, 0, len(extIDs))
+			for _, id := range extIDs {
+				items = append(items, map[string]any{
+					"AdExtensionId": id,
+					"Operation":     "SET",
+				})
+			}
+			textAd["CalloutSetting"] = map[string]any{"AdExtensions": items}
 		}
 
 		ad := map[string]any{
