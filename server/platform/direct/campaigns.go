@@ -30,7 +30,10 @@ func registerGetCampaigns(s *mcpserver.MCPServer, client *Client, resolver *auth
 		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
 		mcp.WithString("states", mcp.Description("Статусы: ON, SUSPENDED, OFF, ENDED, ARCHIVED")),
-		mcp.WithString("field_names", mcp.Description("Поля: Id, Name, State, Status, DailyBudget и др.")),
+		mcp.WithString("field_names", mcp.Description("Базовые поля: Id, Name, State, Status, DailyBudget и др. Для вложенных TextCampaign/UnifiedCampaign/DynamicTextCampaign используй соответствующие *_field_names.")),
+		mcp.WithString("text_campaign_field_names", mcp.Description("Поля внутри TextCampaign (возвращается только если кампания типа TEXT_CAMPAIGN): BiddingStrategy, TrackingParams, Settings, CounterIds и др. Пример: BiddingStrategy,TrackingParams")),
+		mcp.WithString("dynamic_text_campaign_field_names", mcp.Description("Поля внутри DynamicTextCampaign (только для DYNAMIC_TEXT_CAMPAIGN). Пример: BiddingStrategy,TrackingParams")),
+		mcp.WithString("unified_campaign_field_names", mcp.Description("Поля внутри UnifiedCampaign/ЕПК (только для UNIFIED_CAMPAIGN). Пример: BiddingStrategy,TrackingParams,PlacementTypes")),
 		mcp.WithNumber("limit", mcp.Description("Макс. кампаний (умолч 100)")),
 		mcp.WithString("campaign_ids", mcp.Description("ID кампаний")),
 	)
@@ -70,6 +73,18 @@ func registerGetCampaigns(s *mcpserver.MCPServer, client *Client, resolver *auth
 			params["FieldNames"] = []string{"Id", "Name", "State", "Status"}
 		}
 
+		// Тип-специфичные FieldNames (для чтения вложенных объектов TextCampaign/UnifiedCampaign/DynamicTextCampaign).
+		// Нужны, например, чтобы получить BiddingStrategy.Search.PlacementTypes.DynamicPlaces.
+		if tf := common.GetStringSlice(req, "text_campaign_field_names"); len(tf) > 0 {
+			params["TextCampaignFieldNames"] = tf
+		}
+		if df := common.GetStringSlice(req, "dynamic_text_campaign_field_names"); len(df) > 0 {
+			params["DynamicTextCampaignFieldNames"] = df
+		}
+		if uf := common.GetStringSlice(req, "unified_campaign_field_names"); len(uf) > 0 {
+			params["UnifiedCampaignFieldNames"] = uf
+		}
+
 		limit := common.GetInt(req, "limit")
 		if limit <= 0 {
 			limit = 50
@@ -107,6 +122,7 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 		mcp.WithString("start_date", mcp.Description("Начало (YYYY-MM-DD)")),
 		mcp.WithString("negative_keywords", mcp.Description("Минус-фразы через запятую")),
 		mcp.WithString("settings", mcp.Description("Настройки JSON: [{\"option\":\"ENABLE_AREA_OF_INTEREST_TARGETING\",\"value\":false}]")),
+		mcp.WithString("tracking_params", mcp.Description("UTM-метки на уровне кампании. Наследуется всеми группами. Рекомендуется вместо per-group. Вид: utm_source=yandex&utm_medium=cpc&utm_campaign={campaign_id}&...")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -205,6 +221,13 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 			searchSettings["AverageCpa"] = avgSettings
 		}
 
+		// Динамические места показа (договорённость с SEO: ВСЕГДА off).
+		// BiddingStrategy.Search.PlacementTypes.DynamicPlaces = "NO".
+		// Применимо к TextCampaign / DynamicTextCampaign.
+		searchSettings["PlacementTypes"] = map[string]any{
+			"DynamicPlaces": "NO",
+		}
+
 		biddingStrategy := map[string]any{
 			"Search": searchSettings,
 			"Network": map[string]any{
@@ -221,6 +244,11 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 			textCampaign["PriorityGoals"] = map[string]any{
 				"Items": priorityGoals,
 			}
+		}
+
+		// Campaign-level UTM (TrackingParams) — наследуется всеми группами.
+		if tp := common.GetString(req, "tracking_params"); tp != "" {
+			textCampaign["TrackingParams"] = tp
 		}
 
 		campaign["TextCampaign"] = textCampaign
@@ -301,6 +329,8 @@ func registerUpdateCampaign(s *mcpserver.MCPServer, client *Client, resolver *au
 		mcp.WithNumber("goal_id", mcp.Description("Новая цель Метрики (одна). Для нескольких — используй priority_goals + goal_id=13.")),
 		mcp.WithString("priority_goals", mcp.Description("Приоритетные цели JSON: [{\"goal_id\":123,\"value\":0},{\"goal_id\":456,\"value\":0}]. value — ценность в рублях (0 = минимум 1₽). При передаче GoalId автоматически ставится 13.")),
 		mcp.WithNumber("average_cpa", mcp.Description("Целевая CPA (для стратегии AVERAGE_CPA)")),
+		mcp.WithString("tracking_params", mcp.Description("UTM-метки на уровне кампании. Наследуется всеми группами. Для миграции UTM с уровня группы на кампанию — указывай здесь.")),
+		mcp.WithBoolean("disable_dynamic_places", mcp.Description("Отключить динамические места показа (BiddingStrategy.Search.PlacementTypes.DynamicPlaces=NO). Договорённость с SEO. Требует search_strategy для применения.")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -360,11 +390,14 @@ func registerUpdateCampaign(s *mcpserver.MCPServer, client *Client, resolver *au
 			goalID = 13
 		}
 
-		needTextCampaign := searchStrategy != "" || goalID > 0 || avgCPA > 0 || len(priorityGoals) > 0
+		trackingParams := common.GetString(req, "tracking_params")
+		disableDynamicPlaces := common.GetBool(req, "disable_dynamic_places")
+
+		needTextCampaign := searchStrategy != "" || goalID > 0 || avgCPA > 0 || len(priorityGoals) > 0 || trackingParams != "" || disableDynamicPlaces
 		if needTextCampaign {
 			textCampaign := map[string]any{}
 
-			if searchStrategy != "" || goalID > 0 || avgCPA > 0 {
+			if searchStrategy != "" || goalID > 0 || avgCPA > 0 || disableDynamicPlaces {
 				search := map[string]any{}
 				if searchStrategy != "" {
 					search["BiddingStrategyType"] = searchStrategy
@@ -397,6 +430,13 @@ func registerUpdateCampaign(s *mcpserver.MCPServer, client *Client, resolver *au
 					}
 				}
 
+				// Динамические места показа — off по договорённости с SEO.
+				if disableDynamicPlaces {
+					search["PlacementTypes"] = map[string]any{
+						"DynamicPlaces": "NO",
+					}
+				}
+
 				textCampaign["BiddingStrategy"] = map[string]any{
 					"Search": search,
 				}
@@ -406,6 +446,12 @@ func registerUpdateCampaign(s *mcpserver.MCPServer, client *Client, resolver *au
 				textCampaign["PriorityGoals"] = map[string]any{
 					"Items": priorityGoals,
 				}
+			}
+
+			// Campaign-level UTM (TrackingParams) — наследуется всеми группами.
+			// Для миграции с уровня группы: ставим на кампанию, потом чистим у групп через update_adgroup(tracking_params="").
+			if trackingParams != "" {
+				textCampaign["TrackingParams"] = trackingParams
 			}
 
 			campaign["TextCampaign"] = textCampaign

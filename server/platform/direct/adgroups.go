@@ -123,7 +123,8 @@ func registerUpdateAdGroup(s *mcpserver.MCPServer, client *Client, resolver *aut
 		mcp.WithNumber("adgroup_id", mcp.Description("ID группы"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Новое название")),
 		mcp.WithString("region_ids", mcp.Description("Новые регионы через запятую")),
-		mcp.WithString("tracking_params", mcp.Description("UTM-метки")),
+		mcp.WithString("tracking_params", mcp.Description("UTM-метки (override для этой группы). Предпочтение — ставить UTM на кампанию, не на группу.")),
+		mcp.WithBoolean("clear_tracking_params", mcp.Description("Очистить TrackingParams на группе (для миграции UTM на уровень кампании). Отправляет пустую строку.")),
 		mcp.WithString("negative_keywords", mcp.Description("Минус-фразы через запятую")),
 	)
 
@@ -144,7 +145,10 @@ func registerUpdateAdGroup(s *mcpserver.MCPServer, client *Client, resolver *aut
 		if regions := parseIntSlice(common.GetStringSlice(req, "region_ids")); len(regions) > 0 {
 			adGroup["RegionIds"] = regions
 		}
-		if tp := common.GetString(req, "tracking_params"); tp != "" {
+		// clear_tracking_params имеет приоритет над tracking_params.
+		if common.GetBool(req, "clear_tracking_params") {
+			adGroup["TrackingParams"] = ""
+		} else if tp := common.GetString(req, "tracking_params"); tp != "" {
 			adGroup["TrackingParams"] = tp
 		}
 		if negKw := common.GetStringSlice(req, "negative_keywords"); len(negKw) > 0 {

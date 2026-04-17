@@ -1,5 +1,75 @@
 # Правила работы с Яндекс Директ API (MCP: yandex-direct)
 
+## Обязательные настройки кампании (жёсткие дефолты)
+
+Договорённости с SEO и маркетингом — применяются ко ВСЕМ новым кампаниям:
+
+| Настройка | Значение | Путь в API | Применяется в |
+|---|---|---|---|
+| Расширенный геотаргетинг | выкл | `TextCampaign.Settings` → `ENABLE_AREA_OF_INTEREST_TARGETING=NO` | `add_campaign(settings=...)` |
+| **Динамические места показа** | **выкл** | `BiddingStrategy.Search.PlacementTypes.DynamicPlaces="NO"` | автоматически в `add_campaign`, для миграции — `update_campaign(disable_dynamic_places=true)` |
+| Стратегия поиска (старт) | `WB_MAXIMUM_CONVERSION_RATE` | `BiddingStrategy.Search.BiddingStrategyType` | `add_campaign(search_strategy=...)` |
+| Стратегия сетей | `SERVING_OFF` (поисковая) / `NETWORK_DEFAULT` (РСЯ) | `BiddingStrategy.Network.BiddingStrategyType` | `add_campaign(network_strategy=...)` |
+| Бюджет | НЕДЕЛЬНЫЙ, в рублях | `BiddingStrategy.Search.WbMaximumConversionRate.WeeklySpendLimit` (микроюниты) | `add_campaign(daily_budget_amount=...)` — MCP сам умножает на 1 000 000 |
+| UTM | на уровне кампании, не группы | `TextCampaign.TrackingParams` | `add_campaign(tracking_params=...)` |
+
+### Динамические места показа — подробности
+
+«Динамические места показа» — это показы в дополнительных местах поисковой выдачи
+(Яндекс.Карты, Маркет, Организации, Галерея товаров, партнёрские поисковые сайты).
+
+**Договорённость с SEO Этажи:** ВСЕГДА отключаем. Такие показы:
+- Размывают атрибуцию (кампания засчитывает показы, которых не было на поиске).
+- Пересекаются с органическими показами в тех же сервисах.
+- Увеличивают CPC без значимого роста качественного трафика.
+
+API-путь: `BiddingStrategy.Search.PlacementTypes.DynamicPlaces = "NO"`
+Применимо: `TextCampaign`, `DynamicTextCampaign`, `UnifiedCampaign` (ЕПК).
+
+Полный перечень `PlacementTypes` (из Campaigns.get/update для ЕПК):
+- `SearchResults` — основная поисковая выдача
+- `ProductGallery` — галерея товаров
+- `DynamicPlaces` — дополнительные динамические места ← **отключаем**
+- `Maps` — Яндекс.Карты
+- `SearchOrganizationList` — список организаций
+
+**Миграция старых кампаний:** см. подветку O3.10 в скилле `etazhi-direct`.
+
+### Тип-специфичные FieldNames в Campaigns.get
+
+Вложенные поля кампании (BiddingStrategy, PlacementTypes, TrackingParams и т.д.)
+**НЕ возвращаются через обычный `FieldNames`** — нужны отдельные массивы в зависимости от типа:
+
+| Тип кампании (`Type`) | Параметр MCP `get_campaigns` | API |
+|---|---|---|
+| `TEXT_CAMPAIGN` | `text_campaign_field_names` | `TextCampaignFieldNames` |
+| `DYNAMIC_TEXT_CAMPAIGN` | `dynamic_text_campaign_field_names` | `DynamicTextCampaignFieldNames` |
+| `UNIFIED_CAMPAIGN` (ЕПК) | `unified_campaign_field_names` | `UnifiedCampaignFieldNames` |
+
+Пример: чтобы получить `DynamicPlaces`, вызывай
+```
+get_campaigns(
+  campaign_ids=<id>,
+  field_names="Id,Name,Type",
+  text_campaign_field_names="BiddingStrategy"
+)
+```
+
+### Валидация при Campaigns.update
+
+API Директа при `update` принимает только изменяемые поля, но **валидирует объект
+целиком**. Возможные ошибки:
+
+- Несовместимая комбинация стратегии/мест показа → вернётся ошибка валидации.
+- Обязательные связанные поля не заполнены (например, GoalId без указания Metrika-счётчика).
+- Сочетание типа кампании и поля (например, PlacementTypes для устаревшего типа) → отказ.
+
+**Паттерн при ошибке валидации:**
+1. Прочитать текущее состояние кампании через `get_campaigns` с нужными тип-специфичными
+   FieldNames.
+2. Сравнить — что в кампании и чего хочет update.
+3. Если конфликт по бизнес-правилам — эскалация пользователю, не тихий retry.
+
 ## Получение кампаний — ВАЖНО
 
 Когда пользователь просит "покажи кампании", "получи кампании", "что у меня запущено" — **всегда фильтруй по активным**:

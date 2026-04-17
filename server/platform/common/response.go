@@ -64,6 +64,11 @@ func GetInt(req mcp.CallToolRequest, key string) int {
 	return req.GetInt(key, 0)
 }
 
+// GetBool extracts a boolean parameter from the MCP request arguments.
+func GetBool(req mcp.CallToolRequest, key string) bool {
+	return req.GetBool(key, false)
+}
+
 // GetStringSlice extracts a comma-separated string as a slice.
 func GetStringSlice(req mcp.CallToolRequest, key string) []string {
 	s := GetString(req, key)

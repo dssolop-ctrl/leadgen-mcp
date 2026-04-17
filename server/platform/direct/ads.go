@@ -94,6 +94,7 @@ func registerAddAd(s *mcpserver.MCPServer, client *Client, resolver *auth.Accoun
 		mcp.WithNumber("sitelink_set_id", mcp.Description("ID набора быстрых ссылок")),
 		mcp.WithString("ad_extension_ids", mcp.Description("ID уточнений через запятую")),
 		mcp.WithString("ad_image_hash", mcp.Description("Хеш изображения")),
+		mcp.WithString("display_url_path", mcp.Description("Отображаемый путь после домена (до 20 символов). Разрешена кириллица, дефисы, цифры. Пример: Квартиры-Омск или kvartiry-omsk")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -119,6 +120,9 @@ func registerAddAd(s *mcpserver.MCPServer, client *Client, resolver *auth.Accoun
 		}
 		if imgHash := common.GetString(req, "ad_image_hash"); imgHash != "" {
 			textAd["AdImageHash"] = imgHash
+		}
+		if dup := common.GetString(req, "display_url_path"); dup != "" {
+			textAd["DisplayUrlPath"] = dup
 		}
 
 		ad := map[string]any{
@@ -154,6 +158,7 @@ func registerUpdateAd(s *mcpserver.MCPServer, client *Client, resolver *auth.Acc
 		mcp.WithString("href", mcp.Description("Новая ссылка")),
 		mcp.WithNumber("sitelink_set_id", mcp.Description("Новый ID набора быстрых ссылок")),
 		mcp.WithString("ad_extension_ids", mcp.Description("Новый набор ID уточнений через запятую (полная замена через CalloutSetting SET)")),
+		mcp.WithString("display_url_path", mcp.Description("Новый отображаемый путь после домена (до 20 символов). Разрешена кириллица, дефисы, цифры.")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -178,6 +183,9 @@ func registerUpdateAd(s *mcpserver.MCPServer, client *Client, resolver *auth.Acc
 		}
 		if slID := common.GetInt(req, "sitelink_set_id"); slID > 0 {
 			textAd["SitelinkSetId"] = slID
+		}
+		if dup := common.GetString(req, "display_url_path"); dup != "" {
+			textAd["DisplayUrlPath"] = dup
 		}
 		// API v5 TextAdUpdate не принимает AdExtensionIds напрямую (в отличие от TextAdAdd) —
 		// уточнения меняются через CalloutSetting с операциями ADD/REMOVE/SET.
