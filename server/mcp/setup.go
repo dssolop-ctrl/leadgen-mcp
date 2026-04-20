@@ -6,6 +6,7 @@ import (
 	"github.com/leadgen-mcp/server/auth"
 	"github.com/leadgen-mcp/server/platform/direct"
 	"github.com/leadgen-mcp/server/platform/filters"
+	"github.com/leadgen-mcp/server/platform/history"
 	"github.com/leadgen-mcp/server/platform/metrika"
 	"github.com/leadgen-mcp/server/platform/vk"
 	"github.com/leadgen-mcp/server/platform/wordstat"
@@ -13,7 +14,7 @@ import (
 )
 
 // NewServer creates and configures the MCP server with all tools registered.
-func NewServer(resolver *auth.AccountResolver, logger *slog.Logger, filterStore *filters.Store) *server.MCPServer {
+func NewServer(resolver *auth.AccountResolver, logger *slog.Logger, filterStore *filters.Store, historyStore *history.Store) *server.MCPServer {
 	s := server.NewMCPServer(
 		"leadgen-mcp",
 		"0.1.0",
@@ -31,6 +32,9 @@ func NewServer(resolver *auth.AccountResolver, logger *slog.Logger, filterStore 
 	// Yandex Metrika (11 tools)
 	metrika.RegisterToolsWithClient(s, metrClient, resolver)
 
+	// Forecast (1 tool) — прогноз spend/clicks/conversions по dailyстатам кампании.
+	direct.RegisterForecastTools(s, direct.NewClient(logger), resolver)
+
 	// Yandex Wordstat (5 tools)
 	wordstat.RegisterTools(s, resolver, logger)
 
@@ -40,6 +44,11 @@ func NewServer(resolver *auth.AccountResolver, logger *slog.Logger, filterStore 
 	// Site filters — SQLite-backed landing URL builder (3 tools)
 	if filterStore != nil {
 		filters.RegisterTools(s, filterStore)
+	}
+
+	// Centralized change history — events + daily summaries (4 tools)
+	if historyStore != nil {
+		history.RegisterTools(s, historyStore)
 	}
 
 	return s

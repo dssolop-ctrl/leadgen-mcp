@@ -58,6 +58,55 @@
 - `update_autotargeting`: `true/false` → `YES/NO`
 - Расширены триггерные слова роутера для всех 3 веток
 
+### 16. Обратный инжиниринг yandex-performance-ops → leadgen (2026-04-20)
+
+Волна по мотивам анализа стороннего скилла `yandex-performance-ops`. 4 волны изменений.
+
+**W1. Переименование скилла**
+- `.claude/skills/etazhi-direct/` → `.claude/skills/leadgen/` (через `git mv`)
+- Обновлены ссылки: `SKILL.md` (frontmatter name + description), `README.md`, `METRIKA-ADS-RULES.md`
+- Создано:
+  - `.claude/skills/leadgen/references/lessons_registry.md` — реестр API-гочи (21 запись: `ads.add` vs `ads.get` по extensions, read-back после resume, `AVERAGE_CPA` без 10+ конв, batch-лимиты и др.)
+  - `.claude/skills/leadgen/references/copy_blacklist.md` — запрещённые слова в текстах (жёсткий + мягкий списки: WhatsApp, VPN, «официальный сайт», «без СМС», «гарантия», «№1» и т.д.)
+
+**W2. Процессный контур в SKILL.md**
+Новая сквозная секция «Процессный контур: режимы работы, валидация, отчётность»:
+- Session Modes (4 режима): `research` / `pre-apply-review` / `live-apply` / `post-apply-monitoring`. Agent называет режим в первом сообщении.
+- Validation Mesh: три чеклиста перед live-apply (domain / coverage / apply-safety).
+- Read-back отчёт после live-apply: было → сделал → стало, с read-back через `get_*`.
+- Output Contract: единая структура для аудита/оптимизации (scope / findings / proposed / applied / next steps).
+
+**W3. Централизованная история изменений (MCP)**
+- Новый модуль Go: `server/platform/history/{store.go,tools.go}` — SQLite-хранилище.
+- Две таблицы: `change_events` (append-only детальный лог критичных мутаций) + `daily_summaries` (одна запись на город на день, UPDATE в течение дня, INSERT на новый день).
+- Древовидный ключ: `agency_account → city_login → campaign_id → event`.
+- БД: `server/data/change_history.db` (в `.gitignore`).
+- 4 MCP-инструмента:
+  - `log_change_event` — записать критичное live-изменение (смена цели/стратегии, бюджет >30%, пауза/запуск)
+  - `get_change_history` — получить детальную историю с фильтрами (campaign / city / agency / date / correlation_key)
+  - `update_daily_summary` — обновить суточное саммари по городу (append/replace)
+  - `get_daily_summary` — получить недавние саммари по городу
+- Правила работы в SKILL.md секции «История изменений»: когда писать, когда читать перед правками.
+
+**W4. Дополнительные инструменты**
+- Wordstat L1→L2 waves: в разделе «Шаг 4. Сбор семантики» зафиксирован канонический порядок `ПРОДУКТ-МАПА → МАСКИ L1 → РЕВЬЮ → WAVE 1 → GAP → МАСКИ L2 → WAVE 2 → ВАЛИДАЦИЯ → КЛАСТЕРИЗАЦИЯ` и уровни масок L1-L4.
+- `.claude/skills/leadgen/scripts/check_copy.py` — Python-валидатор текстов против `copy_blacklist.md`. Работает с CLI-параметрами или TSV. Exit code: 0 (чисто) / 1 (hard) / 2 (soft).
+- `.claude/skills/leadgen/scripts/render_audit_report.py` — HTML-рендерер аудита с фиксированной версткой (шапка с KPI, badge-цвета для verdict, таблицы findings + proposals + applied + next_steps). Предсказуемый вид между запусками. Пример JSON-входа: `audit_example.json`.
+- `server/platform/direct/forecast.go` — новый MCP-инструмент `forecast_campaign(campaign_id, horizon_days)`. Горизонты 3/7/15/30/90 дней, 95% CI (z=1.96), сезонный множитель по месяцам, опциональный override. Готовит baseline из daily-статистики через Reports API.
+
+**Сборка и деплой**
+- Docker-образ пересобран, контейнер перезапущен (`docker compose build && docker compose up -d`)
+- Все 5 новых инструментов проверены через `test_tool.sh`:
+  - `log_change_event` — событие записано, id=1
+  - `update_daily_summary` — саммари создано на 2026-04-20
+  - `get_change_history` — возвращает events
+  - `get_daily_summary` — возвращает results
+  - `forecast_campaign` — компилируется (проверка в проде — на реальной кампании)
+
+**Итоги по инструментам MCP**
+- Было: ~150 инструментов. Стало: **~155** (+4 history + 1 forecast).
+- Новые таблицы SQLite: `change_events`, `daily_summaries` в `server/data/change_history.db`.
+
 ## Что НЕ сделано / на обсуждение
 - vCard/визитка — решено НЕ добавлять
 - Корректировки на мобильные — решено НЕ добавлять

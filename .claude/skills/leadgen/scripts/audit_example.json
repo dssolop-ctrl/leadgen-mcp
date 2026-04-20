@@ -1,0 +1,80 @@
+{
+  "campaign": {
+    "id": "89167235",
+    "name": "Поиск | Вторичка | Покупатель",
+    "city": "omsk"
+  },
+  "scope": {
+    "window": "2026-04-13..2026-04-20",
+    "attribution": "LYDC",
+    "campaigns": ["89167235"],
+    "adgroups": ["Нефтяники", "Левобережье", "Общая"],
+    "checks": ["SQR", "ключи", "минус-слова", "объявления", "ставки"],
+    "out_of_scope": ["Посадочная страница (не редактируется из Директа)", "Объявления в других кампаниях города"]
+  },
+  "kpis": {
+    "cpa": 820,
+    "cpa_threshold": 900,
+    "ctr": 8.2,
+    "conversions_7d": 12,
+    "cost_7d": 9840,
+    "clicks_7d": 156
+  },
+  "findings": [
+    {
+      "entity_type": "keyword",
+      "entity_id": "kw_123",
+      "entity_name": "скачать планировку",
+      "verdict": "waste",
+      "confidence": "high",
+      "evidence": "Cost 1240 ₽, 0 конверсий за 14 дней — инфо-интент"
+    },
+    {
+      "entity_type": "ad",
+      "entity_id": "ad_456",
+      "entity_name": "Объявление A (Нефтяники)",
+      "verdict": "opportunity",
+      "confidence": "medium",
+      "evidence": "CTR 12.4% vs 8.2% среднее по группе — можно расширить ядро на похожие районы"
+    },
+    {
+      "entity_type": "adgroup",
+      "entity_id": "ag_789",
+      "entity_name": "Общая",
+      "verdict": "attention",
+      "confidence": "high",
+      "evidence": "Доля расхода 43%, но 0 конверсий за 7 дней. Возможно размывает бюджет."
+    }
+  ],
+  "proposed_changes": [
+    {
+      "change_id": "c1",
+      "entity_type": "negative",
+      "entity_id": null,
+      "current": "нет",
+      "proposed": "Добавить 'скачать', 'бесплатно', 'планировка' в минус-слова кампании",
+      "reason": "8 кликов по инфо-запросам за 14 дней без единой конверсии",
+      "expected_effect": "1-3d",
+      "risk": "low",
+      "confidence": "high-confidence operational",
+      "approval_needed": false
+    },
+    {
+      "change_id": "c2",
+      "entity_type": "budget",
+      "entity_id": "89167235",
+      "current": "1000 ₽/нед",
+      "proposed": "1300 ₽/нед (+30%)",
+      "reason": "CPA стабильно ниже порога 3 недели подряд, есть запас",
+      "expected_effect": "7d+",
+      "risk": "medium — обучение может временно просесть",
+      "confidence": "medium-confidence optimization",
+      "approval_needed": true
+    }
+  ],
+  "next_steps": [
+    "Через 3 дня: проверить CPA и CTR по кампании после добавления минус-слов",
+    "Через 7 дней: сравнить cost-per-conversion до и после",
+    "Если одобрен апрув по бюджету — внести в четверг, не в понедельник"
+  ]
+}

@@ -11,6 +11,7 @@ import (
 	"github.com/leadgen-mcp/server/config"
 	mcpsetup "github.com/leadgen-mcp/server/mcp"
 	"github.com/leadgen-mcp/server/platform/filters"
+	"github.com/leadgen-mcp/server/platform/history"
 	"github.com/mark3labs/mcp-go/server"
 )
 
@@ -49,8 +50,18 @@ func main() {
 	defer filterStore.Close()
 	logger.Info("filters DB opened", "path", dbPath, "seed", exportPath)
 
+	// Open SQLite for centralized change history (events + daily summaries).
+	historyPath := dataDir + "/change_history.db"
+	historyStore, err := history.Open(historyPath)
+	if err != nil {
+		logger.Error("failed to open history DB", "path", historyPath, "error", err)
+		os.Exit(1)
+	}
+	defer historyStore.Close()
+	logger.Info("history DB opened", "path", historyPath)
+
 	// Create MCP server
-	mcpServer := mcpsetup.NewServer(resolver, logger, filterStore)
+	mcpServer := mcpsetup.NewServer(resolver, logger, filterStore, historyStore)
 
 	// Create SSE handler
 	sseHandler := server.NewSSEServer(mcpServer)

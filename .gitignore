@@ -13,6 +13,26 @@ server/data/filters.db-wal
 server/data/filters.db-journal
 server/data/filter_values.json.tmp
 
+# Change history DB is runtime state (per deployment).
+# Each environment accumulates its own history; no canonical seed.
+server/data/change_history.db
+server/data/change_history.db-shm
+server/data/change_history.db-wal
+server/data/change_history.db-journal
+
+# Secrets / local-only tokens.
+metrika-token.txt
+
+# Agent scratch.
+.claude/worktrees/
+
+# External material — third-party skill kept locally for reverse-engineering
+# reference; not shipped.
+yandex-performance-ops/
+
+# Python venv for excalidraw-diagram renderer (created by `uv sync`).
+.claude/skills/excalidraw-diagram/references/.venv/
+
 # Other AI agents (keep only .claude/)
 .agents/
 .cline/

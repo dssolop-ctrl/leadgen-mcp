@@ -33,7 +33,7 @@ API-путь: `BiddingStrategy.Search.PlacementTypes.DynamicPlaces = "NO"`
 - `Maps` — Яндекс.Карты
 - `SearchOrganizationList` — список организаций
 
-**Миграция старых кампаний:** см. подветку O3.10 в скилле `etazhi-direct`.
+**Миграция старых кампаний:** см. подветку O3.10 в скилле `leadgen`.
 
 ### Тип-специфичные FieldNames в Campaigns.get
 
