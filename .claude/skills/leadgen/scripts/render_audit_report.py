@@ -87,17 +87,19 @@ def render_findings(findings: list[dict]) -> str:
         c = f.get("confidence", "medium")
         rows.append(
             f"<tr>"
-            f"<td>{esc(f.get('entity_type'))}</td>"
-            f"<td>{esc(f.get('entity_name') or f.get('entity_id'))}</td>"
-            f"<td>{badge(v, VERDICT_COLOR.get(v, '#6b7280'))}</td>"
-            f"<td>{badge(c, CONFIDENCE_COLOR.get(c, '#6b7280'))}</td>"
-            f"<td>{esc(f.get('evidence'))}</td>"
+            f"<td class=\"c-narrow\">{esc(f.get('entity_type'))}</td>"
+            f"<td class=\"c-med\">{esc(f.get('entity_name') or f.get('entity_id'))}</td>"
+            f"<td class=\"c-narrow\">{badge(v, VERDICT_COLOR.get(v, '#6b7280'))}</td>"
+            f"<td class=\"c-narrow\">{badge(c, CONFIDENCE_COLOR.get(c, '#6b7280'))}</td>"
+            f"<td class=\"c-wide\">{esc(f.get('evidence'))}</td>"
             f"</tr>"
         )
     return (
-        "<table><thead><tr>"
-        "<th>тип</th><th>сущность</th><th>verdict</th><th>уверенность</th><th>evidence</th>"
-        "</tr></thead><tbody>" + "".join(rows) + "</tbody></table>"
+        "<div class=\"table-wrap\"><table class=\"t-findings\"><thead><tr>"
+        "<th class=\"c-narrow\">тип</th><th class=\"c-med\">сущность</th>"
+        "<th class=\"c-narrow\">verdict</th><th class=\"c-narrow\">уверенность</th>"
+        "<th class=\"c-wide\">evidence</th>"
+        "</tr></thead><tbody>" + "".join(rows) + "</tbody></table></div>"
     )
 
 
@@ -110,22 +112,25 @@ def render_proposals(changes: list[dict]) -> str:
         approval_color = "#d97706" if c.get("approval_needed") else "#16a34a"
         rows.append(
             f"<tr>"
-            f"<td><code>{esc(c.get('change_id'))}</code></td>"
-            f"<td>{esc(c.get('entity_type'))}<br><span class=\"muted\">{esc(c.get('entity_id'))}</span></td>"
-            f"<td>{esc(c.get('current'))}</td>"
-            f"<td><strong>{esc(c.get('proposed'))}</strong></td>"
-            f"<td>{esc(c.get('reason'))}</td>"
-            f"<td>{esc(c.get('expected_effect'))}</td>"
-            f"<td>{esc(c.get('risk'))}</td>"
-            f"<td>{badge(c.get('confidence', 'medium'), CONFIDENCE_COLOR.get(c.get('confidence', 'medium'), '#6b7280'))}</td>"
-            f"<td>{badge(approval, approval_color)}</td>"
+            f"<td class=\"c-id\"><code>{esc(c.get('change_id'))}</code></td>"
+            f"<td class=\"c-med\">{esc(c.get('entity_type'))}<br><span class=\"muted\">{esc(c.get('entity_id'))}</span></td>"
+            f"<td class=\"c-wide\">{esc(c.get('current'))}</td>"
+            f"<td class=\"c-wide\"><strong>{esc(c.get('proposed'))}</strong></td>"
+            f"<td class=\"c-wide\">{esc(c.get('reason'))}</td>"
+            f"<td class=\"c-narrow\">{esc(c.get('expected_effect'))}</td>"
+            f"<td class=\"c-med\">{esc(c.get('risk'))}</td>"
+            f"<td class=\"c-narrow\">{badge(c.get('confidence', 'medium'), CONFIDENCE_COLOR.get(c.get('confidence', 'medium'), '#6b7280'))}</td>"
+            f"<td class=\"c-narrow\">{badge(approval, approval_color)}</td>"
             f"</tr>"
         )
     return (
-        "<table><thead><tr>"
-        "<th>id</th><th>сущность</th><th>сейчас</th><th>предложено</th><th>почему</th>"
-        "<th>горизонт</th><th>риск</th><th>уверенность</th><th>согласие</th>"
-        "</tr></thead><tbody>" + "".join(rows) + "</tbody></table>"
+        "<div class=\"table-wrap\"><table class=\"t-proposals\"><thead><tr>"
+        "<th class=\"c-id\">id</th><th class=\"c-med\">сущность</th>"
+        "<th class=\"c-wide\">сейчас</th><th class=\"c-wide\">предложено</th>"
+        "<th class=\"c-wide\">почему</th><th class=\"c-narrow\">горизонт</th>"
+        "<th class=\"c-med\">риск</th><th class=\"c-narrow\">уверенность</th>"
+        "<th class=\"c-narrow\">согласие</th>"
+        "</tr></thead><tbody>" + "".join(rows) + "</tbody></table></div>"
     )
 
 
@@ -136,18 +141,20 @@ def render_applied(applied: list[dict]) -> str:
     for a in applied:
         rows.append(
             f"<tr>"
-            f"<td>{esc(a.get('tool_name'))}</td>"
-            f"<td>{esc(a.get('entity_type'))} {esc(a.get('entity_id'))}</td>"
-            f"<td>{esc(a.get('before_value'))}</td>"
-            f"<td><strong>{esc(a.get('after_value'))}</strong></td>"
-            f"<td>{esc(a.get('read_back_ok'))}</td>"
+            f"<td class=\"c-narrow\">{esc(a.get('tool_name'))}</td>"
+            f"<td class=\"c-med\">{esc(a.get('entity_type'))} {esc(a.get('entity_id'))}</td>"
+            f"<td class=\"c-wide\">{esc(a.get('before_value'))}</td>"
+            f"<td class=\"c-wide\"><strong>{esc(a.get('after_value'))}</strong></td>"
+            f"<td class=\"c-narrow\">{esc(a.get('read_back_ok'))}</td>"
             f"</tr>"
         )
     return (
         "<section><h2>Что сделано (live-apply)</h2>"
-        "<table><thead><tr>"
-        "<th>tool</th><th>сущность</th><th>было</th><th>стало</th><th>read-back</th>"
-        "</tr></thead><tbody>" + "".join(rows) + "</tbody></table></section>"
+        "<div class=\"table-wrap\"><table class=\"t-applied\"><thead><tr>"
+        "<th class=\"c-narrow\">tool</th><th class=\"c-med\">сущность</th>"
+        "<th class=\"c-wide\">было</th><th class=\"c-wide\">стало</th>"
+        "<th class=\"c-narrow\">read-back</th>"
+        "</tr></thead><tbody>" + "".join(rows) + "</tbody></table></div></section>"
     )
 
 
@@ -176,31 +183,47 @@ TEMPLATE = """<!DOCTYPE html>
 <title>Аудит кампании — {campaign_name}</title>
 <style>
   *{{box-sizing:border-box}}
+  html,body{{overflow-x:hidden}}
   body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-       max-width:1100px;margin:24px auto;padding:0 20px;color:#0f172a;background:#f8fafc;}}
+       max-width:1400px;margin:24px auto;padding:0 20px;color:#0f172a;background:#f8fafc;}}
   header{{border-bottom:2px solid #e2e8f0;padding-bottom:16px;margin-bottom:20px;}}
-  h1{{margin:0 0 8px;font-size:24px}}
+  h1{{margin:0 0 8px;font-size:24px;word-wrap:break-word;overflow-wrap:break-word}}
   h2{{margin-top:28px;font-size:18px;color:#1e293b;border-left:4px solid #2563eb;padding-left:12px}}
   .meta{{color:#64748b;font-size:14px}}
   .muted{{color:#94a3b8}}
   section{{background:white;padding:16px 20px;border-radius:8px;margin-bottom:16px;
-          border:1px solid #e2e8f0}}
+          border:1px solid #e2e8f0;overflow:hidden}}
   .kpis{{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
         gap:12px;margin-bottom:20px}}
   .kpi{{background:white;padding:14px 18px;border-radius:8px;border:1px solid #e2e8f0}}
   .kpi-label{{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px}}
   .kpi-value{{font-size:24px;font-weight:700;margin-top:4px}}
   .kpi-hint{{font-size:11px;color:#94a3b8;margin-top:2px}}
-  table{{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}}
+  .table-wrap{{overflow-x:auto;margin:8px -20px;padding:0 20px;
+              -webkit-overflow-scrolling:touch}}
+  table{{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px;
+         table-layout:fixed}}
   th{{background:#f1f5f9;text-align:left;padding:10px;border-bottom:2px solid #cbd5e1;
-      font-weight:600;color:#475569}}
-  td{{padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top}}
+      font-weight:600;color:#475569;word-wrap:break-word;overflow-wrap:break-word}}
+  td{{padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top;
+      word-wrap:break-word;overflow-wrap:break-word;word-break:normal;hyphens:auto}}
   tr:last-child td{{border-bottom:none}}
-  code{{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:13px}}
+  /* column width classes — table-layout:fixed использует первую строку для ширин */
+  .c-id{{width:52px}}
+  .c-narrow{{width:108px}}
+  .c-med{{width:170px}}
+  .c-wide{{width:auto}}
+  /* минимальная ширина таблиц — если экран узкий, table-wrap даст горизонтальный скролл */
+  .t-findings{{min-width:820px}}
+  .t-proposals{{min-width:1280px}}
+  .t-applied{{min-width:900px}}
+  code{{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:13px;
+        word-break:break-all}}
   ul{{margin:6px 0;padding-left:22px}}
   footer{{color:#94a3b8;font-size:12px;margin-top:20px;text-align:center}}
   .scope-chip{{display:inline-block;background:#e2e8f0;color:#475569;
-               padding:2px 8px;border-radius:10px;font-size:12px;margin:2px}}
+               padding:2px 8px;border-radius:10px;font-size:12px;margin:2px;
+               word-break:break-word}}
 </style>
 </head>
 <body>
