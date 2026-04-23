@@ -41,43 +41,76 @@ type cityConfig struct {
 	CounterID   string `json:"counter_id,omitempty"`
 	ClientLogin string `json:"client_login,omitempty"`
 	GeoRegionID string `json:"geo_region_id,omitempty"`
+	// Tier: "tier_1" (1M+ pop / federal), "tier_2" (300K-1M), "tier_3" (<300K).
+	// Used by get_conversion_values for network-fallback CPA selection.
+	Tier string `json:"tier,omitempty"`
 }
 
 var cities = map[string]cityConfig{
-	"тюмень":             {23, "www", "etagi.com", "942898", "porg-hftcfrrz", "55"},
-	"москва":             {155, "msk", "msk.etagi.com", "19308763", "porg-2w2kj6z6", "1"},
-	"санкт-петербург":    {242, "spb", "spb.etagi.com", "38553395", "porg-m3foz3ju", "2"},
-	"екатеринбург":       {45, "ekb", "ekb.etagi.com", "12032014", "porg-ntnwy7i7", "54"},
-	"новосибирск":        {135, "novosibirsk", "novosibirsk.etagi.com", "18476308", "porg-25knnffr", "65"},
-	"челябинск":          {91, "chel", "chel.etagi.com", "23226073", "porg-jcjf5iew", "56"},
-	"краснодар":          {223, "krasnodar", "krasnodar.etagi.com", "", "porg-hratjvxn", "35"},
-	"омск":               {85, "omsk", "omsk.etagi.com", "22325545", "porg-cyjuzztm", "66"},
-	"пермь":              {238, "perm", "perm.etagi.com", "25857344", "", "50"},
-	"самара":             {301, "samara", "samara.etagi.com", "24841433", "porg-7ho2evfz", "51"},
-	"сургут":             {74, "surgut", "surgut.etagi.com", "1868509", "porg-scxkyykb", "973"},
-	"ростов-на-дону":     {190, "rostov-na-donu", "rostov-na-donu.etagi.com", "39714890", "porg-653l43h7", "39"},
-	"нижний новгород":    {2832, "nn", "nn.etagi.com", "43505874", "porg-jcceglb3", "47"},
-	"казань":             {180, "kazan", "kazan.etagi.com", "", "porg-ljycd6no", "43"},
-	"красноярск":         {224, "kras", "kras.etagi.com", "", "porg-z5qhml3t", "62"},
-	"уфа":                {254, "ufa", "ufa.etagi.com", "", "porg-uvfvezxc", "5"},
-	"набережные челны":   {230, "chelny", "chelny.etagi.com", "31448038", "porg-kadk7de3", "236"},
-	"нижний тагил":       {147, "tagil", "tagil.etagi.com", "23226067", "porg-dfdfpb3d", "11171"},
-	"курган":             {151, "kurgan", "kurgan.etagi.com", "45771603", "porg-gwr73sm7", "53"},
-	"новый уренгой":      {86, "n-urengoy", "n-urengoy.etagi.com", "10984753", "porg-hvalirls", "103735"},
-	"тобольск":           {28, "tobolsk", "tobolsk.etagi.com", "16440742", "porg-aiahey2h", "11168"},
-	"ишим":               {27, "ishim", "ishim.etagi.com", "12031981", "porg-675e5ogx", "11169"},
-	"ханты-мансийск":     {47, "khm", "khm.etagi.com", "26209575", "porg-dgmcwugn", "572"},
-	"хабаровск":          {255, "khabarovsk", "khabarovsk.etagi.com", "", "porg-7gyixlh4", "76"},
-	"владивосток":        {211, "vl", "vl.etagi.com", "", "porg-vnsatkuz", "75"},
-	"тула":               {178, "tula", "tula.etagi.com", "", "porg-m6y7ddob", "15"},
-	"стерлитамак":        {246, "sterlitamak", "sterlitamak.etagi.com", "31447638", "", "11111"},
-	"тамбов":             {248, "tambov", "tambov.etagi.com", "56857531", "porg-4fm7mfgg", "13"},
-	"саранск":            {243, "saransk", "saransk.etagi.com", "69271498", "porg-vncz2b2b", "42"},
-	"нальчик":            {2592, "nalchik", "nalchik.etagi.com", "84576808", "porg-pbjdkab2", "11070"},
-	"якутск":             {258, "yakutsk", "yakutsk.etagi.com", "40955514", "porg-5bbyxu75", "74"},
-	"ялта":               {775, "yalta", "yalta.etagi.com", "49089640", "porg-uz5qwfj2", "11470"},
-	"дмитров":            {2040, "dmitrov", "dmitrov.etagi.com", "72200521", "porg-5sd57v7i", "10716"},
-	"обнинск":            {990, "obninsk", "obninsk.etagi.com", "84396994", "porg-t5zoyujy", "10857"},
+	"тюмень":             {23, "www", "etagi.com", "942898", "porg-hftcfrrz", "55", "tier_2"},
+	"москва":             {155, "msk", "msk.etagi.com", "19308763", "porg-2w2kj6z6", "1", "tier_1"},
+	"санкт-петербург":    {242, "spb", "spb.etagi.com", "38553395", "porg-m3foz3ju", "2", "tier_1"},
+	"екатеринбург":       {45, "ekb", "ekb.etagi.com", "12032014", "porg-ntnwy7i7", "54", "tier_1"},
+	"новосибирск":        {135, "novosibirsk", "novosibirsk.etagi.com", "18476308", "porg-25knnffr", "65", "tier_1"},
+	"челябинск":          {91, "chel", "chel.etagi.com", "23226073", "porg-jcjf5iew", "56", "tier_1"},
+	"краснодар":          {223, "krasnodar", "krasnodar.etagi.com", "", "porg-hratjvxn", "35", "tier_1"},
+	"омск":               {85, "omsk", "omsk.etagi.com", "22325545", "porg-cyjuzztm", "66", "tier_1"},
+	"пермь":              {238, "perm", "perm.etagi.com", "25857344", "", "50", "tier_1"},
+	"самара":             {301, "samara", "samara.etagi.com", "24841433", "porg-7ho2evfz", "51", "tier_1"},
+	"сургут":             {74, "surgut", "surgut.etagi.com", "1868509", "porg-scxkyykb", "973", "tier_2"},
+	"ростов-на-дону":     {190, "rostov-na-donu", "rostov-na-donu.etagi.com", "39714890", "porg-653l43h7", "39", "tier_1"},
+	"нижний новгород":    {2832, "nn", "nn.etagi.com", "43505874", "porg-jcceglb3", "47", "tier_1"},
+	"казань":             {180, "kazan", "kazan.etagi.com", "", "porg-ljycd6no", "43", "tier_1"},
+	"красноярск":         {224, "kras", "kras.etagi.com", "", "porg-z5qhml3t", "62", "tier_1"},
+	"уфа":                {254, "ufa", "ufa.etagi.com", "", "porg-uvfvezxc", "5", "tier_1"},
+	"набережные челны":   {230, "chelny", "chelny.etagi.com", "31448038", "porg-kadk7de3", "236", "tier_2"},
+	"нижний тагил":       {147, "tagil", "tagil.etagi.com", "23226067", "porg-dfdfpb3d", "11171", "tier_3"},
+	"курган":             {151, "kurgan", "kurgan.etagi.com", "45771603", "porg-gwr73sm7", "53", "tier_3"},
+	"новый уренгой":      {86, "n-urengoy", "n-urengoy.etagi.com", "10984753", "porg-hvalirls", "103735", "tier_3"},
+	"тобольск":           {28, "tobolsk", "tobolsk.etagi.com", "16440742", "porg-aiahey2h", "11168", "tier_3"},
+	"ишим":               {27, "ishim", "ishim.etagi.com", "12031981", "porg-675e5ogx", "11169", "tier_3"},
+	"ханты-мансийск":     {47, "khm", "khm.etagi.com", "26209575", "porg-dgmcwugn", "572", "tier_3"},
+	"хабаровск":          {255, "khabarovsk", "khabarovsk.etagi.com", "", "porg-7gyixlh4", "76", "tier_2"},
+	"владивосток":        {211, "vl", "vl.etagi.com", "", "porg-vnsatkuz", "75", "tier_2"},
+	"тула":               {178, "tula", "tula.etagi.com", "", "porg-m6y7ddob", "15", "tier_2"},
+	"стерлитамак":        {246, "sterlitamak", "sterlitamak.etagi.com", "31447638", "", "11111", "tier_3"},
+	"тамбов":             {248, "tambov", "tambov.etagi.com", "56857531", "porg-4fm7mfgg", "13", "tier_3"},
+	"саранск":            {243, "saransk", "saransk.etagi.com", "69271498", "porg-vncz2b2b", "42", "tier_3"},
+	"нальчик":            {2592, "nalchik", "nalchik.etagi.com", "84576808", "porg-pbjdkab2", "11070", "tier_3"},
+	"якутск":             {258, "yakutsk", "yakutsk.etagi.com", "40955514", "porg-5bbyxu75", "74", "tier_3"},
+	"ялта":               {775, "yalta", "yalta.etagi.com", "49089640", "porg-uz5qwfj2", "11470", "tier_3"},
+	"дмитров":            {2040, "dmitrov", "dmitrov.etagi.com", "72200521", "porg-5sd57v7i", "10716", "tier_3"},
+	"обнинск":            {990, "obninsk", "obninsk.etagi.com", "84396994", "porg-t5zoyujy", "10857", "tier_3"},
+}
+
+// TierForLogin looks up the tier for a given client_login (linear scan; called rarely).
+// Returns "tier_3" as conservative default if login is unknown.
+func TierForLogin(login string) string {
+	if login == "" {
+		return "tier_3"
+	}
+	for _, c := range cities {
+		if c.ClientLogin == login {
+			if c.Tier != "" {
+				return c.Tier
+			}
+			return "tier_3"
+		}
+	}
+	return "tier_3"
+}
+
+// CityNameForLogin returns the Russian city name for a given client_login, or "".
+func CityNameForLogin(login string) string {
+	if login == "" {
+		return ""
+	}
+	for name, c := range cities {
+		if c.ClientLogin == login {
+			return name
+		}
+	}
+	return ""
 }
 
 func registerGetCityConfig(s *mcpserver.MCPServer) {

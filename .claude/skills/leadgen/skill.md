@@ -220,7 +220,7 @@ Scope: кампания omsk_poisk_vtorichka_odnokomnatnye (id 89167235), окн
 
 1. **Город** — спроси если не указан
 2. **Конфигурация города** — вызови `get_city_config(city="<город>")` → вернёт client_login, counter_id, domain, geo_region_id
-3. **Цели и ценности** — вызови `get_conversion_values(client_login=<login>, counter_id=<id>)` → goal_id обеих целей + рекомендуемые value + priority_goals_json
+3. **Цели и ценности** — вызови `get_conversion_values(client_login=<login>, counter_id=<id>, theme="<тематика>")` → goal_id обеих целей + рекомендуемые value + priority_goals_json. **Всегда передавай `theme=`** для точного бенчмарка (vtorichka/novostroyki/zagorodka/ipoteka/arenda/commerce/agency/imidzh/hr).
 
 ### Принцип рассуждения
 
@@ -259,9 +259,16 @@ Scope: кампания omsk_poisk_vtorichka_odnokomnatnye (id 89167235), окн
 
 ```
 1. Вызови get_city_config(city="<город>") → counter_id, client_login, domain, geo_region_id
-2. Вызови get_conversion_values(client_login=<login>, counter_id=<id>)
+2. Вызови get_conversion_values(client_login=<login>, counter_id=<id>, theme="<тематика>")
+   → ВАЖНО: всегда передавай theme= совпадающий с тематикой создаваемой кампании
+     (vtorichka | novostroyki | zagorodka | ipoteka | arenda | commerce | agency | imidzh | hr).
+     Без theme получишь общий benchmark города, размытый по всем тематикам — это даст
+     неправильный value для стратегии (см. .claude/skills/leadgen/mcp/goals.md).
    → Вернёт: goal_id обеих целей + рекомендуемые value + готовый priority_goals JSON
    → Сохрани priority_goals_json для Шага 6
+   → Проверь confidence в выдаче: если "low" — данных мало (часто в малых городах),
+     priority_goals_json основан на heuristic 2× / network fallback. Это нормально для старта,
+     но имей в виду при анализе CPA в первые 2-3 недели.
 3. Загрузи config/campaign_naming.md → конвенция именования кампании
 4. Вызови get_utm_config(city="<город>", theme="<тематика>", placement="<тип>")
    → Вернёт готовый tracking_params для Шага 6
@@ -1443,7 +1450,7 @@ get_daily_summary(city_login="<login>", limit=7)
 |---|---|---|
 | `get_city_config(city)` | — | counter_id, client_login, domain, geo_region_id |
 | `get_utm_config(city, theme, placement)` | — | Готовый tracking_params с utm_content |
-| `get_conversion_values(client_login, counter_id)` | — | goal_id, value, priority_goals_json |
+| `get_conversion_values(client_login, counter_id, theme)` | — | goal_id, benchmark_*_cpa, target_*_cpa, statistics, breakdown_by_theme, trend_7d, priority_goals_json. **theme= обязателен для точного бенчмарка** |
 | `get_sitelink_templates(theme, city)` | — | Наборы быстрых ссылок с доменом города |
 | `get_semantic_cluster(theme)` | — | Модификаторы, объекты, минус-слова |
 | `get_blocked_placements()` | — | 400+ заблокированных площадок РСЯ |

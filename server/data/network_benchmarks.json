@@ -1,0 +1,58 @@
+{
+  "updated_at": "2026-04-23",
+  "source": "manual_seed_phase2",
+  "note": "Educated estimates based on real estate vertical knowledge. Will be replaced by Phase 4 cron-aggregated values from live campaigns across 70 cities.",
+  "tier_definitions": {
+    "tier_1": "Federal centers / 1M+ population (Moscow, SPb, regional capitals)",
+    "tier_2": "Regional cities 300K-1M (Tyumen, Surgut, Khabarovsk)",
+    "tier_3": "Smaller cities <300K (Tambov, Saransk, Yakutsk)"
+  },
+  "benchmarks": {
+    "vtorichka": {
+      "tier_1": {"form": 3500, "call": 1500},
+      "tier_2": {"form": 2500, "call": 1100},
+      "tier_3": {"form": 1800, "call": 800}
+    },
+    "novostroyki": {
+      "tier_1": {"form": 5000, "call": 2200},
+      "tier_2": {"form": 3500, "call": 1500},
+      "tier_3": {"form": 2500, "call": 1000}
+    },
+    "zagorodka": {
+      "tier_1": {"form": 4500, "call": 2000},
+      "tier_2": {"form": 3200, "call": 1400},
+      "tier_3": {"form": 2200, "call": 950}
+    },
+    "ipoteka": {
+      "tier_1": {"form": 3800, "call": 1700},
+      "tier_2": {"form": 2700, "call": 1200},
+      "tier_3": {"form": 2000, "call": 900}
+    },
+    "arenda": {
+      "tier_1": {"form": 2200, "call": 950},
+      "tier_2": {"form": 1600, "call": 700},
+      "tier_3": {"form": 1100, "call": 500}
+    },
+    "commerce": {
+      "tier_1": {"form": 6000, "call": 2700},
+      "tier_2": {"form": 4500, "call": 2000},
+      "tier_3": {"form": 3000, "call": 1300}
+    },
+    "agency": {
+      "tier_1": {"form": 2200, "call": 950},
+      "tier_2": {"form": 1700, "call": 750},
+      "tier_3": {"form": 1300, "call": 600}
+    },
+    "imidzh": {
+      "tier_1": {"form": 4500, "call": 2000},
+      "tier_2": {"form": 3200, "call": 1400},
+      "tier_3": {"form": 2200, "call": 950}
+    },
+    "hr": {
+      "tier_1": {"form": 1800, "call": 800},
+      "tier_2": {"form": 1300, "call": 600},
+      "tier_3": {"form": 900, "call": 400}
+    }
+  },
+  "default": {"form": 1500, "call": 3000}
+}

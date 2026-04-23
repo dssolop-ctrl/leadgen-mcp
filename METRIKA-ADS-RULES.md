@@ -317,6 +317,22 @@ priority_goals: [{"goal_id": 34275273, "value": 0}, {"goal_id": 500485089, "valu
 
 **Расчёт value:** используй `get_conversion_values(client_login, counter_id)` — он автоматически рассчитает ценности на основе реальных CPA по действующим кампаниям города. Если кампаний нет — вернёт средние по сети.
 
+С Phase 1+2+3 (2026-04-23) расчёт стал робастным и сегментируемым:
+- **Фильтр** кампаний по объёму (`min_conversions=5`, `min_clicks=100`, `min_cost=1000`) — отсекает шум
+- **Learning + модерация:** исключаются кампании <14 дней и с реальными «красными флагами» в `StatusClarification` (`отклон|закончил|запрещ|не принят|ошибк|приостановл`)
+- **Робастная статистика:** медиана + IQR-отсечка Тьюки при n ≥ 5; при n < 5 IQR пропускается
+- **Авто-релакс:** если фильтр отсёк всё → `min_conversions → 1` с `filter_relaxed=true`
+- **Confidence** (high/medium/low) на основе total_conv + included_count
+- **Benchmark vs target:** `benchmark_*_cpa` (факт) ≠ `target_*_cpa` (в стратегию). `target_form_cpa_override`/`target_call_cpa_override` для явного таргета.
+- **Theme сегментация (FR-4):** параметр `theme` (`vtorichka|novostroyki|zagorodka|ipoteka|arenda|commerce|agency|imidzh|hr`) → расчёт только по совпадающим кампаниям. Без `theme` → общий benchmark + `breakdown_by_theme`.
+- **Auto-window (FR-5):** старт 30d → 60/90d при <20 conv, 14d при >150 conv. Возвращает `actual_days_used`, `window_reason`.
+- **Network fallback (FR-8):** при отсутствии данных — lookup в `server/data/network_benchmarks.json` по `(theme, tier)`. Тиры в `cityConfig`.
+- **Cross-goal estimation:** при наличии данных только по одной цели — `2× call_cpa` или `0.5× form_cpa` (внутригородское соотношение, точнее network avg)
+- **Trend 7d (FR-9):** отдельный fetch за 7d, signal=`improving|stable|degrading|insufficient_data` (порог ±15%)
+- **Cost attribution (FR-1):** `cost_attribution: yandex_per_goal_cost_per_conversion | full_campaign_cost`. Yandex `CostPerConversion` фактически = `Cost/Conv` (не реальная атрибуция), но флаг сохранён для прозрачности.
+- **Backward compat:** `avg_form_cpa` / `avg_call_cpa` остаются weighted_mean по всем fetched кампаниям с конверсиями
+- Формат выдачи и описание полей: `.claude/skills/leadgen/mcp/goals.md`
+
 ---
 
 ## Изменения, влияющие на обучение — СОГЛАСОВАНИЕ ОБЯЗАТЕЛЬНО
