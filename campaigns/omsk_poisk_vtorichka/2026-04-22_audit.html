@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Аудит 706224151 — Омск | Поиск | Вторичка — 2026-04-22</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{overflow-x:hidden}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       max-width:1400px;margin:24px auto;padding:0 20px;color:#0f172a;background:#f8fafc;}
+  header{border-bottom:2px solid #e2e8f0;padding-bottom:16px;margin-bottom:20px;}
+  h1{margin:0 0 8px;font-size:24px}
+  h2{margin-top:28px;font-size:18px;color:#1e293b;border-left:4px solid #2563eb;padding-left:12px}
+  h3{margin-top:16px;font-size:15px;color:#334155}
+  .meta{color:#64748b;font-size:14px}
+  .muted{color:#94a3b8}
+  section{background:white;padding:16px 20px;border-radius:8px;margin-bottom:16px;
+          border:1px solid #e2e8f0;overflow:hidden}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+        gap:12px;margin-bottom:20px}
+  .kpi{background:white;padding:14px 18px;border-radius:8px;border:1px solid #e2e8f0}
+  .kpi-label{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px}
+  .kpi-value{font-size:24px;font-weight:700;margin-top:4px}
+  .kpi-hint{font-size:11px;color:#94a3b8;margin-top:2px}
+  .good{border-left:4px solid #16a34a}
+  .attention{border-left:4px solid #eab308}
+  .critical{border-left:4px solid #dc2626}
+  .info{border-left:4px solid #2563eb}
+  .table-wrap{overflow-x:auto;margin:8px -20px;padding:0 20px}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}
+  th{background:#f1f5f9;text-align:left;padding:10px;border-bottom:2px solid #cbd5e1;
+      font-weight:600;color:#475569}
+  td{padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:13px;word-break:break-all}
+  ul{margin:6px 0;padding-left:22px}
+  li{margin:3px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;text-transform:uppercase}
+  .t-critical{background:#fee2e2;color:#991b1b}
+  .t-attention{background:#fef3c7;color:#92400e}
+  .t-good{background:#dcfce7;color:#166534}
+  .t-waste{background:#fecaca;color:#7f1d1d}
+  .t-opportunity{background:#dbeafe;color:#1e40af}
+  .t-hypothesis{background:#e9d5ff;color:#6b21a8}
+  .scope-chip{display:inline-block;background:#e2e8f0;color:#475569;
+               padding:2px 8px;border-radius:10px;font-size:12px;margin:2px}
+  footer{color:#94a3b8;font-size:12px;margin-top:20px;text-align:center}
+  .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .note{background:#fef9c3;border-left:4px solid #eab308;padding:10px 14px;border-radius:4px;margin:8px 0;font-size:14px}
+  .bad{background:#fee2e2;border-left:4px solid #dc2626;padding:10px 14px;border-radius:4px;margin:8px 0;font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Аудит кампании — Омск | Поиск | Вторичка | [site]</h1>
+  <div class="meta">
+    ID <code>706224151</code> · город Омск · client_login <code>porg-cyjuzztm</code> · счётчик Метрики основной (22325545)<br>
+    Окно анализа: <b>2026-03-23 — 2026-04-21</b> (30 дней) · Атрибуция: Последний значимый переход из Директа (LYDC) · Режим: research · Отчёт сформирован 2026-04-22
+  </div>
+</header>
+
+<!-- СВОДКА -->
+<section>
+  <h2>Сводка</h2>
+  <p>
+    Кампания работает с 2026-01-12 (<span class="tag t-good">State: ON</span> · «Идут показы»). За 30 дней — 22 392 показа, 1 737 кликов, расход <b>31 461 ₽</b>, 18 конверсий (4 формы + 14 звонков), что даёт ≈ 4,5 конверсии/нед.
+  </p>
+  <p>
+    <b>CTR 7,76% — в норме для поиска</b>, но экономика кампании сломана: <b>форма CPA 7 865 ₽ при бенчмарке по городу 3 248 ₽</b> (×2,4 порога attention), <b>звонок CPA 2 247 ₽ при бенчмарке 1 404 ₽</b> (×1,6). Основные причины — структурная (1 ключ = 1 группа × 96, лимитирующая обучение стратегии), контентная (1 текст и 1 посадочная на всех) и недостаточно проработанные минус-слова.
+  </p>
+</section>
+
+<!-- KPIS -->
+<section>
+  <h2>Ключевые показатели (30 дней, LYDC)</h2>
+  <div class="kpis">
+    <div class="kpi good"><div class="kpi-label">CTR</div><div class="kpi-value">7,76%</div><div class="kpi-hint">GOOD (порог поиска &gt; 5%)</div></div>
+    <div class="kpi info"><div class="kpi-label">Показы</div><div class="kpi-value num">22 392</div><div class="kpi-hint">кликов 1 737</div></div>
+    <div class="kpi info"><div class="kpi-label">Расход</div><div class="kpi-value num">31 461 ₽</div><div class="kpi-hint">AvgCpc 18,11 ₽</div></div>
+    <div class="kpi critical"><div class="kpi-label">CPA форма</div><div class="kpi-value num">7 865 ₽</div><div class="kpi-hint">CRITICAL · бенчмарк 3 248 ₽</div></div>
+    <div class="kpi critical"><div class="kpi-label">CPA звонок</div><div class="kpi-value num">2 247 ₽</div><div class="kpi-hint">CRITICAL · бенчмарк 1 404 ₽</div></div>
+    <div class="kpi attention"><div class="kpi-label">Конверсий всего</div><div class="kpi-value">18</div><div class="kpi-hint">≈ 4,5/нед · для AVG_CPA нужно ≥ 10/нед</div></div>
+    <div class="kpi good"><div class="kpi-label">Отказы Директ</div><div class="kpi-value">15,27%</div><div class="kpi-hint">GOOD (&lt; 30%)</div></div>
+    <div class="kpi good"><div class="kpi-label">Глубина</div><div class="kpi-value">4,55</div><div class="kpi-hint">стр/визит — GOOD</div></div>
+    <div class="kpi good"><div class="kpi-label">Длительность (Метрика)</div><div class="kpi-value">7:22</div><div class="kpi-hint">мин — GOOD</div></div>
+    <div class="kpi info"><div class="kpi-label">Групп объявлений</div><div class="kpi-value">96</div><div class="kpi-hint">по 1 ключу в каждой</div></div>
+    <div class="kpi info"><div class="kpi-label">Объявлений</div><div class="kpi-value">192</div><div class="kpi-hint">по 2 варианта в группе</div></div>
+    <div class="kpi attention"><div class="kpi-label">Минус-слов кампании</div><div class="kpi-value">83</div><div class="kpi-hint">требуется ≥ 150</div></div>
+  </div>
+</section>
+
+<!-- КОНФИГ -->
+<section>
+  <h2>Конфигурация кампании</h2>
+  <table>
+    <tr><th style="width:260px">Параметр</th><th>Значение</th><th style="width:180px">Верда</th></tr>
+    <tr><td>Тип</td><td>Текстово-графическая (Поиск)</td><td><span class="tag t-good">ok</span></td></tr>
+    <tr><td>Стратегия — Поиск</td><td>Оплата за конверсии — «Максимум конверсий» (AVERAGE_CPA), цель «Коллтрекинг, реальный звонок» (500485089), целевой CPA 1 200 ₽, недельный бюджет 12 000 ₽, бюджет на эксперимент 8 400 ₽</td><td><span class="tag t-attention">attention</span></td></tr>
+    <tr><td>Стратегия — Сеть (РСЯ)</td><td>Показы отключены</td><td><span class="tag t-good">ok</span></td></tr>
+    <tr><td>Счётчики Метрики</td><td>22325545 (основной) · 58307905 (доп.)</td><td><span class="tag t-good">ok</span></td></tr>
+    <tr><td>PriorityGoals (ценности целей)</td><td>не заданы (<code>null</code>)</td><td><span class="tag t-attention">attention</span></td></tr>
+    <tr><td>TrackingParams (UTM-метки)</td><td>не заданы ни на кампании, ни на группах</td><td><span class="tag t-critical">critical</span></td></tr>
+    <tr><td>Расширенный геотаргетинг<br><code>ENABLE_AREA_OF_INTEREST_TARGETING</code></td><td><b>включён</b> (YES) — привлекает пользователей других регионов, ищущих «квартиру в Омске»</td><td><span class="tag t-critical">critical</span></td></tr>
+    <tr><td>Расширенный заголовок<br><code>ENABLE_EXTENDED_AD_TITLE</code></td><td>включён</td><td><span class="tag t-good">ok</span></td></tr>
+    <tr><td>Минус-слов на уровне кампании</td><td>83 шт.</td><td><span class="tag t-attention">attention</span></td></tr>
+  </table>
+  <div class="note">
+    <b>Примечание по стратегии.</b> «Максимум конверсий» требует ≥ 10 конверсий/нед для стабильного обучения. Фактически — 4,5/нед (18 за 30 дней). Алгоритм вынужденно работает в зоне exploration (бюджет на эксперимент 8 400 ₽ — 70% от недельного). Поэтому и CPC, и CPA плавают, несмотря на нормальный CTR.
+  </div>
+</section>
+
+<!-- СТРУКТУРА -->
+<section>
+  <h2>Структура групп и объявлений</h2>
+  <div class="bad">
+    <b>Главный структурный антипаттерн:</b> 96 групп объявлений, в каждой — ровно <b>1 целевая ключевая фраза</b> (и название группы = буквально ключ: «купить квартиру», «купить вторичную квартиру», «куплю часть квартиры», «этажи омск недвижимость купить квартиру вторичный рынок» и т. п.). Все 96 групп указывают на одну посадочную и используют один текст объявления.
+  </div>
+  <h3>Что это ломает</h3>
+  <ul>
+    <li><b>Автостратегия не обучается.</b> Каждая группа собирает слишком мало данных отдельно; при 4,5 конверсиях в неделю на всю кампанию статистика на группу = 0.</li>
+    <li><b>Дублирование семантики и каннибализация.</b> «купить квартиру», «купить квартиру в омске», «омск купить квартиру», «купить квартиру омск» — всё разные группы, конкурирующие на одних и тех же запросах.</li>
+    <li><b>Ставки одинаковые (300 ₽ в каждой группе)</b> — то есть назначение бида по группе не работает, хотя формально выставлено.</li>
+    <li><b>Нет гео-кластеров</b> (Нефтяники, Кировский, Левый берег), нет типологических (однушки/двушки/студии), нет ценовых — хотя Wordstat по запросам это всё показывает.</li>
+    <li><b>Названия групп — сырой output Wordstat</b> («купить квартиру в 19», «купить квартиру 50», «купить квартиру со», «купить квартиру плюс», «купить квартиру жилой», «мультистилинг купить квартиру омск» — это не семантические кластеры, это копипаст подсказок).</li>
+  </ul>
+  <h3>Объявления (по 2 на группу)</h3>
+  <ul>
+    <li><b>Текст объявления</b> (Text) — <b>один и тот же для всех 192 объявлений</b>: «Квартиры от 950 тыс. Бесплатное юридическое, ипотечное сопровождение! С нами надежно!»</li>
+    <li><b>Посадочная страница</b> — <b>одна для всех 192</b>: <code>https://omsk.etagi.com/realty/</code> (без фильтров по комнатности/району/цене).</li>
+    <li><b>Отображаемый URL</b> — одинаковый «Квартиры-Омск».</li>
+    <li><b>Набор быстрых ссылок</b> — единый (sitelink_set_id 1454044809) ✓.</li>
+    <li><b>Уточнения (callouts)</b> — <b>не привязаны ни к одному из 192 объявлений</b> (AdExtensions пустой). Это 10-20% потерянного CTR.</li>
+    <li><b>Title уникальных</b>: 49; <b>Title2 уникальных</b>: 16 — хоть какое-то разнообразие заголовков.</li>
+  </ul>
+  <h3>Ошибки в заголовках (выборка)</h3>
+  <table>
+    <tr><th>Title</th><th>Кол-во</th><th>Проблема</th></tr>
+    <tr><td>«Куппить вторичную квартиру»</td><td class="num">2</td><td>опечатка — двойное «п»</td></tr>
+    <tr><td>«Сроно купите квартиру?»</td><td class="num">2</td><td>опечатка «Сроно» + форма «купите» вместо «купить»</td></tr>
+    <tr><td>«Купить квартиру в 2020»</td><td class="num">2</td><td>устаревшая дата (сегодня 2026)</td></tr>
+    <tr><td>«Купить квартиру в 2020 году»</td><td class="num">2</td><td>то же</td></tr>
+    <tr><td>«Купить квартиру от хозяина»</td><td class="num">2</td><td>риск юрпроверки: для вторички «от хозяина/собственника» в deny-list (косвенное обещание работы без комиссии)</td></tr>
+    <tr><td>«Купить собственную квартиру»</td><td class="num">2</td><td>нечитаемая формулировка</td></tr>
+    <tr><td>«Купить собственную вторичку»</td><td class="num">2</td><td>то же</td></tr>
+  </table>
+</section>
+
+<!-- FINDINGS -->
+<section>
+  <h2>Findings</h2>
+  <div class="table-wrap">
+  <table>
+    <tr><th style="width:120px">Сущность</th><th style="width:140px">Verdict</th><th>Evidence</th><th style="width:110px">Confidence</th></tr>
+    <tr><td>Структура групп</td><td><span class="tag t-critical">critical</span></td><td>96 групп по 1 ключу — разрушает обучение автостратегии; равная ставка 300 ₽ во всех группах не управляет аукционом.</td><td>high</td></tr>
+    <tr><td>Текст объявлений</td><td><span class="tag t-critical">critical</span></td><td>1 Text на 192 объявления; 1 Href (<code>/realty/</code>) на все 96 групп — нет гео/комнатности в посадочной.</td><td>high</td></tr>
+    <tr><td>Уточнения (callouts)</td><td><span class="tag t-critical">critical</span></td><td>0/192 объявлений имеют AdExtensions. Потенциал CTR +10-20%.</td><td>high</td></tr>
+    <tr><td>Расширенный геотаргетинг</td><td><span class="tag t-critical">critical</span></td><td>ENABLE_AREA_OF_INTEREST_TARGETING=YES. В SQR — запросы из чужих регионов («купить квартиру в новосибирске», «в белоруссии», «в воронеже», «в казахстане», «на павелецкой» и т.д.), расходующие бюджет.</td><td>high</td></tr>
+    <tr><td>CPA (форма и звонок)</td><td><span class="tag t-critical">critical</span></td><td>Форма 7 865 ₽ (×2,4 бенчмарка), звонок 2 247 ₽ (×1,6 бенчмарка). CPA обеих целей выше порога critical.</td><td>high</td></tr>
+    <tr><td>Минус-слова</td><td><span class="tag t-attention">attention</span></td><td>83 шт. (требуется ≥ 150). В SQR — большой информационный/знаменитостный/ипотечно-льготный мусор без минусовки.</td><td>high</td></tr>
+    <tr><td>UTM-метки</td><td><span class="tag t-critical">critical</span></td><td>TrackingParams пустой и на кампании, и на группах. Метрика видит кампанию только по UTM-campaign=706224151 (из автометки Директа), но прочие измерения теряются.</td><td>high</td></tr>
+    <tr><td>Стратегия «Максимум конверсий»</td><td><span class="tag t-attention">attention</span></td><td>4,5 конверсии/нед — ниже порога устойчивой работы алгоритма (≥ 10). Формально стратегия уже на AVERAGE_CPA, но по факту не обучается.</td><td>high</td></tr>
+    <tr><td>Ошибки/опечатки в Title</td><td><span class="tag t-attention">attention</span></td><td>«Куппить», «Сроно», «Купить квартиру в 2020» — конкретные объявления найдены.</td><td>high</td></tr>
+    <tr><td>«Hazardous» запросы в deny-list юрпроверки</td><td><span class="tag t-attention">attention</span></td><td>«Купить квартиру от хозяина» на вторичке (косвенно нарушает правила агентской рекламы).</td><td>medium</td></tr>
+    <tr><td>Отказы и глубина</td><td><span class="tag t-good">ok</span></td><td>Отказы 15,3% (Директ) / 11% (Метрика), глубина 4,55, длительность 7:22 — посадочная работает, проблема в неправильном трафике, а не в сайте.</td><td>high</td></tr>
+    <tr><td>CTR 7,76%</td><td><span class="tag t-good">ok</span></td><td>Выше порога GOOD для поиска (&gt; 5%). Показывает, что креативы хотя бы не хуже конкурентов на поиске.</td><td>high</td></tr>
+    <tr><td>Бренд-трафик</td><td><span class="tag t-opportunity">opportunity</span></td><td>«этажи омск» (3/2/30,07 ₽), «агентство недвижимости этажи в омске» (1/1/21,17 ₽) — ловится в вторичке вместо бренд-кампании.</td><td>medium</td></tr>
+    <tr><td>Продавецкий трафик</td><td><span class="tag t-opportunity">opportunity</span></td><td>«продается квартира поселок светлый омск», «покупка квартиры с молотка» — запросы продавцов идут в покупательскую кампанию и не конвертят.</td><td>medium</td></tr>
+    <tr><td>Гео-спрос без гео-групп</td><td><span class="tag t-opportunity">opportunity</span></td><td>SQR содержит сотни запросов с районами (Нефтяники, Кировский, Ленинский, Советский, Левый берег, Амурский, Крутая горка, Солнечный и т.д.) — ни одного кластера под них.</td><td>high</td></tr>
+  </table>
+  </div>
+</section>
+
+<!-- WASTE -->
+<section>
+  <h2>Точки слива бюджета в SQR (30 дней)</h2>
+  <table>
+    <tr><th>Запрос</th><th style="width:90px">Показы</th><th style="width:70px">Клики</th><th style="width:100px">Расход ₽</th><th style="width:100px">CPC ₽</th><th>Комментарий</th></tr>
+    <tr><td>купить дешевое жилье в омске</td><td class="num">4</td><td class="num">2</td><td class="num">192,69</td><td class="num">96,35</td><td><span class="tag t-waste">waste</span> аномально дорогой CPC, 0 конверсий</td></tr>
+    <tr><td>риэлтор в омске купить квартиру</td><td class="num">1</td><td class="num">1</td><td class="num">85,94</td><td class="num">85,94</td><td>аномалия CPC, 1 звонок — перепроверить</td></tr>
+    <tr><td>продается квартира поселок светлый омск</td><td class="num">1</td><td class="num">1</td><td class="num">56,61</td><td class="num">56,61</td><td><span class="tag t-waste">waste</span> продавецкий интент</td></tr>
+    <tr><td>агентство недвижимости этажи в омске</td><td class="num">1</td><td class="num">1</td><td class="num">21,17</td><td class="num">21,17</td><td>бренд — переделать в бренд-кампанию</td></tr>
+    <tr><td>этажи омск</td><td class="num">3</td><td class="num">2</td><td class="num">30,07</td><td class="num">15,04</td><td>бренд</td></tr>
+    <tr><td>омск квартира купить</td><td class="num">2</td><td class="num">1</td><td class="num">19,23</td><td class="num">19,23</td><td>ок</td></tr>
+    <tr><td>старгород омск купить квартиру</td><td class="num">1</td><td class="num">1</td><td class="num">16,51</td><td class="num">16,51</td><td>посёлок/ЖК — можно вывести в отдельную группу</td></tr>
+    <tr><td colspan="6" class="muted">Итого по этим запросам: 422 ₽ (~1,3% бюджета), но они маркеры проблем — аналогичные запросы в хвосте SQR дают в сумме больше.</td></tr>
+  </table>
+  <h3>Категории мусорных запросов (без минусов)</h3>
+  <ul>
+    <li><b>Чужие города (расширенный геотаргетинг):</b> новосибирске, белоруссии/беларуси, казахстане, биробиджане, бийске, новокузнецке, воронеже, челябинске, абхазии, вьетнаме, сша, горно-алтайске, крестовском острове, ясной поляне, красногорске, видном, доброграде, костанае, харцызске, нови саде — <b>нет в минус-словах кампании</b>.</li>
+    <li><b>Знаменитости:</b> бузова, заворотнюк, гагарина, самойлова, мелстрой, краснов, седокова, комаров, муляр, чики пики.</li>
+    <li><b>Финансово-правовой ликбез:</b> вычет, 13 процентов, налог, возмещение, материнский капитал, задаток, трейд-ин, аккредитив, безопасный счёт, расписка, ДДУ риски.</li>
+    <li><b>Как-вопросы:</b> как купить, как оформить, как вернуть, как получить, как рассчитать, как сохранить.</li>
+    <li><b>Эзотерика/быт:</b> «кому молиться о покупке квартиры» (4 показа), «во сне к чему», «иголка с чёрной ниткой».</li>
+    <li><b>Продавецкий трафик:</b> продаётся/продать/как продается/не продается/квартира с молотка.</li>
+    <li><b>Сопутствующие товары:</b> «входные металлические двери в квартиру», «в омске купить бу пластиковые окна».</li>
+  </ul>
+</section>
+
+<!-- ТОП SQR -->
+<section>
+  <h2>Топ ключевых запросов (30 дней, сырые)</h2>
+  <table>
+    <tr><th>Запрос</th><th style="width:90px">Показы</th><th style="width:70px">Клики</th><th style="width:80px">CTR %</th><th style="width:100px">Расход ₽</th><th style="width:90px">CPC ₽</th></tr>
+    <tr><td>купить квартиру в омске</td><td class="num">591</td><td class="num">41</td><td class="num">6,94</td><td class="num">771,77</td><td class="num">18,82</td></tr>
+    <tr><td>омск купить квартиру</td><td class="num">252</td><td class="num">6</td><td class="num">2,38</td><td class="num">65,76</td><td class="num">10,96</td></tr>
+    <tr><td>купить квартиру омск</td><td class="num">86</td><td class="num">10</td><td class="num">11,63</td><td class="num">106,70</td><td class="num">10,67</td></tr>
+    <tr><td>квартиры в омске купить</td><td class="num">47</td><td class="num">7</td><td class="num">14,89</td><td class="num">64,90</td><td class="num">9,27</td></tr>
+    <tr><td>купить квартиру</td><td class="num">33</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">—</td></tr>
+    <tr><td>покупка квартиры в омске</td><td class="num">29</td><td class="num">3</td><td class="num">10,34</td><td class="num">6,61</td><td class="num">2,20</td></tr>
+    <tr><td>куплю квартиру в омске</td><td class="num">27</td><td class="num">5</td><td class="num">18,52</td><td class="num">60,66</td><td class="num">12,13</td></tr>
+    <tr><td>квартира в омске купить</td><td class="num">24</td><td class="num">4</td><td class="num">16,67</td><td class="num">28,62</td><td class="num">7,16</td></tr>
+    <tr><td>покупка квартиры омск</td><td class="num">14</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">—</td></tr>
+    <tr><td>купить жилье в омске</td><td class="num">8</td><td class="num">2</td><td class="num">25,00</td><td class="num">25,62</td><td class="num">12,81</td></tr>
+    <tr><td>омск куплю квартиру</td><td class="num">8</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">—</td></tr>
+    <tr><td>квартиры омск купить</td><td class="num">8</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">—</td></tr>
+    <tr><td>омск квартиры купить</td><td class="num">7</td><td class="num">1</td><td class="num">14,29</td><td class="num">9,96</td><td class="num">9,96</td></tr>
+    <tr><td>квартира омск купить</td><td class="num">7</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">—</td></tr>
+    <tr><td>купить двушку в омске первомайский район</td><td class="num">6</td><td class="num">2</td><td class="num">33,33</td><td class="num">10,93</td><td class="num">5,47</td></tr>
+    <tr><td>купить жилье в омске недорого свежие объявления</td><td class="num">6</td><td class="num">2</td><td class="num">33,33</td><td class="num">26,01</td><td class="num">13,01</td></tr>
+  </table>
+  <div class="note">
+    ~99% уникальных запросов (6 389 всего) — long tail с 1-2 показами (адресные запросы, ЖК, улицы). Это нормально для поиска, но подчёркивает: кампанию нужно <b>тематизировать по кластерам</b> (гео, типы, цены), а не копить отдельные группы под каждое сочетание слов.
+  </div>
+</section>
+
+<!-- PROPOSED CHANGES -->
+<section>
+  <h2>Предлагаемые изменения</h2>
+  <div class="table-wrap">
+  <table>
+    <tr>
+      <th style="width:40px">#</th>
+      <th style="width:160px">Сущность</th>
+      <th>Предложение</th>
+      <th style="width:100px">Горизонт</th>
+      <th style="width:110px">Confidence</th>
+      <th style="width:95px">Одобр.</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>Расширенный геотаргетинг</td>
+      <td>Выключить <code>ENABLE_AREA_OF_INTEREST_TARGETING</code> (поставить NO). Это отсечёт запросы «купить квартиру в новосибирске/белоруссии/воронеже» от омской кампании.</td>
+      <td>1-3 дня</td>
+      <td>high-confidence operational</td>
+      <td>не требуется</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Минус-слова</td>
+      <td>Добавить 80-100 минус-слов по категориям: чужие города (новосибирск, белоруссия, казахстан, воронеж, челябинск, биробиджан, бийск, новокузнецк, абхазия, вьетнам, сша, красногорск, видное, доброград, харцызск, нови сад, ясная поляна, крестовский, павелецкая); знаменитости (бузова, заворотнюк, гагарина, самойлова, мелстрой, краснов, седокова, комаров, муляр); информационные (вычет, 13, процентов, налог, возмещение, материнский, задаток, аккредитив, ДДУ, залог, обременение, трейд); эзотерика (молиться, сне); бытовые (двери, окна, стекло); продавецкие (продается, продать, продаю, с молотка). Довести общее число до ≥ 150.</td>
+      <td>1-3 дня</td>
+      <td>high-confidence operational</td>
+      <td>не требуется</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Уточнения</td>
+      <td>Создать 6-8 уточнений (callouts) по списку для вторички (без «без комиссии», «от собственника» — они в deny-list): «Бесплатный подбор», «Безопасные сделки», «Юристы в штате», «Работаем 14 лет», «База 10 000+ объектов», «Ипотека 70+ банков». Привязать ко всем 192 объявлениям через <code>update_ad(ad_extension_ids=…)</code>.</td>
+      <td>1-3 дня</td>
+      <td>high-confidence operational</td>
+      <td>не требуется</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>UTM-метки</td>
+      <td>Поставить <code>tracking_params</code> на уровне кампании (из <code>get_utm_config</code>) для корректной атрибуции по источнику/группе в Метрике.</td>
+      <td>1-3 дня</td>
+      <td>high-confidence operational</td>
+      <td>да — меняется атрибуция</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Опечатки и устаревшие заголовки</td>
+      <td>Исправить или заменить 14 объявлений: «Куппить» (2), «Сроно купите» (2), «Купить квартиру в 2020» (2), «Купить квартиру в 2020 году» (2), «Купить собственную квартиру/вторичку» (4), «Купить квартиру от хозяина» (2 — заменить по юрпроверке).</td>
+      <td>intraday</td>
+      <td>high-confidence operational</td>
+      <td>не требуется</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>Структура (крупная перестройка)</td>
+      <td>Пересобрать кампанию в 8-12 семантических кластеров вместо 96 пословных групп: <br>• Общий купительский <br>• Гео — Нефтяники / Кировский / Ленинский / Советский / Левый берег / Амурский / Крутая горка / Солнечный <br>• Ценовой (недорого, до N млн) <br>• Финансовый (ипотека, рассрочка, маткапитал) <br>• Условия (с ремонтом, с отделкой, студия, комната) <br>• Бренд (этажи, агентство этажи) — вынести в отдельную бренд-кампанию <br>Каждый кластер — отдельная группа с собственным Title, Text, Href с фильтрами через <code>build_landing_url</code>.</td>
+      <td>7+ дней</td>
+      <td>medium-confidence optimization</td>
+      <td>да — крупная реструктуризация</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>Посадочные URL</td>
+      <td>Для гео-кластеров — посадочная с фильтром района через <code>build_landing_url(city="omsk", theme="vtorichka", district=…)</code>. Для ценовых — с фильтром цены. Сейчас все ведут на базовый <code>/realty/</code>.</td>
+      <td>1-3 дня</td>
+      <td>high-confidence operational</td>
+      <td>да — меняет URL объявлений</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>Стратегия (после набора конверсий)</td>
+      <td>Сейчас стратегия <b>AVERAGE_CPA 1 200 ₽</b> при фактической 2 247 ₽ — стратегия недостижимая для алгоритма. Варианты: (а) поднять целевой CPA до 1 700-1 800 ₽ и посмотреть, как отработает за 2 недели; (б) если после п. 1-5 CPA упадёт к бенчмарку — оставить 1 200; (в) временно переключить на WB_MAXIMUM_CONVERSION_RATE (без целевого CPA) до накопления 10+ конверсий/нед.</td>
+      <td>7+ дней</td>
+      <td>hypothesis-only</td>
+      <td>да — смена стратегии</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>PriorityGoals</td>
+      <td>Задать <code>priority_goals_json</code> из <code>get_conversion_values</code>: форма 3 248 ₽, звонок 1 404 ₽. Это даст алгоритму понять относительную ценность двух целей.</td>
+      <td>1-3 дня</td>
+      <td>high-confidence operational</td>
+      <td>да — меняется сигнал цели</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>Бренд-сплит</td>
+      <td>Вынести бренд-запросы («этажи омск», «агентство недвижимости этажи» и варианты) в отдельную бренд-кампанию с более низкой ставкой и минусовать их в текущей.</td>
+      <td>7+ дней</td>
+      <td>medium-confidence optimization</td>
+      <td>да — новая кампания</td>
+    </tr>
+  </table>
+  </div>
+</section>
+
+<!-- NEXT STEPS -->
+<section>
+  <h2>Следующие шаги</h2>
+  <ol>
+    <li><b>Быстрые правки (intraday - 3 дня).</b> Выключить расширенный геотаргетинг (п. 1), расширить минус-слова до ≥ 150 (п. 2), привязать уточнения ко всем объявлениям (п. 3), поставить UTM на кампанию (п. 4), исправить опечатки и запрещённые формулировки (п. 5). Все — без согласования, кроме UTM (атрибуция) и п. 5 по юрпроверке.</li>
+    <li><b>Средний горизонт (1-2 недели).</b> Задать PriorityGoals (п. 9), поменять посадочные для существующих групп на фильтрованные через <code>build_landing_url</code> (п. 7). Провести read-back через 3 дня.</li>
+    <li><b>Крупная реструктуризация (с подтверждением).</b> Перестройка в 8-12 кластеров (п. 6), бренд-сплит (п. 10), пересмотр стратегии (п. 8). Лучше в чт-пт, после 2 недель наблюдения за эффектом мелких правок.</li>
+    <li><b>Триггеры для реакции.</b> Если после п. 1-5 через 7 дней CPA звонка опустится ниже 1 800 ₽ — п. 8 не требуется. Если вырастет или останется — пересматривать стратегию и структуру.</li>
+    <li><b>Монитор-окно.</b> Следующий аудит — через 7 дней (2026-04-29) после применения п. 1-5 и п. 9.</li>
+  </ol>
+</section>
+
+<footer>
+  Режим анализа: research · Мутирующих операций не выполнено · Источники: Яндекс Директ API (get_campaigns, get_campaign_stats, get_ads, get_adgroups, get_keywords, get_search_queries), Яндекс Метрика (metrika_get_direct_report), история изменений (get_change_history — пусто) · Сформировано 2026-04-22
+</footer>
+</body>
+</html>

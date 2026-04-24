@@ -51,3 +51,9 @@ leadgen-mcp-linux
 # Contains helper scripts with API tokens + large PNG/JSON payloads.
 # Folder is mapped into the container at /app/previews (see docker-compose.yml).
 docs/campaign_previews/
+
+# Personal Claude Code permissions (per-clone).
+.claude/settings.local.json
+
+# Rendered exports from excalidraw files — source .excalidraw is canonical.
+docs/*.png

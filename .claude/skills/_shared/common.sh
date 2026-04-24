@@ -7,9 +7,22 @@ set -euo pipefail
 # ─── Пути ──────────────────────────────────────────────
 
 SKILLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROJECT_ROOT="$(cd "$SKILLS_DIR/../../.." && pwd)"
+PROJECT_ROOT="$(cd "$SKILLS_DIR/../.." && pwd)"
 CACHE_DIR="${PROJECT_ROOT}/.cache/skills"
-CACHE_TTL=21600  # 6 часов в секундах
+CACHE_TTL=86400  # 24 часа в секундах
+
+# Детект рабочего python (на Windows `python3` — это Store-заглушка)
+if command -v python3 >/dev/null 2>&1 && python3 -c "import sys" >/dev/null 2>&1; then
+  PYTHON_BIN=python3
+elif command -v python >/dev/null 2>&1 && python -c "import sys" >/dev/null 2>&1; then
+  PYTHON_BIN=python
+else
+  echo "ERROR: Python 3 не найден в PATH. Установи python3." >&2
+  exit 1
+fi
+export PYTHON_BIN
+# На Windows Python по умолчанию cp1251 — заставляем UTF-8 для stdin/stdout
+export PYTHONIOENCODING=utf-8
 
 # ─── Конфиг ────────────────────────────────────────────
 
@@ -35,7 +48,7 @@ get_project_value() {
     echo "" # пустая строка если файла нет
     return 0
   fi
-  python3 "${SKILLS_DIR}/_shared/json_helpers.py" extract_project_value "$key" < "$projects_file" 2>/dev/null || echo ""
+  "$PYTHON_BIN" "${SKILLS_DIR}/_shared/json_helpers.py" extract_project_value "$key" < "$projects_file" 2>/dev/null || echo ""
 }
 
 # ─── HTTP ──────────────────────────────────────────────
@@ -100,6 +113,7 @@ http_get() {
 
 # HTTP POST с JSON-телом
 # Использование: http_post URL JSON_BODY [HEADER...]
+# Пишем JSON во временный файл: иначе Windows-шелл портит UTF-8 в `-d "$json"`.
 http_post() {
   local url="$1"; shift
   local json_body="$1"; shift
@@ -107,7 +121,12 @@ http_post() {
   local max_retries=3
   local retry_delay=5
 
-  local curl_args=(-s -S --max-time 30 -X POST -H "Content-Type: application/json" -d "$json_body")
+  local body_file
+  body_file=$(mktemp)
+  printf '%s' "$json_body" > "$body_file"
+  trap 'rm -f "$body_file"' RETURN
+
+  local curl_args=(-s -S --max-time 30 -X POST -H "Content-Type: application/json; charset=utf-8" --data-binary "@$body_file")
   for h in "${headers[@]}"; do
     curl_args+=(-H "$h")
   done
@@ -229,7 +248,7 @@ cached_get() {
 
 # Форматирование через json_helpers.py
 json_format() {
-  python3 "${SKILLS_DIR}/_shared/json_helpers.py" "$@"
+  "$PYTHON_BIN" "${SKILLS_DIR}/_shared/json_helpers.py" "$@"
 }
 
 # Парсинг даты: "7d" → дата 7 дней назад, "2025-01-01" → как есть

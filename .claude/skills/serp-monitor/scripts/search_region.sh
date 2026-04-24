@@ -24,7 +24,7 @@ done
 
 # ─── Справочник регионов ─────────────────────────────
 
-python3 -c "
+"$PYTHON_BIN" -c "
 import sys
 
 regions = [
@@ -32,12 +32,13 @@ regions = [
     ('2', 'Санкт-Петербург'),
     ('54', 'Екатеринбург'),
     ('43', 'Казань'),
-    ('66', 'Нижний Новгород'),
-    ('56', 'Новосибирск'),
+    ('47', 'Нижний Новгород'),
+    ('65', 'Новосибирск'),
     ('35', 'Краснодар'),
-    ('37', 'Ростов-на-Дону'),
-    ('47', 'Красноярск'),
-    ('65', 'Самара'),
+    ('39', 'Ростов-на-Дону'),
+    ('62', 'Красноярск'),
+    ('51', 'Самара'),
+    ('66', 'Омск'),
     ('172', 'Уфа'),
     ('159', 'Казахстан'),
     ('149', 'Беларусь'),
@@ -59,7 +60,7 @@ else:
 
 if not filtered:
     print(f'Регион \"{search}\" не найден в справочнике.')
-    print('Полный список кодов: https://yandex.ru/dev/xml/doc/dg/reference/regions.html')
+    print('Полный список кодов: https://yandex.cloud/ru/docs/search-api/concepts/regions')
     sys.exit(0)
 
 print('## Коды регионов Яндекса (lr)')
@@ -72,5 +73,5 @@ for lr, name in filtered:
 print()
 print('Использование: \`search.sh --query \"запрос\" --region 213\`')
 print()
-print('Полный список: https://yandex.ru/dev/xml/doc/dg/reference/regions.html')
+print('Полный список: https://yandex.cloud/ru/docs/search-api/concepts/regions')
 "

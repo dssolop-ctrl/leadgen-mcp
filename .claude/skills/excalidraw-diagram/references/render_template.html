@@ -13,7 +13,8 @@
   <div id="root"></div>
 
   <script type="module">
-    import { exportToSvg } from "https://esm.sh/@excalidraw/excalidraw?bundle";
+    const mod = await import("https://esm.sh/@excalidraw/excalidraw@0.17.6?bundle");
+    const exportToSvg = mod.exportToSvg || (mod.default && mod.default.exportToSvg);
 
     window.renderDiagram = async function(jsonData) {
       try {

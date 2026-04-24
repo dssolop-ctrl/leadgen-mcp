@@ -165,7 +165,7 @@ func registerGetCityConfig(s *mcpserver.MCPServer) {
 		if len(matches) > 0 {
 			return common.TextResult(fmt.Sprintf("Город '%s' не найден. Похожие: %s", cityName, strings.Join(matches, ", "))), nil
 		}
-		return common.TextResult(fmt.Sprintf("Город '%s' не найден. Используй get_city_config() без параметров для списка всех городов.")), nil
+		return common.TextResult(fmt.Sprintf("Город '%s' не найден. Используй get_city_config() без параметров для списка всех городов.", cityName)), nil
 	})
 }
 

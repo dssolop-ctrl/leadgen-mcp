@@ -1,0 +1,318 @@
+{
+  "campaign": {
+    "id": "709079826",
+    "name": "Омск | Поиск | Вторичка | Двухкомнатные | [site]",
+    "city": "omsk"
+  },
+  "scope": {
+    "window": "pre-launch аудит 2026-04-20 (кампания в DRAFT, не запускалась)",
+    "attribution": "LYDC (будет применяться после запуска)",
+    "campaigns": ["709079826"],
+    "adgroups": ["Общий (23 ключа)", "Нефтяники (3)", "Московка (5)", "Левый берег (4)", "Недорого (6)"],
+    "checks": [
+      "структура кампании",
+      "стратегия/бюджет/PlacementTypes",
+      "заголовки/тексты объявлений",
+      "sitelinks (набор 1471565740)",
+      "уточнения (6 callout)",
+      "минус-слова (38)",
+      "посадочные URL",
+      "DisplayUrlPath",
+      "UTM / TrackingParams",
+      "автотаргетинг",
+      "семантическое покрытие (41 ключ)",
+      "бенчмарк с кампанией 706224151"
+    ],
+    "out_of_scope": [
+      "Реальная эффективность — кампания в DRAFT, 0 показов и расхода",
+      "Site filters для Московки и Левого берега — нет в БД, посадочные уйдут на базовую /realty/?rooms[]=2 (осознанно)",
+      "Расширение семантики новыми интент-кластерами (ипотека / бренд / каталог / ценовые лимиты) — это Wave 3 после 7-14 дней боевой работы",
+      "Смена priority_goals / goal_id — ценности уже заданы рядом с рекомендованными (3156/1394 ₽)",
+      "Расписание показов, корректировки по устройствам/демографии"
+    ]
+  },
+  "findings": [
+    {
+      "entity_type": "campaign",
+      "entity_id": "709079826",
+      "entity_name": "бюджет: DailyBudget=null, WeeklySpendLimit=10 000 ₽/нед",
+      "verdict": "critical",
+      "confidence": "high",
+      "evidence": "Бюджет в микро=10 000 000 000 → 10 000 ₽/нед. Для 5 кластеров / 14 объявлений мало. Бенчмарк 706224151 тратит ~6 300 ₽/нед и показывает 16 конверсий/мес при высоком CPA (форма 6778 > цель 3107)."
+    },
+    {
+      "entity_type": "ads × 3",
+      "entity_id": "17689923274, 17689923342, 17689923445",
+      "entity_name": "Title2 \"Проверенные собственники\"",
+      "verdict": "critical",
+      "confidence": "high",
+      "evidence": "Запрет для тематики Вторичка (library/extensions.md + LEGAL.md): формулировки про «собственников/без посредников» недопустимы для агентских объявлений."
+    },
+    {
+      "entity_type": "ads × 5",
+      "entity_id": "17689923444, 17689923445, 17689923446, 17689923649, 17689923342",
+      "entity_name": "Title1 без объекта «квартиру»",
+      "verdict": "critical",
+      "confidence": "high",
+      "evidence": "Антипаттерн из library/titles.md: «2-комнатные — Нефтяники, Омск», «Двушки на Московке, Омск», «2-комнатные Московка Омск», «2-комнатная в Омске — Выгодно», «Двухкомнатные в Нефтяниках» — типологический Title1 требует объектного слова («квартиру»)."
+    },
+    {
+      "entity_type": "ad",
+      "entity_id": "17689923614",
+      "entity_name": "Title1 \"2-к Квартиры Левый Берег Омск\"",
+      "verdict": "critical",
+      "confidence": "high",
+      "evidence": "Сокращение «2-к» — запрещено правилом (library/titles.md). Норма: «2-комнатную квартиру на Левом берегу, Омск»."
+    },
+    {
+      "entity_type": "ad_extension",
+      "entity_id": "42496157",
+      "entity_name": "Уточнение \"Ипотека от 5.5%\"",
+      "verdict": "critical",
+      "confidence": "high",
+      "evidence": "На 2026-04-20 базовая ключевая ставка РФ ~20%+. «От 5.5%» допустимо только в спец-программах (семейная, IT, льготная под определённые условия). Общая формулировка вводит в заблуждение → риск модерации и юр.претензий."
+    },
+    {
+      "entity_type": "sitelink_set",
+      "entity_id": "1471565740",
+      "entity_name": "Ссылка «Со скидками» — битый URL",
+      "verdict": "critical",
+      "confidence": "high",
+      "evidence": "Href=\"https://omsk.etagi.com/realty/dvuhkomnatnye-kvartiry/?old_price_min=price\" — литеральная строка «price» вместо числа. Фильтр не сработает, посадочная вернётся к базовой выдаче."
+    },
+    {
+      "entity_type": "campaign.negative_keywords",
+      "entity_id": "709079826",
+      "entity_name": "38 минус-слов (цель ≥150)",
+      "verdict": "critical",
+      "confidence": "high",
+      "evidence": "Список: аренда/сдача, info-шт 10 слов, несколько competitors (авито, циан, домклик). Нет блока «Чужие города РФ» (Новосибирск, Тюмень, Москва и т.д.), нет расширенного info-блока, мало competitor-ов. Шаблон mcp/negative_keywords.md требует ≥150."
+    },
+    {
+      "entity_type": "ads × 14",
+      "entity_id": "все объявления кампании",
+      "entity_name": "DisplayUrlPath=null",
+      "verdict": "attention",
+      "confidence": "high",
+      "evidence": "Отображаемый путь не заполнен ни у одного объявления. По опыту — минус 15-20% CTR относительно заполненного."
+    },
+    {
+      "entity_type": "campaign/adgroups",
+      "entity_id": "709079826",
+      "entity_name": "UTM на уровне групп, не кампании (старая схема)",
+      "verdict": "attention",
+      "confidence": "high",
+      "evidence": "campaign.TrackingParams=null, у всех 5 групп tracking_params заполнен одинаковым UTM. Подветка O3.9 — миграция на кампанию (одно место редактирования)."
+    },
+    {
+      "entity_type": "ads × 3 (группа Нефтяники)",
+      "entity_id": "17689923342, 17689923343, 17689923444",
+      "entity_name": "Href без district-фильтра, хотя район в БД",
+      "verdict": "attention",
+      "confidence": "high",
+      "evidence": "Href=https://omsk.etagi.com/realty/dvuhkomnatnye-kvartiry/ — базовая страница. В БД фильтров site_filters есть Нефтяники (district_id=82206). Должно быть https://omsk.etagi.com/realty/?district_id[]=82206&rooms[]=2"
+    },
+    {
+      "entity_type": "cluster structure",
+      "entity_id": "709079826",
+      "entity_name": "Отсутствуют интент-кластеры",
+      "verdict": "opportunity",
+      "confidence": "medium",
+      "evidence": "Нет: ипотека/финансовый (основной драйвер конверсий по бенчмарку), каталог («варианты», «база»), бренд-интент («этажи» — 2 ключа в Общем), ценовые лимиты («за 3 млн», «за 2 млн»). Бенчмарк 706224151 имеет эти кластеры."
+    },
+    {
+      "entity_type": "adgroup",
+      "entity_id": "5742666820",
+      "entity_name": "Общий — раздут (23 ключа)",
+      "verdict": "attention",
+      "confidence": "medium",
+      "evidence": "В группе смесь интентов + 2 бренд-ключа («двухкомнатная квартира омск этажи», «купить квартиру в омске 2 комнатную этажи»), которые стоит вынести в отдельный бренд-кластер."
+    },
+    {
+      "entity_type": "adgroups × 3",
+      "entity_id": "5742666834, 5742666835, 5742666840",
+      "entity_name": "Нефтяники/Московка/Левый берег — 3-6 ключей",
+      "verdict": "opportunity",
+      "confidence": "medium",
+      "evidence": "Мало для масштабирования. Нужен check_search_volume с SearchedWith для каждого кластера — добрать long-tail вариации."
+    },
+    {
+      "entity_type": "campaign.BiddingStrategy.BidCeiling",
+      "entity_id": "709079826",
+      "entity_name": "BidCeiling=null",
+      "verdict": "attention",
+      "confidence": "medium",
+      "evidence": "Потолок ставки не задан. При WB_MAXIMUM_CONVERSION_RATE без потолка на старте возможны аукционные пики. В действующей Вторичке Омска средний CPC ~14-15 ₽ — рекомендуемый потолок 150 ₽."
+    },
+    {
+      "entity_type": "campaign.PlacementTypes.DynamicPlaces",
+      "entity_id": "709079826",
+      "entity_name": "Динамические места показа — не подтверждено OFF",
+      "verdict": "attention",
+      "confidence": "hypothesis-only",
+      "evidence": "В ответе API поле не видно (ожидалось в TextCampaign.BiddingStrategy.Search.PlacementTypes). Вероятно default=YES. Договорённость с SEO — всегда NO. При запуске передать disable_dynamic_places=true."
+    },
+    {
+      "entity_type": "adgroups × 5 — autotargeting categories",
+      "entity_id": "5742666820, 5742666834, 5742666835, 5742666840, 5742666841",
+      "entity_name": "Категории автотаргетинга не подтверждены",
+      "verdict": "attention",
+      "confidence": "hypothesis-only",
+      "evidence": "API вернул записи ---autotargeting в статусе ON/ACCEPTED, но флаги EXACT/ALTERNATIVE/BROADER/ACCESSORY/COMPETITOR не видны. Принудительно выставить: EXACT=YES, ALTERNATIVE=YES, остальные=NO."
+    }
+  ],
+  "proposed_changes": [
+    {
+      "change_id": "C1",
+      "entity_type": "campaign",
+      "entity_id": "709079826",
+      "current": "weekly=10 000 ₽, DynamicPlaces не выставлен, campaign.TrackingParams=null",
+      "proposed": "update_campaign(weekly_spend_limit=<15 000-20 000 ₽ — нужно решение>, disable_dynamic_places=true, tracking_params=<единый UTM из get_utm_config>)",
+      "reason": "Стартовый бюджет под 5 кластеров; договорённость SEO по DynamicPlaces=NO; миграция UTM на уровень кампании (O3.9)",
+      "expected_effect": "intraday",
+      "risk": "смена бюджета влияет на обучение WB_MAX — делать до resume_campaign",
+      "confidence": "high-confidence operational",
+      "approval_needed": true
+    },
+    {
+      "change_id": "C2",
+      "entity_type": "adgroup × 5",
+      "entity_id": "5742666820, 5742666834, 5742666835, 5742666840, 5742666841",
+      "current": "TrackingParams заполнен одинаковым UTM на каждой группе",
+      "proposed": "update_adgroup(clear_tracking_params=true) × 5 — после C1",
+      "reason": "Миграция UTM на уровень кампании (O3.9) — одно место редактирования",
+      "expected_effect": "intraday",
+      "risk": "Атрибуция не ломается — UTM рендерится при клике, ЛОГИ не переписываются",
+      "confidence": "high-confidence operational",
+      "approval_needed": false
+    },
+    {
+      "change_id": "C3",
+      "entity_type": "autotargeting × 5",
+      "entity_id": "все 5 групп",
+      "current": "Категории не подтверждены (---autotargeting записи в State=ON)",
+      "proposed": "update_autotargeting(exact=YES, alternative=YES, broader=NO, accessory=NO, competitor=NO) × 5",
+      "reason": "Стандарт скилла: только целевые + узкие, остальное отключено",
+      "expected_effect": "intraday",
+      "risk": "Низкий — соответствует правилам",
+      "confidence": "high-confidence operational",
+      "approval_needed": false
+    },
+    {
+      "change_id": "C4",
+      "entity_type": "ad_extension",
+      "entity_id": "42496157",
+      "current": "«Ипотека от 5.5%»",
+      "proposed": "delete_ad_extensions(42496157); add_ad_extension(callout_text=«Помощь с ипотекой»); переприцепить к 14 объявлениям через update_ad(ad_extension_ids=...) — каждое объявление",
+      "reason": "Базовая ставка РФ ~20%+, «от 5.5%» вне спец-программ недостоверно → риск модерации и юр.претензий",
+      "expected_effect": "intraday",
+      "risk": "Нет — замена на безопасную формулировку",
+      "confidence": "high-confidence operational",
+      "approval_needed": true
+    },
+    {
+      "change_id": "C5",
+      "entity_type": "sitelink_set",
+      "entity_id": "1471565740",
+      "current": "«Со скидками» → ?old_price_min=price (битый URL с литеральной строкой)",
+      "proposed": "Пересобрать набор: заменить URL на ?old_price_min=<число — нужно уточнить порог> либо убрать этот sitelink, если порога нет; остальные 7 ссылок оставить",
+      "reason": "Битая ссылка — фильтр не применится, сливается клик в общую выдачу",
+      "expected_effect": "intraday",
+      "risk": "Нет",
+      "confidence": "high-confidence operational",
+      "approval_needed": true
+    },
+    {
+      "change_id": "C6",
+      "entity_type": "ads × 3",
+      "entity_id": "17689923274, 17689923342, 17689923445",
+      "current": "Title2 «Проверенные собственники»",
+      "proposed": "update_ad(title2=...): «Вторичное жильё» / «Большой выбор» / «Онлайн-показы» — разнести по 3 объявлениям (A/B)",
+      "reason": "Запрет deny-list Вторички (LEGAL.md + extensions.md)",
+      "expected_effect": "intraday",
+      "risk": "Нет",
+      "confidence": "high-confidence operational",
+      "approval_needed": false
+    },
+    {
+      "change_id": "C7",
+      "entity_type": "ads × 5",
+      "entity_id": "17689923444, 17689923445, 17689923446, 17689923649, 17689923342",
+      "current": "Title1 без объекта «квартиру»",
+      "proposed": "update_ad(title=...): «Двухкомнатную квартиру — Нефтяники», «Двушки-квартиры на Московке, Омск», «2-комнатные квартиры на Московке», «2-комнатную квартиру — Выгодно», «Двухкомнатные квартиры в Нефтяниках»",
+      "reason": "Правило Title1: типологический заголовок требует объектного слова",
+      "expected_effect": "intraday",
+      "risk": "Нет",
+      "confidence": "high-confidence operational",
+      "approval_needed": false
+    },
+    {
+      "change_id": "C8",
+      "entity_type": "ad",
+      "entity_id": "17689923614",
+      "current": "Title1 «2-к Квартиры Левый Берег Омск»",
+      "proposed": "update_ad(title=«2-комнатную квартиру на Левом берегу, Омск»)",
+      "reason": "Запрет сокращений «2-к»",
+      "expected_effect": "intraday",
+      "risk": "Нет",
+      "confidence": "high-confidence operational",
+      "approval_needed": false
+    },
+    {
+      "change_id": "C9",
+      "entity_type": "ads × 14",
+      "entity_id": "все объявления",
+      "current": "DisplayUrlPath=null",
+      "proposed": "update_ad(display_url_path=...): «Двушки-Омск» (Общий/Недорого) / «Двушки-Нефтяники» (Нефтяники) / «Двушки-Московка» (Московка) / «Левый-берег» (Левый берег)",
+      "reason": "+15-20% CTR по опыту",
+      "expected_effect": "1-3d",
+      "risk": "Нет",
+      "confidence": "high-confidence operational",
+      "approval_needed": false
+    },
+    {
+      "change_id": "C10",
+      "entity_type": "ads × 3 (группа Нефтяники)",
+      "entity_id": "17689923342, 17689923343, 17689923444",
+      "current": "Href=https://omsk.etagi.com/realty/dvuhkomnatnye-kvartiry/",
+      "proposed": "update_ad(href=https://omsk.etagi.com/realty/?district_id[]=82206&rooms[]=2) — из build_landing_url",
+      "reason": "Релевантность: кластер Нефтяники → посадочная с district-фильтром",
+      "expected_effect": "1-3d",
+      "risk": "Нет",
+      "confidence": "high-confidence operational",
+      "approval_needed": false
+    },
+    {
+      "change_id": "C11",
+      "entity_type": "campaign.negative_keywords",
+      "entity_id": "709079826",
+      "current": "38 слов",
+      "proposed": "update_campaign(negative_keywords=<≥150 слов>) — добавить блоки: чужие города РФ (30-40 слов), расширенный info-блок (как, почему, отзывы, рейтинг, статья, что такое, плюсы, минусы, калькулятор и т.д.), competitors (домклик, авито, циан, яндекс недвижимость, sberhome, mlsn), нецелевые (скачать, бесплатно, общежитие, коммуналка, малосемейка, гостинка) — шаблон mcp/negative_keywords.md",
+      "reason": "Защита от info и другого города трафика на старте",
+      "expected_effect": "1-3d",
+      "risk": "Нет — проверить что новые минусы не конфликтуют с целевыми ключевыми",
+      "confidence": "high-confidence operational",
+      "approval_needed": false
+    },
+    {
+      "change_id": "C12",
+      "entity_type": "campaign.BiddingStrategy.BidCeiling",
+      "entity_id": "709079826",
+      "current": "null",
+      "proposed": "update_campaign(search_strategy=WB_MAXIMUM_CONVERSION_RATE, bid_ceiling=150 ₽) — уточнить значение",
+      "reason": "Потолок CPC — в действующей Вторичке Омска средний CPC ~14-15 ₽, 150 ₽ с запасом для пиков аукциона",
+      "expected_effect": "7d+",
+      "risk": "Занижение потолка может сжать объём в первые дни обучения",
+      "confidence": "medium-confidence optimization",
+      "approval_needed": true
+    }
+  ],
+  "next_steps": [
+    "До apply Wave 1: получить от специалиста 3 решения — (1) недельный бюджет ₽, (2) потолок CPC ₽, (3) объём волны (только Wave 1 + запуск vs Wave 1 + Wave 3 расширение + запуск)",
+    "До apply Wave 1: утвердить порог старой цены для sitelink «Со скидками» (или убрать ссылку)",
+    "Wave 1 apply: только после явного ок, порядок — C1 (кампания), C2 (UTM миграция), C3 (autotargeting), C4 (ипотека уточнение), C5 (sitelinks), C6-C10 (объявления), C11 (минус-слова), C12 (bid ceiling). Read-back после каждого блока.",
+    "Wave 2 запуск: финальный get_campaigns + get_ads + get_keywords → все Status=ACCEPTED; затем resume_campaign(709079826); read-back State=ON, StatusClarification=\"\", StatusPayment=ALLOWED; log_change_event + update_daily_summary(city=omsk).",
+    "Wave 3 — через 7-14 дней боевой работы (отдельная задача, не сейчас): добавить кластеры ипотека / каталог / бренд-этажи / ценовые лимиты через подветку O3.7; расширить Нефтяники/Московка/Левый берег через check_search_volume + SearchedWith; A/B-тест заголовков по паттернам с высоким CTR.",
+    "Первая проверка эффективности: через 3 дня после запуска — CPA и CTR на уровне кампании и по группам; через 7 дней — сравнение с бенчмарком 706224151 (форма CPA ≤ цель 3107 ₽, звонок CPA ≤ цель 1461 ₽)."
+  ]
+}

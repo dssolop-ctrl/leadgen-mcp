@@ -45,7 +45,7 @@ SEARCH_OUTPUT=$("${SCRIPT_DIR}/search.sh" --query "$QUERY" --region "$REGION" --
 }
 
 # Извлечь позицию и количество конкурентов выше нас
-POSITION_DATA=$(echo "$SEARCH_OUTPUT" | python3 -c "
+POSITION_DATA=$(echo "$SEARCH_OUTPUT" | "$PYTHON_BIN" -c "
 import sys
 import re
 
@@ -68,7 +68,7 @@ COMPETITORS_ABOVE=$(echo "$POSITION_DATA" | cut -d',' -f2)
 # ─── Записать в CSV ──────────────────────────────────
 
 # Slug для имени файла: lowercase, пробелы → подчёркивания
-KEYWORD_SLUG=$(echo "$QUERY" | python3 -c "
+KEYWORD_SLUG=$(echo "$QUERY" | "$PYTHON_BIN" -c "
 import sys, re
 q = sys.stdin.read().strip().lower()
 q = re.sub(r'[^a-zA-Zа-яА-ЯёЁ0-9]+', '_', q)
@@ -92,7 +92,7 @@ if grep -q "^${TODAY}," "$CSV_FILE" 2>/dev/null; then
   # Обновить существующую запись за сегодня
   # Используем временный файл для замены
   TMPFILE=$(mktemp)
-  python3 -c "
+  "$PYTHON_BIN" -c "
 import sys
 today = '${TODAY}'
 new_line = '${TODAY},${QUERY},${REGION},${POSITION},${COMPETITORS_ABOVE}'
@@ -148,7 +148,7 @@ if [[ "$ENTRY_COUNT" -ge 2 ]]; then
   echo "### Динамика позиции"
   echo ""
 
-  python3 -c "
+  "$PYTHON_BIN" -c "
 import csv
 import sys
 
