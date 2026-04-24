@@ -18,9 +18,11 @@ func RegisterContentTools(s *mcpserver.MCPServer, client *Client, resolver *auth
 
 func registerGetAdImages(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("get_ad_images",
-		mcp.WithDescription("Получить изображения для объявлений (РСЯ). Возвращает хеши для использования в ad_image_hash."),
+		mcp.WithDescription("Получить изображения для объявлений (РСЯ). Возвращает хеши и URL превью для использования в ad_image_hash."),
 		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("client_login", mcp.Description("Логин клиента-города")),
+		mcp.WithBoolean("with_urls", mcp.Description("Добавить OriginalUrl и PreviewUrl в ответ (по умолчанию true)")),
+		mcp.WithNumber("limit", mcp.Description("Лимит (умолч. 50)")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		token, err := resolver.ResolveYandex(common.GetString(req, "account"))
@@ -29,10 +31,25 @@ func registerGetAdImages(s *mcpserver.MCPServer, client *Client, resolver *auth.
 		}
 		clientLogin := common.GetString(req, "client_login")
 
+		fieldNames := []string{"AdImageHash", "Name", "Type", "Associated"}
+		// By default include URLs (callers can opt-out by passing with_urls=false).
+		withURLs := true
+		if hasParam(req, "with_urls") {
+			withURLs = common.GetBool(req, "with_urls")
+		}
+		if withURLs {
+			fieldNames = append(fieldNames, "OriginalUrl", "PreviewUrl")
+		}
+
+		limit := common.GetInt(req, "limit")
+		if limit <= 0 {
+			limit = 50
+		}
+
 		params := map[string]any{
 			"SelectionCriteria": map[string]any{},
-			"FieldNames":        []string{"AdImageHash", "Name", "Type", "Associated"},
-			"Page":              map[string]int{"Limit": 50},
+			"FieldNames":        fieldNames,
+			"Page":              map[string]int{"Limit": limit},
 		}
 		raw, err := client.Call(ctx, token, "adimages", "get", params, clientLogin)
 		if err != nil {
@@ -44,6 +61,17 @@ func registerGetAdImages(s *mcpserver.MCPServer, client *Client, resolver *auth.
 		}
 		return common.TextResult(string(result)), nil
 	})
+}
+
+// hasParam checks whether a parameter is explicitly present in the request (not default zero).
+// Used to distinguish "with_urls=false" from "with_urls not provided".
+func hasParam(req mcp.CallToolRequest, key string) bool {
+	args := req.GetArguments()
+	if args == nil {
+		return false
+	}
+	_, ok := args[key]
+	return ok
 }
 
 func registerGetVCards(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {

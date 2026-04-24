@@ -12,6 +12,7 @@ import (
 	mcpsetup "github.com/leadgen-mcp/server/mcp"
 	"github.com/leadgen-mcp/server/platform/filters"
 	"github.com/leadgen-mcp/server/platform/history"
+	"github.com/leadgen-mcp/server/platform/imagegen"
 	"github.com/mark3labs/mcp-go/server"
 )
 
@@ -60,8 +61,16 @@ func main() {
 	defer historyStore.Close()
 	logger.Info("history DB opened", "path", historyPath)
 
+	// OpenRouter client for RSYA image generation (R6.5).
+	// If no key — the tools are still registered but will return a clear error on invocation.
+	imgClient := imagegen.NewClient(cfg.OpenRouter.APIKey)
+	previewDir := cfg.Server.PreviewDir
+	if previewDir == "" {
+		previewDir = "docs/campaign_previews"
+	}
+
 	// Create MCP server
-	mcpServer := mcpsetup.NewServer(resolver, logger, filterStore, historyStore)
+	mcpServer := mcpsetup.NewServer(resolver, logger, filterStore, historyStore, imgClient, previewDir)
 
 	// Create SSE handler
 	sseHandler := server.NewSSEServer(mcpServer)

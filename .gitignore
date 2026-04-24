@@ -42,3 +42,12 @@ yandex-performance-ops/
 .openclaw/
 .windsurf/
 .vscode/
+
+# Built MCP server binary (produced by `go build` / Dockerfile).
+leadgen-mcp.exe
+leadgen-mcp-linux
+
+# Campaign previews — RSYA generation artifacts (R6.5).
+# Contains helper scripts with API tokens + large PNG/JSON payloads.
+# Folder is mapped into the container at /app/previews (see docker-compose.yml).
+docs/campaign_previews/

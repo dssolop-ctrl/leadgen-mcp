@@ -4,6 +4,8 @@ server:
   # Directory for SQLite DB (filters.db) and the JSON seed (filter_values.json).
   # Matches the bind mount in docker-compose.yml (./server/data:/app/data).
   data_dir: /app/data
+  # Directory for RSYA banner previews (see R6.5 in the leadgen skill).
+  preview_dir: docs/campaign_previews
 
 accounts:
   yandex:
@@ -17,3 +19,7 @@ accounts:
     - name: "default"
       token: "YOUR_VK_ADS_TOKEN"
       default: true
+
+# OpenRouter API key for RSYA image generation (alternative: OPENROUTER_API_KEY env var).
+openrouter:
+  api_key: ""

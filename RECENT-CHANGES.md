@@ -1,9 +1,100 @@
-# Последние изменения (2026-04-15)
+# Последние изменения (2026-04-24)
 
 > Этот файл — контекст для продолжения работы с другого компьютера.
 > После синхронизации контекста — файл можно удалить.
 
 ## Что сделано
+
+### 18. Ветка R (РСЯ) в скилле leadgen + генерация картинок через OpenRouter (2026-04-24)
+
+Большая волна: отдельная ветка для создания РСЯ-кампаний, генерация креативов через сторонний API, новые MCP-инструменты, первый e2e-тест.
+
+**W1. Исследование: как Этажи настраивают РСЯ сейчас**
+
+- Проанализировано 395 активных РСЯ-кампаний в 61 из 77 городов (общий расход ≈ 6.25M ₽/мес). 92% расхода — `TEXT_CAMPAIGN` с сетями, 8% — `CPM_BANNER_CAMPAIGN` (медийка).
+- Разобраны настройки топ-10 РСЯ по расходу. Выявлены разбросы: UTM отсутствует в 40% кампаний (Краснодар/Казань/Омск/Курган), `ENABLE_AREA_OF_INTEREST_TARGETING` — разная политика, `BidCeiling` — только в Москве.
+- Скачаны 15 картинок из топ-кампаний в `docs/rsya-research/` для визуального анализа. Выявлены 3 кластера стилей: фото/рендеры объектов (валидно), текст-тяжёлые баннеры (не наш путь), готовые фото. Источник найден: API adimages `OriginalUrl` / `PreviewUrl` (в MCP раньше не возвращались).
+
+**W2. Скилл — новые файлы и правила**
+
+Создано:
+- `.claude/skills/leadgen/references/rsya_defaults.md` — дефолты РСЯ: консервативные бюджеты (Микро 3–5k, Стандарт 5–10k, Расширенный 15–25k, Премиум 40–80k ₽/нед), дерево решений по стратегиям, **коэффициент tCPA_РСЯ = CPA_поиска × 0.7**, правила ретаргета/LAL (опция, не дефолт), minusи (инфо-интент), чеклист валидации.
+- `.claude/skills/leadgen/references/image_prompts.md` — промпт-билдер для OpenRouter: 7 визуальных направлений (V1 интерьер / V2 3D-план / V3 фасад / V4 дом / V5 участок / V6 коммерческая / V7 ключ), константы PHOTO_STYLE_BASE / NEGATIVE_HARD_BAN / CITY_ARCHITECTURE_HINTS, маппинг тематика → визуал, правило лимита 20 генераций на кампанию, валидация.
+- `.claude/skills/leadgen/library/banner_titles.md` — 4 формулы заголовков РСЯ (отличаются от поиска — короче, benefit-forward), заготовки по 5 тематикам.
+- `.claude/skills/leadgen/library/banner_texts.md` — 3 формулы текстов + уточнения callouts (доверие / скорость / финансы).
+- `campaigns/template_rsya.md` — отдельный шаблон для РСЯ-кампаний с обязательной секцией «Креативы» и счётчиком генераций.
+
+Обновлено:
+- `.claude/skills/leadgen/skill.md`:
+  - **Роутер 2 (канал размещения)** — ветвление «поиск vs РСЯ» по триггерам пользователя, таблица критичных отличий каналов.
+  - **Автономный режим (auto vs review)** — явные триггеры «запусти», «сам», «без модерации» пропускают preview-шаги; validation mesh остаётся обязательной.
+  - **Ветка 1-R (C1–C10 → R1–R11)** — полный флоу создания РСЯ: параметры, конфиг, анализ аналогов, широкая семантика, кластеризация по аудитории (не интенту), preview R5.5, контент R6 с визуал-стилем, генерация картинок R6.5, создание через API R7 с add_ad_image, аудиторные таргеты R8 (опция), метки, документирование, read-back/мониторинг.
+  - **Ветка 3-R (O-RSYA)** — OR.1 чистка площадок, OR.2 A/B картинок, OR.3 аудиторные таргеты, OR.4 частотное ограничение, OR.5 корректировки bid_modifiers.
+- `.claude/skills/leadgen/flow-steps.md` — детальные таблицы для R1–R11 и OR.1–OR.5.
+
+**W3. MCP-инструменты — новые и расширенные**
+
+- **Расширен `get_ad_images`** (`server/platform/direct/content.go`): добавлены `OriginalUrl`, `PreviewUrl` в FieldNames + параметр `with_urls`. Было — только хеши без URL, теперь можно сразу получать ссылки на изображения.
+- **Новый `server/platform/direct/images.go`** — 2 инструмента:
+  - `add_ad_image` — загрузка картинки в `adimages/add`. Источник: URL (скачает сам), file_path, или image_base64. Возвращает `AdImageHash`. Лимит 10 МБ.
+  - `delete_ad_images` — удаление неиспользуемых хешей.
+- **Новый пакет `server/platform/imagegen/`** — генерация картинок через OpenRouter:
+  - `client.go` — HTTP-клиент к `openrouter.ai/api/v1/chat/completions` с `modalities:["image","text"]`, парсит ответ (`choices[0].message.images[].image_url.url` с `data:image/...;base64,...`), поддерживает direct URL fallback.
+  - `tools.go` — 2 MCP-инструмента: `generate_image` (одиночная генерация с сохранением в preview dir), `generate_banner_set` (пакетная генерация одного промпта в нескольких aspect ratios с вариантами).
+- **Регистрация:** `server/mcp/setup.go` расширен для приёма `*imagegen.Client` и `preview_dir`. `server/main.go` создаёт клиента из конфига. `server/platform/direct/tools.go` регистрирует `RegisterImageTools`.
+- **Конфиг:** `server/config/config.go` — новая секция `openrouter.api_key` + `server.preview_dir`. Env fallback `OPENROUTER_API_KEY`. `docker-compose.yml` монтирует `./docs/campaign_previews:/app/previews` — generated files видны на хосте.
+
+**W4. Доработка add_campaign — Network-стратегия для РСЯ**
+
+- До: `Network` формировался как `{BiddingStrategyType: <name>}`, без вложенной структуры. Для РСЯ с `WB_MAXIMUM_CONVERSION_RATE` / `AVERAGE_CPA` API возвращал ошибку «Стратегия должна содержать структуру с настройками».
+- После (`server/platform/direct/campaigns.go`): добавлен switch по `networkStrategy` с полями `WbMaximumConversionRate{WeeklySpendLimit, GoalId}`, `AverageCpa{WeeklySpendLimit, AverageCpa, GoalId}`, `WbMaximumClicks{WeeklySpendLimit}`. Новые параметры `network_weekly_budget`, `network_average_cpa` (если не заданы — наследуются от search-аналогов). `start_date` по умолчанию — сегодня (избегаем ошибки 5003).
+
+**W5. Первый e2e-тест: Омск-вторичка**
+
+Создана тестовая РСЯ-кампания `Омск | РСЯ | Вторичка | Общая | [site]` (id `709316305`) в клиенте `porg-cyjuzztm`:
+- Бюджет 10 000 ₽/нед, `Search=SERVING_OFF`, `Network=WB_MAXIMUM_CONVERSION_RATE`, `PriorityGoals` = форма 6443 ₽ + звонок 1869 ₽ (из `get_conversion_values`).
+- `ENABLE_AREA_OF_INTEREST_TARGETING=YES` (регион — ловим приезжих), UTM на уровне кампании, 47 минус-слов.
+- 2 группы (`Общие-купить` 5745089037, `2-комнатные` 5745089038) с 12 и 6 ключевыми, автотаргетингом EXACT+ALTERNATIVE.
+- 6 объявлений с 3 картинками (картинки переиспользуются между группами — 1 картинка → 2 группы). Sitelinks (1472621032) + 4 callouts (42591619..22).
+- Метки: `Лидген`, `Вторичка`, `Покупатель`, `РСЯ`.
+- Status: DRAFT — ожидает модерации.
+
+**Картинки** сгенерированы через OpenRouter, модель `google/gemini-2.5-flash-image`:
+- V1.1 гостиная 1:1 (`uguH254sX390VOmwaN_TcA`) — фото современного интерьера.
+- V1.1 гостиная 16:9 (`0CJ7iBxiwezPNQusP22xUA`) — широкоформат.
+- V3 фасад ЖК Омск 16:9 (`qLoxFHy1BPe6D2glOzgDmA`) — панельно-кирпичный дом + двор + детская площадка.
+- Итого **3 картинки** из лимита 20, стоимость **~$0.12**. Попытка V2 top-down floor plan — Gemini 2.5 Flash вернул текст вместо картинки, отложено на Gemini 3 Pro.
+
+Превью-файлы: `docs/campaign_previews/omsk_rsya_vtorichka/` (примонтировано в контейнер через `/app/previews`).
+Документация: `campaigns/omsk_rsya_vtorichka.md`.
+Запись в history: `update_daily_summary` + `log_change_event` зафиксированы.
+
+**Известные ограничения тестового запуска:**
+- В текущей Claude-сессии MCP-клиент не видит новые инструменты (SSE-соединение инициализируется один раз). Тест проведён: картинки сгенерированы + загружены через прямой curl/Python к OpenRouter и `adimages/add`; кампания создана через Python-обёртку над API v5 (т.к. до фикса Go-кода Network-стратегия не строилась). В следующей сессии Claude Code новые MCP-инструменты (`add_ad_image`, `generate_image`, `generate_banner_set`) будут доступны нативно.
+
+**W6. BidCeiling для Network и Search автостратегий**
+
+Добавлена полная поддержка верхнего потолка ставки клика (`BidCeiling`) для автостратегий в `add_campaign` и `update_campaign`.
+
+- **Что это:** жёсткий лимит ставки клика, которую автобиддер Директа не может превысить. Страховка от перекрута CPC на горячих аукционах (особенно в первые дни обучения стратегии). Анализ показал, что все московские РК Этажей используют BidCeiling 200–1200 ₽, но ни одна региональная — пропасть в настройках.
+- **Где применим:** `WB_MAXIMUM_CONVERSION_RATE`, `AVERAGE_CPA`, `WB_MAXIMUM_CLICKS`. Не применим к `SERVING_OFF`, `NETWORK_DEFAULT`, ручным стратегиям.
+- **Новые параметры `add_campaign`:** `search_bid_ceiling`, `network_bid_ceiling` (рубли). Нижний порог API — 0.3 ₽ (300 000 микро), контролируется helper-функцией `bidCeilingMicros()`.
+- **Новые параметры `update_campaign`:** те же + блок Network полностью переработан (раньше покрывал только Search). Теперь можно обновлять `network_strategy`, `network_weekly_budget`, `network_average_cpa`, `network_bid_ceiling` через MCP. Нюанс API: при частичном обновлении BidCeiling нужно продублировать `network_strategy` — Yandex требует Network-блок целиком.
+- **Формула для ветки R:** `network_bid_ceiling = tCPA × 1.5`, где `tCPA = CPA_поиска_факт × 0.7`. Для Омска-вторички: CPA_звонок 1869 ₽ → tCPA 1308 ₽ → потолок ≈ 1962 ₽.
+- **Обновлены файлы скилла:**
+  - `.claude/skills/leadgen/references/rsya_defaults.md` — раздел «Параметры создания для API» переписан, добавлен пункт в чеклист валидации.
+  - `.claude/skills/leadgen/skill.md` — шаг R7 теперь включает `network_bid_ceiling` в вызов `add_campaign`.
+- **Сборка и рестарт:** `docker compose up -d --build`, health=200. Новые инструменты доступны в схемах MCP (`mcp__yandex-direct__add_campaign`, `update_campaign`) в следующей Claude-сессии.
+
+### 17. Синхронизация проектной информации (2026-04-24)
+
+- Просмотрена текущая структура репозитория: Go MCP-сервер, skills, campaign-файлы, docs, правила Direct/VK/Legal.
+- Зафиксирован фактический состав MCP-инструментов: всего 162, из них Direct 109, Metrika 11, Wordstat 5, VK Ads 30, filters 3, history 4.
+- Заполнен `PROJECTS.md`: продукт Этажи, сайты, аккаунты, счётчики, цели, CPA-ориентиры, гео, naming и правила кампаний.
+- Обновлён `README.md`: актуальные счётчики инструментов, модули filters/history/forecast, структура данных.
+- Исправлена компиляционная ошибка в `server/platform/direct/references.go`: в `fmt.Sprintf` для fallback-сообщения `get_city_config` передан отсутствовавший `cityName`.
+- Проверка `go test ./...` в `server/` проходит.
+- Текущее рабочее дерево уже содержит незакоммиченные изменения в `.claude/skills/*`, `campaigns/template.md`, `tokens.env.example`, новые audit/SERP артефакты в `campaigns/` и новую CJM-схему в `docs/`. Эти изменения не откатывались и считаются текущей рабочей реальностью.
 
 ### 1. MCP-сервер: оптимизация описаний инструментов
 - Сжаты описания `account` (147 вхождений) и `client_login` (99 вхождений) во всех 36 Go-файлах
@@ -104,7 +195,7 @@
   - `forecast_campaign` — компилируется (проверка в проде — на реальной кампании)
 
 **Итоги по инструментам MCP**
-- Было: ~150 инструментов. Стало: **~155** (+4 history + 1 forecast).
+- Было: ~150 инструментов. Сейчас: **162** (Direct 109, Metrika 11, Wordstat 5, VK Ads 30, filters 3, history 4).
 - Новые таблицы SQLite: `change_events`, `daily_summaries` в `server/data/change_history.db`.
 
 ## Что НЕ сделано / на обсуждение

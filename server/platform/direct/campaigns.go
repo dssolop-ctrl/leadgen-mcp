@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/leadgen-mcp/server/auth"
 	"github.com/leadgen-mcp/server/platform/common"
@@ -114,7 +115,11 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 		mcp.WithNumber("daily_budget_amount", mcp.Description("Недельный бюджет в рублях"), mcp.Required()),
 		mcp.WithString("daily_budget_mode", mcp.Description("Режим: STANDARD или DISTRIBUTED (умолч)")),
 		mcp.WithString("search_strategy", mcp.Description("Стратегия поиска: WB_MAXIMUM_CONVERSION_RATE, AVERAGE_CPA, WB_MAXIMUM_CLICKS и др."), mcp.Required()),
-		mcp.WithString("network_strategy", mcp.Description("Стратегия сетей: SERVING_OFF (по умолчанию), NETWORK_DEFAULT, WB_MAXIMUM_CLICKS")),
+		mcp.WithString("network_strategy", mcp.Description("Стратегия сетей: SERVING_OFF (по умолчанию), NETWORK_DEFAULT, WB_MAXIMUM_CLICKS, WB_MAXIMUM_CONVERSION_RATE, AVERAGE_CPA. Для РСЯ-кампаний используй WB_MAXIMUM_CONVERSION_RATE с search_strategy=SERVING_OFF.")),
+		mcp.WithNumber("network_weekly_budget", mcp.Description("Недельный бюджет для Network-стратегии, рубли. Если не задан — берётся daily_budget_amount.")),
+		mcp.WithNumber("network_average_cpa", mcp.Description("Целевая CPA для Network AVERAGE_CPA, рубли.")),
+		mcp.WithNumber("network_bid_ceiling", mcp.Description("Верхний потолок ставки клика для Network-автостратегии, рубли. Применим к WB_MAXIMUM_CONVERSION_RATE / AVERAGE_CPA / WB_MAXIMUM_CLICKS. Формула для РСЯ: tCPA × 1.5. Мин. 0.3 ₽.")),
+		mcp.WithNumber("search_bid_ceiling", mcp.Description("Верхний потолок ставки клика для Search-автостратегии, рубли. Применим к WB_MAXIMUM_CONVERSION_RATE / AVERAGE_CPA / WB_MAXIMUM_CLICKS. Мин. 0.3 ₽.")),
 		mcp.WithNumber("goal_id", mcp.Description("ID цели Метрики (одна). Для нескольких — priority_goals.")),
 		mcp.WithString("priority_goals", mcp.Description("Приоритетные цели JSON. При передаче GoalId ставится 13.")),
 		mcp.WithString("counter_ids", mcp.Description("ID счётчиков Метрики")),
@@ -145,10 +150,15 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 			networkStrategy = "SERVING_OFF"
 		}
 
-		// Build campaign object
+		// Build campaign object. Default StartDate to today when the caller omits it —
+		// the API rejects empty StartDate (error 5003).
+		startDate := common.GetString(req, "start_date")
+		if startDate == "" {
+			startDate = time.Now().Format("2006-01-02")
+		}
 		campaign := map[string]any{
 			"Name":      name,
-			"StartDate": common.GetString(req, "start_date"),
+			"StartDate": startDate,
 		}
 
 		// DailyBudget only for manual strategies (not WB_* / AVERAGE_*)
@@ -195,17 +205,28 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 			}
 		}
 
+		// BidCeiling for auto strategies — caps the per-click bid the auto-bidder
+		// can reach. Rubles → micros, Yandex API minimum is 0.3 RUB (300000 micros).
+		searchBidCeilingMicros := bidCeilingMicros(common.GetInt(req, "search_bid_ceiling"))
+
 		switch searchStrategy {
 		case "WB_MAXIMUM_CLICKS":
-			searchSettings["WbMaximumClicks"] = map[string]any{
+			wbClicks := map[string]any{
 				"WeeklySpendLimit": weeklyBudgetMicros,
 			}
+			if searchBidCeilingMicros > 0 {
+				wbClicks["BidCeiling"] = searchBidCeilingMicros
+			}
+			searchSettings["WbMaximumClicks"] = wbClicks
 		case "WB_MAXIMUM_CONVERSION_RATE":
 			wbSettings := map[string]any{
 				"WeeklySpendLimit": weeklyBudgetMicros,
 			}
 			if goalID > 0 {
 				wbSettings["GoalId"] = goalID
+			}
+			if searchBidCeilingMicros > 0 {
+				wbSettings["BidCeiling"] = searchBidCeilingMicros
 			}
 			searchSettings["WbMaximumConversionRate"] = wbSettings
 		case "AVERAGE_CPA":
@@ -218,6 +239,9 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 			if goalID > 0 {
 				avgSettings["GoalId"] = goalID
 			}
+			if searchBidCeilingMicros > 0 {
+				avgSettings["BidCeiling"] = searchBidCeilingMicros
+			}
 			searchSettings["AverageCpa"] = avgSettings
 		}
 
@@ -228,11 +252,61 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 			"DynamicPlaces": "NO",
 		}
 
+		// Network-strategy: for auto types (WB_*, AVERAGE_*) Yandex requires nested
+		// settings identical in shape to Search. Needed for RSYA campaigns where
+		// the network_strategy carries the autobid logic (WB_MAX_CONV_RATE etc).
+		networkSettings := map[string]any{
+			"BiddingStrategyType": networkStrategy,
+		}
+		networkWeeklyRub := common.GetInt(req, "network_weekly_budget")
+		if networkWeeklyRub <= 0 {
+			networkWeeklyRub = budgetAmount
+		}
+		networkWeeklyMicros := networkWeeklyRub * 1000000
+		networkAvgCPA := common.GetInt(req, "network_average_cpa")
+		networkBidCeilingMicros := bidCeilingMicros(common.GetInt(req, "network_bid_ceiling"))
+
+		switch networkStrategy {
+		case "WB_MAXIMUM_CLICKS":
+			wbClicksNet := map[string]any{
+				"WeeklySpendLimit": networkWeeklyMicros,
+			}
+			if networkBidCeilingMicros > 0 {
+				wbClicksNet["BidCeiling"] = networkBidCeilingMicros
+			}
+			networkSettings["WbMaximumClicks"] = wbClicksNet
+		case "WB_MAXIMUM_CONVERSION_RATE":
+			wbNet := map[string]any{
+				"WeeklySpendLimit": networkWeeklyMicros,
+			}
+			if goalID > 0 {
+				wbNet["GoalId"] = goalID
+			}
+			if networkBidCeilingMicros > 0 {
+				wbNet["BidCeiling"] = networkBidCeilingMicros
+			}
+			networkSettings["WbMaximumConversionRate"] = wbNet
+		case "AVERAGE_CPA":
+			avgNet := map[string]any{
+				"WeeklySpendLimit": networkWeeklyMicros,
+			}
+			if networkAvgCPA > 0 {
+				avgNet["AverageCpa"] = networkAvgCPA * 1000000
+			} else if avgCPA > 0 {
+				avgNet["AverageCpa"] = avgCPA * 1000000
+			}
+			if goalID > 0 {
+				avgNet["GoalId"] = goalID
+			}
+			if networkBidCeilingMicros > 0 {
+				avgNet["BidCeiling"] = networkBidCeilingMicros
+			}
+			networkSettings["AverageCpa"] = avgNet
+		}
+
 		biddingStrategy := map[string]any{
-			"Search": searchSettings,
-			"Network": map[string]any{
-				"BiddingStrategyType": networkStrategy,
-			},
+			"Search":  searchSettings,
+			"Network": networkSettings,
 		}
 
 		textCampaign := map[string]any{
@@ -331,6 +405,11 @@ func registerUpdateCampaign(s *mcpserver.MCPServer, client *Client, resolver *au
 		mcp.WithNumber("average_cpa", mcp.Description("Целевая CPA (для стратегии AVERAGE_CPA)")),
 		mcp.WithString("tracking_params", mcp.Description("UTM-метки на уровне кампании. Наследуется всеми группами. Для миграции UTM с уровня группы на кампанию — указывай здесь.")),
 		mcp.WithBoolean("disable_dynamic_places", mcp.Description("Отключить динамические места показа (BiddingStrategy.Search.PlacementTypes.DynamicPlaces=NO). Договорённость с SEO. Требует search_strategy для применения.")),
+		mcp.WithString("network_strategy", mcp.Description("Стратегия сетей: SERVING_OFF, NETWORK_DEFAULT, WB_MAXIMUM_CLICKS, WB_MAXIMUM_CONVERSION_RATE, AVERAGE_CPA. Передача обновляет Network-блок BiddingStrategy целиком (включая nested settings).")),
+		mcp.WithNumber("network_weekly_budget", mcp.Description("Новый недельный бюджет Network-стратегии, рубли. Требует network_strategy.")),
+		mcp.WithNumber("network_average_cpa", mcp.Description("Новая целевая CPA для Network AVERAGE_CPA, рубли.")),
+		mcp.WithNumber("network_bid_ceiling", mcp.Description("Новый верхний потолок ставки клика Network-автостратегии, рубли. Требует network_strategy для пересылки блока Network целиком.")),
+		mcp.WithNumber("search_bid_ceiling", mcp.Description("Новый верхний потолок ставки клика Search-автостратегии, рубли. Требует search_strategy для пересылки блока Search целиком.")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -393,22 +472,37 @@ func registerUpdateCampaign(s *mcpserver.MCPServer, client *Client, resolver *au
 		trackingParams := common.GetString(req, "tracking_params")
 		disableDynamicPlaces := common.GetBool(req, "disable_dynamic_places")
 
-		needTextCampaign := searchStrategy != "" || goalID > 0 || avgCPA > 0 || len(priorityGoals) > 0 || trackingParams != "" || disableDynamicPlaces
+		networkStrategy := common.GetString(req, "network_strategy")
+		networkWeeklyRub := common.GetInt(req, "network_weekly_budget")
+		networkAvgCPA := common.GetInt(req, "network_average_cpa")
+		networkBidCeilingMicros := bidCeilingMicros(common.GetInt(req, "network_bid_ceiling"))
+		searchBidCeilingMicros := bidCeilingMicros(common.GetInt(req, "search_bid_ceiling"))
+
+		needTextCampaign := searchStrategy != "" || goalID > 0 || avgCPA > 0 || len(priorityGoals) > 0 ||
+			trackingParams != "" || disableDynamicPlaces ||
+			networkStrategy != "" || networkWeeklyRub > 0 || networkAvgCPA > 0 ||
+			networkBidCeilingMicros > 0 || searchBidCeilingMicros > 0
+
 		if needTextCampaign {
 			textCampaign := map[string]any{}
 
-			if searchStrategy != "" || goalID > 0 || avgCPA > 0 || disableDynamicPlaces {
+			biddingStrategyUpdate := map[string]any{}
+
+			if searchStrategy != "" || goalID > 0 || avgCPA > 0 || disableDynamicPlaces || searchBidCeilingMicros > 0 {
 				search := map[string]any{}
 				if searchStrategy != "" {
 					search["BiddingStrategyType"] = searchStrategy
 				}
 
-				// GoalId and other params go inside the strategy-specific key
+				// GoalId, AverageCpa, BidCeiling go inside the strategy-specific key.
 				switch searchStrategy {
 				case "WB_MAXIMUM_CONVERSION_RATE":
 					stratSettings := map[string]any{}
 					if goalID > 0 {
 						stratSettings["GoalId"] = goalID
+					}
+					if searchBidCeilingMicros > 0 {
+						stratSettings["BidCeiling"] = searchBidCeilingMicros
 					}
 					search["WbMaximumConversionRate"] = stratSettings
 				case "AVERAGE_CPA":
@@ -419,9 +513,16 @@ func registerUpdateCampaign(s *mcpserver.MCPServer, client *Client, resolver *au
 					if avgCPA > 0 {
 						stratSettings["AverageCpa"] = avgCPA * 1000000
 					}
+					if searchBidCeilingMicros > 0 {
+						stratSettings["BidCeiling"] = searchBidCeilingMicros
+					}
 					search["AverageCpa"] = stratSettings
 				case "WB_MAXIMUM_CLICKS":
-					search["WbMaximumClicks"] = map[string]any{}
+					stratSettings := map[string]any{}
+					if searchBidCeilingMicros > 0 {
+						stratSettings["BidCeiling"] = searchBidCeilingMicros
+					}
+					search["WbMaximumClicks"] = stratSettings
 				default:
 					// If no strategy specified but goalID changed, we still need the strategy type
 					// to know where to put GoalId — caller must provide search_strategy
@@ -437,9 +538,64 @@ func registerUpdateCampaign(s *mcpserver.MCPServer, client *Client, resolver *au
 					}
 				}
 
-				textCampaign["BiddingStrategy"] = map[string]any{
-					"Search": search,
+				biddingStrategyUpdate["Search"] = search
+			}
+
+			// Network block: если передано хотя бы одно network-поле — отправляем Network целиком.
+			// Yandex API требует полного BiddingStrategyType + nested settings. Для чистого
+			// изменения BidCeiling — обязательно продублировать network_strategy.
+			if networkStrategy != "" || networkWeeklyRub > 0 || networkAvgCPA > 0 || networkBidCeilingMicros > 0 {
+				netSettings := map[string]any{}
+				if networkStrategy != "" {
+					netSettings["BiddingStrategyType"] = networkStrategy
 				}
+				netWeeklyMicros := networkWeeklyRub * 1000000
+
+				switch networkStrategy {
+				case "WB_MAXIMUM_CLICKS":
+					wbClicks := map[string]any{}
+					if netWeeklyMicros > 0 {
+						wbClicks["WeeklySpendLimit"] = netWeeklyMicros
+					}
+					if networkBidCeilingMicros > 0 {
+						wbClicks["BidCeiling"] = networkBidCeilingMicros
+					}
+					netSettings["WbMaximumClicks"] = wbClicks
+				case "WB_MAXIMUM_CONVERSION_RATE":
+					wbConv := map[string]any{}
+					if netWeeklyMicros > 0 {
+						wbConv["WeeklySpendLimit"] = netWeeklyMicros
+					}
+					if goalID > 0 {
+						wbConv["GoalId"] = goalID
+					}
+					if networkBidCeilingMicros > 0 {
+						wbConv["BidCeiling"] = networkBidCeilingMicros
+					}
+					netSettings["WbMaximumConversionRate"] = wbConv
+				case "AVERAGE_CPA":
+					avgSet := map[string]any{}
+					if netWeeklyMicros > 0 {
+						avgSet["WeeklySpendLimit"] = netWeeklyMicros
+					}
+					if networkAvgCPA > 0 {
+						avgSet["AverageCpa"] = networkAvgCPA * 1000000
+					} else if avgCPA > 0 {
+						avgSet["AverageCpa"] = avgCPA * 1000000
+					}
+					if goalID > 0 {
+						avgSet["GoalId"] = goalID
+					}
+					if networkBidCeilingMicros > 0 {
+						avgSet["BidCeiling"] = networkBidCeilingMicros
+					}
+					netSettings["AverageCpa"] = avgSet
+				}
+				biddingStrategyUpdate["Network"] = netSettings
+			}
+
+			if len(biddingStrategyUpdate) > 0 {
+				textCampaign["BiddingStrategy"] = biddingStrategyUpdate
 			}
 
 			if len(priorityGoals) > 0 {
@@ -567,4 +723,18 @@ func campaignActionHandler(client *Client, resolver *auth.AccountResolver, fixed
 
 		return common.TextResult(string(result)), nil
 	}
+}
+
+// bidCeilingMicros converts a BidCeiling value from rubles to Yandex API micros
+// and enforces the 0.3 RUB (300000 micros) minimum documented for auto-bid ceilings.
+// Returns 0 if the caller passed a non-positive value — meaning "no ceiling".
+func bidCeilingMicros(rub int) int {
+	if rub <= 0 {
+		return 0
+	}
+	micros := rub * 1000000
+	if micros < 300000 {
+		micros = 300000
+	}
+	return micros
 }

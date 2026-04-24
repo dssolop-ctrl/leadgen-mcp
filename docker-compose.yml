@@ -18,3 +18,6 @@ services:
       #   cp server/config.yaml.example server/config.yaml
       # then fill in your tokens.
       - ./server/config.yaml:/app/config.yaml:ro
+      # Generated RSYA banner previews (R6.5). Shared with the host so the
+      # user / agent can inspect images before approving them for upload.
+      - ./docs/campaign_previews:/app/previews
