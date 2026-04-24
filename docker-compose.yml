@@ -8,6 +8,12 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
+    # Secrets from repo-local tokens.env (git-ignored). Referenced by the
+    # OpenRouter image-gen module (OPENROUTER_API_KEY) and any other env-based
+    # integrations. Optional at build time — missing file fails startup, so
+    # tokens.env must exist before `docker compose up`.
+    env_file:
+      - ./tokens.env
     volumes:
       # Data directory — SQLite DB + JSON seed live here on the host.
       # On first start with empty DB, server loads server/data/filter_values.json.
