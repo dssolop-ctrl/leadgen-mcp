@@ -1,10 +1,16 @@
 package imagegen
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -101,11 +107,25 @@ func registerGenerateImage(s *mcpserver.MCPServer, client *Client, previewDir st
 		}
 
 		out := map[string]any{
-			"model":     res.Model,
-			"mime_type": res.MimeType,
-			"file_path": savePath,
+			"model":      res.Model,
+			"mime_type":  res.MimeType,
+			"file_path":  savePath,
 			"size_bytes": len(bytesData),
-			"status":    "saved",
+			"status":     "saved",
+		}
+		if res.FallbackUsed {
+			out["fallback_used"] = true
+			out["primary_error"] = res.PrimaryError
+			out["requested_model"] = model
+		}
+		// Decode actual pixel dimensions and warn if they don't match the
+		// requested aspect ratio — image models often ignore the size hint.
+		if w, h, derr := decodeDims(bytesData); derr == nil {
+			out["width"] = w
+			out["height"] = h
+			if warn := checkAspectMatch(aspect, w, h); warn != "" {
+				out["aspect_warning"] = warn
+			}
 		}
 		if returnB64 {
 			out["image_base64"] = res.Base64
@@ -224,7 +244,7 @@ func registerGenerateBannerSet(s *mcpserver.MCPServer, client *Client, previewDi
 					})
 					continue
 				}
-				results = append(results, map[string]any{
+				entry := map[string]any{
 					"aspect_ratio": ar,
 					"variant":      i + 1,
 					"status":       "saved",
@@ -232,7 +252,20 @@ func registerGenerateBannerSet(s *mcpserver.MCPServer, client *Client, previewDi
 					"size_bytes":   len(data),
 					"mime_type":    res.MimeType,
 					"model":        res.Model,
-				})
+				}
+				if res.FallbackUsed {
+					entry["fallback_used"] = true
+					entry["primary_error"] = res.PrimaryError
+					entry["requested_model"] = model
+				}
+				if w, h, derr := decodeDims(data); derr == nil {
+					entry["width"] = w
+					entry["height"] = h
+					if warn := checkAspectMatch(ar, w, h); warn != "" {
+						entry["aspect_warning"] = warn
+					}
+				}
+				results = append(results, entry)
 			}
 		}
 
@@ -265,6 +298,48 @@ func aspectToSize(aspect string) string {
 	default:
 		return "1024x1024"
 	}
+}
+
+// decodeDims returns width and height of the image bytes without decoding
+// the full pixel data. Supports JPG, PNG, GIF.
+func decodeDims(data []byte) (int, int, error) {
+	cfg, _, err := image.DecodeConfig(bytes.NewReader(data))
+	if err != nil {
+		return 0, 0, err
+	}
+	return cfg.Width, cfg.Height, nil
+}
+
+// checkAspectMatch returns a non-empty warning string if the actual w×h does
+// not match the requested aspect ratio within ±2% tolerance. Empty string
+// means the dimensions match. Used to flag cases where an image model
+// (especially Gemini) ignored our size hint and returned its own dimensions.
+func checkAspectMatch(requested string, w, h int) string {
+	if w <= 0 || h <= 0 {
+		return ""
+	}
+	var want float64
+	switch strings.TrimSpace(requested) {
+	case "", "1:1":
+		want = 1.0
+	case "16:9":
+		want = 16.0 / 9.0
+	case "4:3":
+		want = 4.0 / 3.0
+	case "3:2":
+		want = 3.0 / 2.0
+	case "9:16":
+		want = 9.0 / 16.0
+	default:
+		return ""
+	}
+	got := float64(w) / float64(h)
+	delta := math.Abs(got-want) / want
+	if delta > 0.02 {
+		return fmt.Sprintf("model returned %dx%d (ratio %.3f) but %s was requested (ratio %.3f) — likely Yandex Direct will reject for IncorrectImageSize",
+			w, h, got, requested, want)
+	}
+	return ""
 }
 
 func sanitizeName(s string) string {
