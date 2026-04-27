@@ -18,13 +18,14 @@
 2. **Тематика** — что рекламируем?
 3. **Тип размещения** — выбор:
 
-| Тип | API | Когда использовать |
+| Размещение | Стратегии в ЕПК | Когда использовать |
 |---|---|---|
-| Поиск | TEXT_CAMPAIGN (network=SERVING_OFF) | Горячий спрос, высокий интент |
-| РСЯ | TEXT_CAMPAIGN (search strategy=SERVING_OFF) | Охват, ретаргетинг, имидж |
-| ЕПК / Мастер | UNIFIED_CAMPAIGN (API v501) | Автоматизированная, для тестов |
-| Динамические | DYNAMIC_TEXT_CAMPAIGN | Большая база объектов, фид |
-| Медийная | CPM_BANNER_CAMPAIGN | Охват, узнаваемость, CPM |
+| Поиск | `search=WB_MAXIMUM_CONVERSION_RATE`, `network=SERVING_OFF` | Горячий спрос, высокий интент |
+| РСЯ | `search=SERVING_OFF`, `network=WB_MAXIMUM_CONVERSION_RATE` | Охват, ретаргетинг, имидж (см. ветку R) |
+| Динамические | `DYNAMIC_TEXT_CAMPAIGN` | Большая база объектов, фид |
+| Медийная | `CPM_BANNER_CAMPAIGN` | Охват, узнаваемость, CPM |
+
+> Все новые кампании в Директе с мая 2024 — это **ЕПК (UNIFIED_CAMPAIGN)**, и для Поиска, и для РСЯ. Различие — в стратегиях `Search`/`Network` внутри `BiddingStrategy`. См. `METRIKA-ADS-RULES.md` → раздел «Тип кампании: всегда ЕПК».
 
 4. **Бюджет** — недельный, в рублях
 5. **Посадочная** — [site] (etagi.com) или [LP] (etagi.net)
