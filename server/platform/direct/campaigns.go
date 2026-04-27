@@ -161,8 +161,11 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 			"StartDate": startDate,
 		}
 
-		// DailyBudget only for manual strategies (not WB_* / AVERAGE_*)
-		isAutoStrategy := strings.HasPrefix(searchStrategy, "WB_") || strings.HasPrefix(searchStrategy, "AVERAGE_")
+		// DailyBudget only for manual strategies (not WB_* / AVERAGE_*).
+		// Pure RSYA has Search=SERVING_OFF and Network=WB_*, so the Network block
+		// must also suppress top-level DailyBudget.
+		isAutoStrategy := strings.HasPrefix(searchStrategy, "WB_") || strings.HasPrefix(searchStrategy, "AVERAGE_") ||
+			strings.HasPrefix(networkStrategy, "WB_") || strings.HasPrefix(networkStrategy, "AVERAGE_")
 		if !isAutoStrategy && budgetAmount > 0 {
 			campaign["DailyBudget"] = map[string]any{
 				"Amount": budgetAmount * 1000000,

@@ -270,6 +270,32 @@ settings: [{"option": "ENABLE_AREA_OF_INTEREST_TARGETING", "value": false}]
 
 Когда пользователь говорит "бюджет 400 рублей" — уточни: в неделю? Если да, передавай `400`.
 
+### Чистая РСЯ через `add_campaign`: бюджет передаётся как обычно
+
+Для чистой РСЯ (`search_strategy=SERVING_OFF`, `network_strategy=WB_MAXIMUM_CONVERSION_RATE`)
+передавай `daily_budget_amount` как недельный бюджет в рублях — точно так же, как для поиска.
+MCP сам подавит верхнеуровневый `DailyBudget` (т.к. Network-стратегия автоматическая) и
+положит сумму в `BiddingStrategy.Network.*.WeeklySpendLimit`.
+
+```
+add_campaign(
+  search_strategy="SERVING_OFF",
+  network_strategy="WB_MAXIMUM_CONVERSION_RATE",
+  daily_budget_amount=10000,   # недельный, в рублях
+  ...
+)
+```
+
+Read-back: бюджет лежит в `BiddingStrategy.Network.*.WeeklySpendLimit`, верхнеуровневого
+`DailyBudget` нет.
+
+**Историческая заметка (баг 2026-04-27, починен):** до этого фикса автодетект автостратегии
+смотрел только на `searchStrategy`. Для чистой РСЯ это давало false negative — MCP добавлял
+`DailyBudget`, и Директ возвращал
+`6000: Дневной бюджет можно использовать только совместно с ручными стратегиями`.
+Костыль того периода (`daily_budget_amount=0` + отдельная передача бюджета в Network) больше
+не нужен. Если в файле кампании встретишь упоминание этого костыля — это история, не образец.
+
 ## Выбор стратегии — порядок запуска
 
 WB_MAXIMUM_CONVERSION_RATE и AVERAGE_CPA — это **два режима одной стратегии** "Максимум конверсий":
