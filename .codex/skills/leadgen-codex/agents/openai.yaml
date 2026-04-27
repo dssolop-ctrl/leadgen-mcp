@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "Leadgen Codex"
+  short_description: "Управление рекламой Этажи через leadgen-mcp в Codex"
+  default_prompt: "Создай, проверь или оптимизируй рекламную кампанию Этажи через leadgen-mcp с соблюдением правил API, юридической проверки и истории изменений."

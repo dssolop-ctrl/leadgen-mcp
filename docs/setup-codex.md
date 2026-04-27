@@ -1,73 +1,63 @@
-# Подключение direct-mcp к OpenAI Codex
+# Подключение leadgen-mcp к OpenAI Codex
 
-## 1. Настройка MCP-сервера (проектный конфиг)
+## 1. Запустить локальный MCP-сервер
 
-Создайте или проверьте файл `.codex/mcp.json` в корне проекта:
+```bash
+cp server/config.yaml.example server/config.yaml
+# Заполните токены в server/config.yaml
+docker compose up -d
+```
+
+Endpoint разработки:
+
+- SSE: `http://localhost:8080/sse`
+- Health: `http://localhost:8080/health`
+
+## 2. MCP-конфиг Codex
+
+В проекте создан локальный конфиг `.codex/mcp.json`:
 
 ```json
 {
   "mcpServers": {
-    "yandex-direct": {
-      "url": "https://direct-mcp.aatex.ru/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_API_KEY"
-      }
+    "leadgen": {
+      "type": "sse",
+      "url": "http://localhost:8080/sse"
     }
   }
 }
 ```
 
-Замените `YOUR_API_KEY` на ваш API-ключ из [личного кабинета direct-mcp](https://direct-mcp.aatex.ru).
+Если проектный конфиг не подхватился, добавьте сервер в глобальный MCP-конфиг Codex тем же endpoint и именем `leadgen`.
 
-## 2. Альтернатива — глобальный конфиг через CLI
+## 3. Скилл Codex
 
-Если проектный `.codex/mcp.json` не подхватывается (известная проблема в ранних версиях `codex-cli`), добавьте сервер глобально:
+Codex-адаптация лежит в `.codex/skills/leadgen-codex/`.
 
-```bash
-codex mcp add yandex-direct -- \
-  npx -y mcp-remote https://direct-mcp.aatex.ru/mcp \
-  --header "Authorization: Bearer YOUR_API_KEY"
-```
+Ключевые отличия от Claude-версии:
 
-Проверка:
+- файл входа называется `SKILL.md`;
+- имя скилла: `leadgen-codex`, чтобы не конфликтовать с существующим `leadgen`;
+- добавлен `agents/openai.yaml` для UI-метаданных Codex;
+- endpoint и MCP namespace описаны в `config/mcp_endpoint.md`;
+- ветки `branches/` подгружаются лениво после роутинга.
 
-```bash
-codex mcp list --json
-codex mcp get yandex-direct --json
-```
+## 4. Проверка в Codex
 
-## 3. Запуск
+Откройте проект в Codex App или запустите:
 
 ```bash
-codex -C /path/to/your/project
+codex -C /path/to/leadgen-mcp
 ```
 
-Или откройте папку проекта в Codex App.
+В новой сессии проверьте:
 
-## 4. Проверка подключения
-
-В сессии напишите:
-
-```
-проверь MCP и покажи список tools
+```text
+проверь MCP leadgen и покажи доступные инструменты
 ```
 
-Ожидаемо:
-- Сервер `yandex-direct` виден
-- Доступны tools: `get_campaigns`, `get_adgroups`, `get_ads`, `get_keywords`, `update_campaign` и др.
+Ожидаемо: доступен MCP-сервер `leadgen` с инструментами Директа, Метрики, Wordstat, VK Ads, history и filters.
 
-## 5. Инструкции для агента
+## 5. Инструкции агента
 
-Codex читает `AGENTS.md` из корня проекта, который ссылается на `CLAUDE.md` с правилами работы с API.
-
-Ваши бизнес-настройки — в `PROJECTS.md`.
-
-## 6. Навыки (Skills)
-
-В папке `.codex/skills/` лежат готовые навыки:
-
-| Навык | Описание |
-|-------|---------|
-| `seo-optimizer` | SEO-аудит и оптимизация страниц |
-
-Навыки активируются автоматически по контексту запроса.
+Codex читает `AGENTS.md` из корня проекта. Бизнес-настройки, цели и CPA-пороги лежат в `PROJECTS.md`; правила API Директа и Метрики — в `METRIKA-ADS-RULES.md`; юридическая проверка контента — в `LEGAL.md`.

@@ -36,7 +36,12 @@ yandex-performance-ops/
 # Other AI agents (keep only .claude/)
 .agents/
 .cline/
-.codex/
+.codex/*
+!.codex/mcp.json
+!.codex/skills/
+.codex/skills/*
+!.codex/skills/leadgen-codex/
+!.codex/skills/leadgen-codex/**
 .cursor/
 .gemini/
 .openclaw/
