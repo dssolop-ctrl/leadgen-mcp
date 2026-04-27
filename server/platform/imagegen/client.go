@@ -19,11 +19,56 @@ import (
 // DefaultEndpoint is the OpenRouter chat completions URL used for image generation.
 const DefaultEndpoint = "https://openrouter.ai/api/v1/chat/completions"
 
+// FallbackModel is used when the primary model rejects the request with a
+// modality / capability error. Gemini Pro Image is multimodal (text+image)
+// and reliably accepts our chat-completions flow.
+const FallbackModel = "google/gemini-3-pro-image-preview"
+
 // Client wraps OpenRouter calls for image generation.
 type Client struct {
 	apiKey   string
 	endpoint string
 	http     *http.Client
+}
+
+// isImageOnlyModel returns true for OpenRouter models that emit only image
+// output (no text). For these we MUST send modalities=["image"] — sending
+// ["image","text"] makes OpenRouter reject the request as unsupported.
+//
+// Conservative default: anything that is NOT a known multimodal image model
+// is treated as image-only. Multimodal Gemini *image* variants accept text+image.
+func isImageOnlyModel(model string) bool {
+	m := strings.ToLower(model)
+	// Known multimodal (text + image) models on OpenRouter.
+	if strings.Contains(m, "gemini") && strings.Contains(m, "image") {
+		return false
+	}
+	// Default: treat as image-only (Flux, SDXL, DALL-E, etc.).
+	return true
+}
+
+// shouldFallback decides whether an error from the primary model warrants a
+// retry on FallbackModel. We trigger on capability/modality errors and on
+// 4xx-class API errors — but NOT on network failures or rate limits where
+// the same problem will recur on the fallback.
+func shouldFallback(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	// Modality / capability mismatches.
+	if strings.Contains(msg, "modalit") ||
+		strings.Contains(msg, "image output") ||
+		strings.Contains(msg, "not support") ||
+		strings.Contains(msg, "unsupported") ||
+		strings.Contains(msg, "capability") {
+		return true
+	}
+	// Generic 4xx from OpenRouter except 429 (rate limit).
+	if strings.Contains(msg, "openrouter http 4") && !strings.Contains(msg, "http 429") {
+		return true
+	}
+	return false
 }
 
 // NewClient constructs an OpenRouter image generation client.
@@ -48,13 +93,17 @@ type Request struct {
 
 // Result is a single generated image.
 type Result struct {
-	Base64   string // raw base64 (without data URL prefix)
-	MimeType string // image/png, image/jpeg, etc.
-	URL      string // direct URL if the model returned one (rare for OpenRouter)
-	Model    string
+	Base64       string // raw base64 (without data URL prefix)
+	MimeType     string // image/png, image/jpeg, etc.
+	URL          string // direct URL if the model returned one (rare for OpenRouter)
+	Model        string // model that actually produced the image (may differ from request after fallback)
+	FallbackUsed bool   // true if FallbackModel kicked in after primary failed
+	PrimaryError string // error from the primary model when fallback was used (empty otherwise)
 }
 
-// Generate performs a single image generation call and returns the decoded image.
+// Generate performs an image generation call. If the primary model fails with
+// a capability/modality error, it transparently retries with FallbackModel.
+// The Result reports which model actually produced the image.
 func (c *Client) Generate(ctx context.Context, req Request) (*Result, error) {
 	if c.apiKey == "" {
 		return nil, errors.New("openrouter api key not configured (config.yaml → openrouter.api_key or env OPENROUTER_API_KEY)")
@@ -63,10 +112,45 @@ func (c *Client) Generate(ctx context.Context, req Request) (*Result, error) {
 		return nil, errors.New("prompt is required")
 	}
 	if req.Model == "" {
-		req.Model = "google/gemini-3-pro-image-preview"
+		req.Model = FallbackModel
 	}
 
-	// OpenRouter unified API: chat/completions with modalities: ["image"] or ["image","text"].
+	// Try primary model.
+	res, err := c.generateOnce(ctx, req)
+	if err == nil {
+		return res, nil
+	}
+
+	// Fallback path: only if (a) the error looks like a capability mismatch and
+	// (b) we are not already on the fallback model.
+	if req.Model != FallbackModel && shouldFallback(err) {
+		primaryErr := err.Error()
+		fbReq := req
+		fbReq.Model = FallbackModel
+		res, fbErr := c.generateOnce(ctx, fbReq)
+		if fbErr != nil {
+			return nil, fmt.Errorf("primary %s failed: %v; fallback %s also failed: %v",
+				req.Model, primaryErr, FallbackModel, fbErr)
+		}
+		res.FallbackUsed = true
+		res.PrimaryError = primaryErr
+		return res, nil
+	}
+
+	return nil, err
+}
+
+// generateOnce performs a single (no-retry) image generation call.
+func (c *Client) generateOnce(ctx context.Context, req Request) (*Result, error) {
+	// OpenRouter unified API: chat/completions with modalities.
+	// Image-only models (Flux, SDXL, etc.) reject ["image","text"] — they
+	// only know how to emit images. Send ["image"] for those, ["image","text"]
+	// for multimodal text+image models (Gemini *image* variants).
+	modalities := []string{"image"}
+	if !isImageOnlyModel(req.Model) {
+		modalities = []string{"image", "text"}
+	}
+
 	body := map[string]any{
 		"model": req.Model,
 		"messages": []map[string]any{
@@ -75,7 +159,7 @@ func (c *Client) Generate(ctx context.Context, req Request) (*Result, error) {
 				"content": req.Prompt,
 			},
 		},
-		"modalities": []string{"image", "text"},
+		"modalities": modalities,
 	}
 
 	if req.ImageSize != "" {
