@@ -43,6 +43,11 @@ func NewServer(
 	// Forecast (1 tool) — прогноз spend/clicks/conversions по dailyстатам кампании.
 	direct.RegisterForecastTools(s, direct.NewClient(logger), resolver)
 
+	// Summarize (3 tools) — компактные read-back-ы для оптимизации/аудита:
+	// summarize_search_queries / summarize_ads_performance / summarize_campaign_snapshot.
+	// Возвращают top-N + агрегаты вместо сырого TSV — экономия ~70-90% контекста.
+	direct.RegisterSummarizeTools(s, direct.NewClient(logger), resolver)
+
 	// Yandex Wordstat (5 tools)
 	wordstat.RegisterTools(s, resolver, logger)
 

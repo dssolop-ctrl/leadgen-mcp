@@ -30,9 +30,17 @@
 
 // A2 — сбор статистики
 2. СБОР СТАТИСТИКИ
+   Для одной кампании — `summarize_campaign_snapshot` (один вызов вместо
+   четырёх) даёт базовые поля + 7-дневные метрики:
+   summarize_campaign_snapshot(
+     client_login=<login>, campaign_id=<id>,
+     last_n_days=7, goal_ids=<основные цели>, attribution="LYDC"
+   )
+
+   Для дашборда по нескольким кампаниям — `get_campaign_stats`:
    get_campaign_stats(
      client_login=<login>,
-     campaign_id=<id>,  // или без → все кампании
+     campaign_ids=<id1,id2,...>,  // или без → все кампании
      date_from=<7/30 дней назад>,
      date_to=<вчера>,
      field_names="CampaignName,Impressions,Clicks,Cost,Ctr,AvgCpc,Conversions,CostPerConversion",
@@ -67,9 +75,13 @@
 
 // A5 — диагностика проблемных
 5. ДИАГНОСТИКА ПРОБЛЕМНЫХ
-   - Поисковые запросы: get_search_queries → waste / opportunities
-   - CTR объявлений: get_ad_stats → какое проигрывает
-   - Ключевые: get_criteria_stats → неэффективные фразы
+   - Поисковые запросы: `summarize_search_queries(goal_ids=<цели>, waste_min_clicks=5)`
+     → блоки `waste` (расход без эффекта) и `top_by_conversions` (где работает).
+     Полный TSV — get_search_queries, только если summary не хватает.
+   - CTR объявлений: `summarize_ads_performance(top_n=10)` →
+     блок `low_ctr_candidates_for_ab` = что заменить (A/B).
+   - Ключевые: get_criteria_stats → неэффективные фразы (для них summary пока нет —
+     если станет узким местом, добавим summarize_criteria).
 
    // Если из A4 пришёл SERP-триггер: прогнать track_position.sh по 3-5 ключам
    // из get_criteria_stats с низким CTR и сопоставить позицию с показами.
