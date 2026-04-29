@@ -5,6 +5,61 @@
 
 ## Что сделано
 
+### 24. Фикс ветки create-rsya: BidCeiling, кластеризация, sanity-check на target (2026-04-29)
+
+**Контекст.** Тестовый прогон РСЯ-кампании Омск/вторичка (запрос «делай сам без вмешательства») показал три бага одновременно: (1) три группы созданы по упоминанию пользователя без проверки семантики/посадочных, (2) `network_bid_ceiling ≈ 1800 ₽` — нереально для Омска (реальный клик 30–100 ₽), (3) target form CPA взят как ~6000 ₽ из benchmark без сверки с network-ожиданием 3500 ₽ для tier_1 вторички. Все три причины — в скилле, не в MCP.
+
+**W1. Формула BidCeiling — переписана.**
+В `references/rsya_defaults.md` старая формула `BidCeiling = tCPA × 1.5` (концептуально неверна — путает потолок клика с целью конверсии) заменена на:
+```
+expected_click = tCPA × CR_estimate     # CR=0.05 для РСЯ-недвижимости
+BidCeiling     = expected_click × 2.5   # запас сверху
+BidCeiling_final = clamp(BidCeiling, tier_min, tCPA × 0.30)
+```
+tier_min: tier_1=80₽, tier_2=40₽, tier_3=20₽. Хард-кап: BidCeiling ≤ tCPA × 0.30 (если выше — что-то не так с CR или tCPA). Раздел расширен таблицей примеров и анти-паттернами («НИКОГДА BidCeiling = CallCPA × что-то», «НИКОГДА без `network_bid_ceiling`»).
+
+**W2. Sanity-check benchmark vs network — обязательный шаг R2.5.**
+Раньше скилл брал `BenchmarkFormCPA` из `get_conversion_values` как target. Теперь — обязательная сверка с `NetworkExpected[theme/tier]` (значения захардкожены в `server/data/network_benchmarks.json` + Go-fallback в benchmarks.go):
+
+| ratio = benchmark / network_expected | Действие |
+|---|---|
+| 0.7–1.3 | Норма, использовать benchmark. |
+| 1.3–2.0 | Стоп, спросить пользователя даже в `auto`-режиме. |
+| > 2.0 | Не использовать benchmark, брать `NetworkExpected × 0.9`. |
+
+В режиме `auto` при ratio > 1.3 — приостановить автономный поток и запросить пользователя. Защита от слива бюджета на аномальном target. Зафиксировано как обязательный гейт в `branches/create-rsya.md` и параллельно в Codex-зеркале.
+
+**W3. Группы — после семантики, не до.**
+В R5 переписан алгоритм: упомянутые пользователем сегменты («1-комн», «2-комн») — сигнал, не решение. Хард-правила:
+- ≥3 фраз в R4 под этот сегмент;
+- наличие посадочной (через `build_landing_url` / `get_site_filters`);
+- если хотя бы одно «нет» → сегмент сворачивается в `Общие-купить`.
+
+Минимум для первой кампании теперь — одна группа `Общие-купить`. Сегментные добавляются ТОЛЬКО при выполнении правил выше. Анти-паттерны прописаны явно.
+
+**W4. Объявлений на группу — 5–8 (стандарт), до 45 (LAL).**
+В R7 было `add_ad × 3` — ниже минимума обучения автостратегии РСЯ. Заменено на `5–8` для стандартных групп, `до 45` для LAL. Каждое объявление = свой комбо (заголовок × текст × визуал 1:1 или 16:9).
+
+**W5. Использование новых MCP-инструментов в R7.**
+- `network_bid_ceiling` теперь читается из формулы R2.6, не `tCPA × 1.5`.
+- `negative_keywords` ← `summary_string` из `get_negative_keyword_guidance(theme, city, placement="rsya")` (вместо ручного склеивания файла).
+- `daily_budget_amount` ← `get_default_budgets(channel="rsya", tier, theme, target_cpa)`.
+- Read-back: `summarize_campaign_snapshot(campaign_id)` для компактной сводки.
+
+**W6. Lessons registry + dual-tree sync.**
+Запись «0. РСЯ: BidCeiling — это клик, не CPA. И группы — после семантики, не до» добавлена в `references/lessons_registry.md` как повышенный приоритет (блок 0, перед существующими). Все три файла (`branches/create-rsya.md`, `references/rsya_defaults.md`, `references/lessons_registry.md`) синхронизированы между `.claude/skills/leadgen/` и `.codex/skills/leadgen-codex/` (`diff -r` чистый кроме предсуществующих BOM-разниц).
+
+**Эффект.**
+- Будущие прогоны РСЯ-кампаний на любом tier-городе перестанут (а) задирать `network_bid_ceiling` в 5–15 раз; (б) брать аномальный benchmark как target без сверки; (в) предрешать структуру групп по реплике пользователя; (г) создавать недо-обученные группы по 3 объявления.
+- В режиме `auto` встроена точка вынужденной паузы: ratio benchmark/network > 1.3 — обязательная пауза. Это нарушает «делай сам без вмешательства», но защищает бюджет.
+
+**Файлы изменены:**
+- ✏️ `.claude/skills/leadgen/branches/create-rsya.md` (R2 → R2/R2.5/R2.6, R5 переписан, R7 — фикс ads count и BidCeiling)
+- ✏️ `.claude/skills/leadgen/references/rsya_defaults.md` (раздел BidCeiling переписан, добавлен sanity-check)
+- ✏️ `.claude/skills/leadgen/references/lessons_registry.md` (новая запись блок 0)
+- ✏️ Codex-зеркала всех трёх файлов
+- ✏️ `RECENT-CHANGES.md` (этот пункт)
+
 ### 23. Новые MCP-инструменты: get_default_budgets + get_negative_keyword_guidance (2026-04-29)
 
 **Контекст.** В пункте #22 PROJECTS.md и LEGAL.md ужаты до policy-only. Из бэклога остались: «бюджеты по уровням × tier» и «гайд по минус-словам по тематике/городу» — это data, и им место в MCP, чтобы скилл при создании кампании звал инструмент, а не читал .md в контекст. Реализованы оба.
