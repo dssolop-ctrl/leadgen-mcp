@@ -5,6 +5,83 @@
 
 ## Что сделано
 
+### 23. Новые MCP-инструменты: get_default_budgets + get_negative_keyword_guidance (2026-04-29)
+
+**Контекст.** В пункте #22 PROJECTS.md и LEGAL.md ужаты до policy-only. Из бэклога остались: «бюджеты по уровням × tier» и «гайд по минус-словам по тематике/городу» — это data, и им место в MCP, чтобы скилл при создании кампании звал инструмент, а не читал .md в контекст. Реализованы оба.
+
+**W1. `get_default_budgets(channel, tier, theme?, target_cpa?)`**
+
+Файл: `server/platform/direct/budgets.go` (~155 строк, скомпилирован).
+
+Параметры:
+- `channel` (required) — `search` / `rsya` / `vk`.
+- `tier` (required) — `tier_1` / `tier_2` / `tier_3` (узнаётся через `get_city_config(city).tier`).
+- `theme` (optional) — для коэффициента (`вторичка`=1.0, `новостройки`=1.15, `коммерческая`=1.3, `аренда`=0.7, `ипотека`=0.8, `hr`=0.6).
+- `target_cpa` (optional, целое в рублях) — добавляет в ответ `computed_from_target = target_cpa × 10 × 1.2`, округлённый до 500₽.
+
+Матрица (search):
+
+| Уровень | tier_1 | tier_2 | tier_3 |
+|---|---:|---:|---:|
+| test | 8000 | 5000 | 3000 |
+| start | 25000 | 15000 | 8000 |
+| scale_min | 80000 | 50000 | 25000 |
+
+РСЯ — ~70% от search (соответствует коэффициенту tCPA × 0.7); VK — ~80% от search.
+
+Hard-floor по каналу (минимум для обучения автостратегий): search 5000, rsya 3000, vk 2000 ₽/нед — поднимается автоматически если `theme_multiplier` опускает ниже.
+
+Ответ включает: `tiers` (test/start/scale_min с применённым multiplier), `min_floor`, `formula`, `theme_guidance` (когда какой уровень брать), `rules` (правила старта/смены), и опциональный `computed_from_target` с разрывом vs `tiers.start`.
+
+**W2. `get_negative_keyword_guidance(theme, city?, placement?, include_competitors?, include_jobs?, include_legal?)`**
+
+Файл: `server/platform/direct/negatives.go` (~330 строк, скомпилирован).
+
+Параметры:
+- `theme` (required) — `вторичка` / `новостройки` / `загородка` / `аренда` / `ипотека` / `коммерческая` / `агентство` / `бренд` / `hr`.
+- `city` (optional, русский) — собственный город кампании; автоматически исключается из «чужих городов РФ» вместе со словоформами (Омск → `омск`, `омский`, `омская`, `омское`, `в омске`).
+- `placement` (default `search`) — для `rsya` подмешивается блок RSYA-минусов с восклицательным знаком (точная форма).
+- `include_competitors`, `include_jobs`, `include_legal` (default `true`) — выключи при брендовой/HR/юр.-кампании. Для `theme=hr` блок `jobs` авто-выключается.
+
+Внутри — данные из `mcp/negative_keywords.md` (245 строк) перенесены в Go-литералы:
+- `citiesMoscowMO`, `citiesSPbLO`, `citiesMillionnikiAndCenters` — ~80 чужих городов РФ.
+- `citiesInternationalCIS`, `citiesAbroadRealty` — международные.
+- 7 универсальных блоков: `informational`, `free_download_education`, `irrelevant_services`, `jobs`, `legal_bureaucracy`, `medical_family`, `negative_complaints`.
+- 6 тематических блоков: `theme_vtorichka` / `_zagorodka` / `_novostroyki` / `_arenda` / `_ipoteka` / `_kommercheskaya`.
+- 2 блока конкурентов: `competitor_aggregators` (Циан, Авито, Домклик, ...), `competitor_agencies` (Инком, Миэль, ...).
+- 1 блок РСЯ-специфичных: `!отделка, !ремонт, ...` (с `!` для точной формы в РСЯ).
+- `ownCityForms` — словоформы 18 ключевых городов Этажи для авто-исключения.
+
+Ответ включает: `blocks` (полные слова по блокам), `block_sizes`, `total_words`, `summary_string` (готовая строка через запятую — сразу в `negative_keywords`), `hard_gate` (PASS/FAIL по правилу ≥150 слов), `rules` (как использовать).
+
+**W3. Регистрация и сборка**
+
+В `server/platform/direct/references.go::RegisterReferenceTools` добавлены два вызова: `registerGetDefaultBudgets(s)` и `registerGetNegativeKeywordGuidance(s)`. Также добавлено поле `tier` в JSON-ответ `get_city_config(city)` (раньше присутствовало в структуре, но не сериализовалось — нужно для связки с `get_default_budgets`).
+
+`docker compose build` прошёл с одним конфликтом имени: была локальная функция `roundTo` уже в `summarize.go` (с другой сигнатурой) — переименовал свою в `roundToStep`. Без других правок собрался.
+
+**W4. Правки документации**
+
+- `PROJECTS.md` (header table) — добавлены строки про два новых MCP-инструмента.
+- `PROJECTS.md` (раздел «Бюджеты по умолчанию») — таблица tier × channel заменена на одно предложение со ссылкой на `get_default_budgets`. Сохранена формула расчёта от целевого CPA.
+- `PROJECTS.md` (раздел минусации) — пометка «через MCP `get_negative_keyword_guidance`», полный текстовый референс остаётся для ручного просмотра.
+- `.claude/skills/leadgen/mcp/negative_keywords.md` + Codex-зеркало — шапка переписана: «для рантайма зови MCP, файл — только для ручного просмотра».
+
+**W5. Эффект**
+
+- Скилл при `add_campaign` теперь не должен загружать `negative_keywords.md` (245 строк, ~6 КБ) — зовёт `get_negative_keyword_guidance(theme="вторичка", city="омск")` и получает готовую `summary_string` для `negative_keywords` параметра + список блоков по требованию. Экономия контекста на каждой создаваемой кампании.
+- При расчёте бюджета — не таблица в скилле, а `get_default_budgets(channel, tier, theme, target_cpa?)`. Расчёт tier-aware и theme-aware прямо из MCP, плюс computed-from-target за один вызов.
+- 18 городов Этажей с известными словоформами (для авто-исключения собственного города из чужих) уже встроены в код. Для остальных — базовое имя плюс совпадения по нижнему регистру.
+
+**Файлы изменены / созданы:**
+- 🆕 `server/platform/direct/budgets.go` (155 строк)
+- 🆕 `server/platform/direct/negatives.go` (330 строк)
+- ✏️ `server/platform/direct/references.go` (+ tier в response, +2 register-вызова)
+- ✏️ `PROJECTS.md` (3 правки: header table, бюджеты, минусация)
+- ✏️ `.claude/skills/leadgen/mcp/negative_keywords.md` (шапка)
+- ✏️ `.codex/skills/leadgen-codex/mcp/negative_keywords.md` (шапка, синк)
+- ✏️ `RECENT-CHANGES.md` (этот пункт)
+
 ### 22. Слим PROJECTS.md и LEGAL.md → MCP как источник правды (2026-04-29)
 
 **Контекст.** В корне основного репо `C:\git\leadgen-mcp\` пользователь увидел почти пустой `PROJECTS.md` — main-репо отставал от свежего main на десятки коммитов (был на `f8399f2`, 15.04). Подтянул через `git pull --ff-only` (FF от `f8399f2` до `55db6c3` — 163 файла обновлено). Заодно нашёл два «забытых шаблона» с placeholder-ами `YOUR_*`, `<!-- Опишите`, медицинскими примерами:

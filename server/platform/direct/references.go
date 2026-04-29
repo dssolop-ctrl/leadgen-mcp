@@ -30,6 +30,8 @@ func RegisterReferenceTools(s *mcpserver.MCPServer) {
 	registerGetBlockedPlacements(s)
 	registerGetSitelinkTemplates(s)
 	registerGetSemanticCluster(s)
+	registerGetDefaultBudgets(s)
+	registerGetNegativeKeywordGuidance(s)
 }
 
 // ===== CITY CONFIG =====
@@ -151,6 +153,7 @@ func registerGetCityConfig(s *mcpserver.MCPServer) {
 				"counter_id":    c.CounterID,
 				"client_login":  c.ClientLogin,
 				"geo_region_id": c.GeoRegionID,
+				"tier":          c.Tier,
 			}, "", "  ")
 			return common.TextResult(string(out)), nil
 		}
