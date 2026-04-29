@@ -66,8 +66,15 @@ func main() {
 	imgClient := imagegen.NewClient(cfg.OpenRouter.APIKey)
 	previewDir := cfg.Server.PreviewDir
 	if previewDir == "" {
-		previewDir = "docs/campaign_previews"
+		// In Docker: /app/previews is the bind-mount target (see docker-compose.yml).
+		// Local dev: fall back to relative docs/campaign_previews.
+		if _, err := os.Stat("/app/previews"); err == nil {
+			previewDir = "/app/previews"
+		} else {
+			previewDir = "docs/campaign_previews"
+		}
 	}
+	logger.Info("preview dir resolved", "path", previewDir)
 
 	// Create MCP server
 	mcpServer := mcpsetup.NewServer(resolver, logger, filterStore, historyStore, imgClient, previewDir)
