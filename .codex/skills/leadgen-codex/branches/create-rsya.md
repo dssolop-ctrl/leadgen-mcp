@@ -150,12 +150,20 @@ BidCeiling_final = clamp(BidCeiling, tier_min, tCPA_РСЯ_form × 0.30)
 2. Wave 1: тематические фразы БЕЗ города, с широкими модификаторами
    Пример для вторички: "купить квартиру", "квартиры", "двушка",
    "вторичка", "квартира цена", "квартира ипотека"
-   → 15-25 фраз (меньше чем в поиске)
+   → 25-40 фраз кандидатов на проверку
+
 3. check_search_volume(phrases=..., region_ids=<город>)
+   → передавай ВСЕ фразы за один вызов — инструмент сам чанкит на батчи по 10.
    → оставить фразы с Shows ≥ 100 (в РСЯ важен охват, не точность)
+   → если получилось < 15 валидных фраз → Wave 2: добавить ещё модификаторы
+     (синонимы тематики, цена/ипотека/первый взнос — комбинации с базой R4.1)
+
 4. Добавить интересы/автотаргетинг через update_autotargeting
    (в R7 - EXACT=YES, ALTERNATIVE=YES)
-5. Минус-слова: из `rsya_defaults.md` раздел 9 (инфо-интент блокируется)
+5. Минус-слова: получить через `get_negative_keyword_guidance(theme, city, placement="rsya")`
+   — для РСЯ дефолтно отключены тяжёлые гео-блоки (~160 слов чужих городов
+   неактуальны, т. к. РСЯ таргетируется по region_id пользователя, не по тексту запроса).
+   Получится ~120-180 слов вместо 400+.
 ```
 
 **НЕ делаем в РСЯ:**
@@ -163,7 +171,13 @@ BidCeiling_final = clamp(BidCeiling, tier_min, tCPA_РСЯ_form × 0.30)
 - Точные конкурентные [циан, авито] — в РСЯ не работает как в поиске.
 - Гео-районы в ключах — работает через region_ids.
 
-**Результат:** 10–30 широких фраз на кампанию.
+**Результат — целевые цифры:**
+- 15–25 валидных фраз на кампанию total.
+- 5–10 фраз на сегментную группу (если ≥3 — порог валидации сегмента).
+- 8–15 фраз на базовую группу `Общие-купить`.
+- Итого по 3 группам кампании: 18–35 ключевых.
+
+⚠️ Если по итогам R4 фраз меньше 12 — **не запускать кампанию автоматически**, спросить пользователя: расширить семантику (Wave 2/3 + другие модификаторы) или принять малый объём как риск.
 
 <!-- R5 — кластеризация по аудитории -->
 ### Шаг R5. Кластеризация по аудитории
@@ -291,8 +305,8 @@ BidCeiling_final = clamp(BidCeiling, tier_min, tCPA_РСЯ_form × 0.30)
      daily_budget_amount=<weekly_rub из R1/get_default_budgets>,
      counter_ids=<из R2>,
      tracking_params=<из R2>,
-     negative_keywords=<summary_string из get_negative_keyword_guidance>,
-     settings='[{"option":"ENABLE_AREA_OF_INTEREST_TARGETING","value":<true|false>}]'
+     negative_keywords=<summary_string из get_negative_keyword_guidance, ~120-180 слов для РСЯ>,
+     settings='[{"option":"ENABLE_AREA_OF_INTEREST_TARGETING","value":false}]'
    )
    → campaign_id
 
@@ -300,6 +314,8 @@ BidCeiling_final = clamp(BidCeiling, tier_min, tCPA_РСЯ_form × 0.30)
    - network_bid_ceiling ≤ tCPA × 0.30 (если выше — пересчитай R2.6, что-то не так)
    - priority_goals.value = tCPA, НЕ BidCeiling (типичная путаница)
    - daily_budget_amount в рублях (не микроюниты), недельный
+   - ENABLE_AREA_OF_INTEREST_TARGETING=false по умолчанию (см. rsya_defaults раздел 5).
+     Включи только если пользователь явно сказал «приезжих / командировочных».
 
 2. Для каждой группы (из R5):
    a. add_adgroup(campaign_id, name, region_ids)
@@ -325,8 +341,24 @@ BidCeiling_final = clamp(BidCeiling, tier_min, tCPA_РСЯ_form × 0.30)
    add_audience_targets(adgroup_id, ..., audience_id)
 
 4. Read-back: get_campaigns с text_campaign_field_names="BiddingStrategy,TrackingParams" — подтвердить настройки.
-   Дополнительно: `summarize_campaign_snapshot(campaign_id)` — компактная сводка для read-back пользователю.
+   ⚠️ Для свежесозданных DRAFT-кампаний используй `get_campaigns`, НЕ `summarize_campaign_snapshot`
+   (последний фильтрует только активные/паузнутые, DRAFT не находит).
 ```
+
+<!-- R7.5 — apply blocked placements -->
+### Шаг R7.5. Применить чёрный список площадок РСЯ
+
+**Обязательный шаг для всех новых РСЯ-кампаний.** Делается ОДНОЙ командой сразу после R7:
+
+```
+apply_blocked_placements(client_login=<из R2>, campaign_id=<из R7>)
+  → применит ~400 площадок Этажи через excludedsites.set одним вызовом
+  → возвращает {applied_count, api_response}
+```
+
+Без этого первые дни обучения автостратегии тратят бюджет на мобильные игры, пиратские приложения и развлекательные домены — сотни рублей в день впустую. См. `references/rsya_defaults.md` раздел 10.
+
+Через 3 дня от старта (после активации пользователем) — отдельная чистка реально открученных площадок без конверсий через ветку O-RSYA / OR.1.
 
 <!-- R8 — аудиторные таргеты (опция) -->
 ### Шаг R8. Аудиторные таргеты

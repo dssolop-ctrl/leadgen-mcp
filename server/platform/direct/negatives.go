@@ -317,6 +317,8 @@ func registerGetNegativeKeywordGuidance(s *mcpserver.MCPServer) {
 			mcp.Description("Включить блок «работа/вакансии» (по умолчанию true). Выключи для HR-кампаний.")),
 		mcp.WithBoolean("include_legal",
 			mcp.Description("Включить блок «юр./бюрократия» (по умолчанию true). Выключи для юридических кампаний.")),
+		mcp.WithBoolean("include_geo_blocks",
+			mcp.Description("Подмешать блоки городов/регионов: other_cities_rf (~120 слов), international_cis (~21), abroad_realty (~23). По умолчанию: true для search, false для rsya. Логика: в search чужие города в самом запросе ('купить квартиру москва') — реальная утечка трафика; в РСЯ показ идёт по region_id пользователя, и эти 160+ слов лишь раздувают набор без эффекта. Включи явно для search или гибрид-кампаний.")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -331,6 +333,9 @@ func registerGetNegativeKeywordGuidance(s *mcpserver.MCPServer) {
 		includeCompetitors := req.GetBool("include_competitors", true)
 		includeJobs := req.GetBool("include_jobs", true)
 		includeLegal := req.GetBool("include_legal", true)
+		// Geo-blocks default depends on placement: ON for search (query-based filtering matters),
+		// OFF for rsya (user is region-targeted by IP/cookie, not by query text).
+		includeGeoBlocks := req.GetBool("include_geo_blocks", placement != "rsya")
 
 		if theme == "" {
 			return common.ErrorResult("Параметр theme обязателен. Допустимые: вторичка, новостройки, загородка, аренда, ипотека, коммерческая, агентство, бренд, hr."), nil
@@ -350,10 +355,12 @@ func registerGetNegativeKeywordGuidance(s *mcpserver.MCPServer) {
 
 		blocks := map[string][]string{}
 
-		// Universal city block — always
-		blocks["other_cities_rf"] = buildOtherCitiesRF(city)
-		blocks["international_cis"] = citiesInternationalCIS
-		blocks["abroad_realty"] = citiesAbroadRealty
+		// Geo blocks — heavy (~160 words). Default ON for search, OFF for rsya.
+		if includeGeoBlocks {
+			blocks["other_cities_rf"] = buildOtherCitiesRF(city)
+			blocks["international_cis"] = citiesInternationalCIS
+			blocks["abroad_realty"] = citiesAbroadRealty
+		}
 
 		blocks["informational"] = blockInformational
 		blocks["free_download_education"] = blockFreeDownloadEducation
@@ -407,11 +414,21 @@ func registerGetNegativeKeywordGuidance(s *mcpserver.MCPServer) {
 		// Сomma-separated string for direct use in negative_keywords parameter
 		summaryString := strings.Join(flat, ", ")
 
+		// Hard-gate threshold depends on placement: search needs ≥150 (with geo blocks),
+		// rsya needs ≥80 (geo blocks excluded by default, fewer minuses are normal).
+		minWords := 150
+		if placement == "rsya" && !includeGeoBlocks {
+			minWords = 80
+		}
 		hardGate := "PASS"
-		gateNote := fmt.Sprintf("Слов в наборе: %d (хард-гейт: ≥150).", len(flat))
-		if len(flat) < 150 {
+		gateNote := fmt.Sprintf("Слов в наборе: %d (хард-гейт: ≥%d).", len(flat), minWords)
+		if len(flat) < minWords {
 			hardGate = "FAIL"
-			gateNote += " Добери блоки или проверь, не пропущен ли «other_cities_rf»."
+			if includeGeoBlocks {
+				gateNote += " Добери блоки или проверь, не пропущен ли «other_cities_rf»."
+			} else {
+				gateNote += " Добери блоки (free_download_education / irrelevant_services / theme_*)."
+			}
 		}
 
 		out := map[string]any{
@@ -421,6 +438,7 @@ func registerGetNegativeKeywordGuidance(s *mcpserver.MCPServer) {
 			"include_competitors": includeCompetitors,
 			"include_jobs":        includeJobs,
 			"include_legal":       includeLegal,
+			"include_geo_blocks":  includeGeoBlocks,
 			"blocks":              blocks,
 			"block_sizes":         blockSizes(blocks),
 			"total_words":         len(flat),

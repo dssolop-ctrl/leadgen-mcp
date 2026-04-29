@@ -24,11 +24,18 @@ func RegisterHandlers(s *mcpserver.MCPServer, client *Client, resolver *auth.Acc
 	registerWordstatUserInfo(s, client, resolver)
 }
 
+// wordstatPhraseLimit — фактический лимит API CreateNewWordstatReport (Maximum array size).
+// Документация утверждает «до 128», на практике API отклоняет >10 (error_code 241).
+// Чтобы пользователю не приходилось вручную чанкить — делаем это на стороне сервера.
+const wordstatPhraseLimit = 10
+
 func registerCheckSearchVolume(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("check_search_volume",
-		mcp.WithDescription("Частотность фраз через Вордстат: запросы/месяц + похожие фразы. До 128 фраз за раз."),
+		mcp.WithDescription("Частотность фраз через Вордстат: запросы/месяц + похожие фразы. "+
+			"API-лимит — 10 фраз за один отчёт; этот инструмент авто-чанкит более длинные списки на батчи по 10 и склеивает результаты. "+
+			"Можно передавать любое разумное количество фраз (рекомендуется до 100 за вызов)."),
 		mcp.WithString("account", mcp.Description("Аккаунт")),
-		mcp.WithString("phrases", mcp.Description("Фразы через запятую. Операторы: \"точная фраза\", [точный порядок]"), mcp.Required()),
+		mcp.WithString("phrases", mcp.Description("Фразы через запятую. Операторы: \"точная фраза\", [точный порядок]. Авто-чанкинг при > 10."), mcp.Required()),
 		mcp.WithString("region_ids", mcp.Description("ID регионов через запятую (опционально)")),
 	)
 
@@ -39,62 +46,104 @@ func registerCheckSearchVolume(s *mcpserver.MCPServer, client *Client, resolver 
 		}
 
 		phrases := common.GetStringSlice(req, "phrases")
+		regions := common.GetStringSlice(req, "region_ids")
 
-		param := map[string]any{
-			"Phrases": phrases,
-		}
-		if regions := common.GetStringSlice(req, "region_ids"); len(regions) > 0 {
-			param["GeoID"] = regions
+		if len(phrases) == 0 {
+			return common.ErrorResult("phrases пустой"), nil
 		}
 
-		// CreateNewWordstatReport
-		resp, err := client.Call(ctx, token, "CreateNewWordstatReport", param)
-		if err != nil {
-			return common.ErrorResult(err.Error()), nil
-		}
+		// Chunk phrases into batches of <= wordstatPhraseLimit and aggregate results.
+		var aggregated []json.RawMessage
+		var errors []string
+		for i := 0; i < len(phrases); i += wordstatPhraseLimit {
+			end := i + wordstatPhraseLimit
+			if end > len(phrases) {
+				end = len(phrases)
+			}
+			chunk := phrases[i:end]
 
-		// API v4 returns {"data": <reportID>} — extract report ID
-		var envelope struct {
-			Data int `json:"data"`
-		}
-		if err := json.Unmarshal(resp, &envelope); err != nil || envelope.Data == 0 {
-			return common.TextResult(string(resp)), nil
-		}
-		reportID := envelope.Data
-
-		// Poll for report — GetWordstatReport (with delay between attempts)
-		for i := 0; i < 30; i++ {
-			time.Sleep(2 * time.Second)
-			result, err := client.Call(ctx, token, "GetWordstatReport", reportID)
-			if err != nil {
-				// HTTP error — wait and retry
+			data, fetchErr := fetchWordstatChunk(ctx, client, token, chunk, regions)
+			if fetchErr != nil {
+				errors = append(errors, fmt.Sprintf("chunk %d-%d: %v", i, end-1, fetchErr))
 				continue
 			}
-
-			// Check if API returned an error in JSON body (v4 format)
-			var apiErr struct {
-				ErrorCode int `json:"error_code"`
-			}
-			if err := json.Unmarshal(result, &apiErr); err == nil && apiErr.ErrorCode != 0 {
-				// Report still generating (error_code 92) — continue polling
-				continue
-			}
-
-			// Delete report after getting results
-			_, _ = client.Call(ctx, token, "DeleteWordstatReport", reportID)
-
-			// Extract data field from v4 response
-			var dataEnvelope struct {
-				Data json.RawMessage `json:"data"`
-			}
-			if err := json.Unmarshal(result, &dataEnvelope); err == nil && len(dataEnvelope.Data) > 0 {
-				return common.SafeTextResult(string(dataEnvelope.Data)), nil
-			}
-			return common.SafeTextResult(string(result)), nil
+			aggregated = append(aggregated, data)
 		}
 
-		return common.ErrorResult("Wordstat report timeout — попробуйте позже"), nil
+		if len(aggregated) == 0 {
+			return common.ErrorResult(fmt.Sprintf("все чанки упали: %s", strings.Join(errors, "; "))), nil
+		}
+
+		// Merge aggregated chunks. Each chunk is a JSON array of phrase results — concatenate.
+		merged := mergeWordstatChunks(aggregated)
+		if len(errors) > 0 {
+			// Partial success: include error notes in response.
+			return common.SafeTextResult(fmt.Sprintf("%s\n/* partial errors: %s */", merged, strings.Join(errors, "; "))), nil
+		}
+		return common.SafeTextResult(merged), nil
 	})
+}
+
+// fetchWordstatChunk requests a single Wordstat report for up to 10 phrases and returns the data field.
+func fetchWordstatChunk(ctx context.Context, client *Client, token string, phrases []string, regions []string) (json.RawMessage, error) {
+	param := map[string]any{
+		"Phrases": phrases,
+	}
+	if len(regions) > 0 {
+		param["GeoID"] = regions
+	}
+
+	resp, err := client.Call(ctx, token, "CreateNewWordstatReport", param)
+	if err != nil {
+		return nil, err
+	}
+	var envelope struct {
+		Data int `json:"data"`
+	}
+	if err := json.Unmarshal(resp, &envelope); err != nil || envelope.Data == 0 {
+		return nil, fmt.Errorf("unexpected CreateNewWordstatReport response: %s", string(resp))
+	}
+	reportID := envelope.Data
+
+	for i := 0; i < 30; i++ {
+		time.Sleep(2 * time.Second)
+		result, err := client.Call(ctx, token, "GetWordstatReport", reportID)
+		if err != nil {
+			continue
+		}
+		var apiErr struct {
+			ErrorCode int `json:"error_code"`
+		}
+		if err := json.Unmarshal(result, &apiErr); err == nil && apiErr.ErrorCode != 0 {
+			continue
+		}
+		_, _ = client.Call(ctx, token, "DeleteWordstatReport", reportID)
+		var dataEnvelope struct {
+			Data json.RawMessage `json:"data"`
+		}
+		if err := json.Unmarshal(result, &dataEnvelope); err == nil && len(dataEnvelope.Data) > 0 {
+			return dataEnvelope.Data, nil
+		}
+		return result, nil
+	}
+	return nil, fmt.Errorf("wordstat report timeout for %d phrases", len(phrases))
+}
+
+// mergeWordstatChunks concatenates chunk JSON arrays into a single array.
+// If chunks aren't arrays (unexpected), falls back to wrapping them in an "items" object.
+func mergeWordstatChunks(chunks []json.RawMessage) string {
+	var allItems []json.RawMessage
+	for _, c := range chunks {
+		var items []json.RawMessage
+		if err := json.Unmarshal(c, &items); err == nil {
+			allItems = append(allItems, items...)
+			continue
+		}
+		// Not an array — append as-is wrapped.
+		allItems = append(allItems, c)
+	}
+	merged, _ := json.Marshal(allItems)
+	return string(merged)
 }
 
 func registerWordstatDynamics(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {

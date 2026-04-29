@@ -71,6 +71,31 @@
 - **Soft-лимит** на стороне скилла — 20 генераций на одну кампанию (см. `references/image_prompts.md`).
 - **Modalities-aware:** клиент проверяет, поддерживает ли модель `modalities:["image","text"]`. Если нет — переключается на direct URL fallback.
 
+### OpenRouter API key — обязательная конфигурация
+
+`generate_image` / `generate_banner_set` требуют `OPENROUTER_API_KEY`. Если ключ отсутствует, инструменты возвращают ошибку `openrouter api key not configured (config.yaml openrouter.api_key or env OPENROUTER_API_KEY)` — это блокирует R6.5 в скилле leadgen.
+
+**Установка ключа** (любой из вариантов):
+
+1. **Через `tokens.env`** (предпочтительно — env_file подхватывается docker-compose):
+   ```
+   OPENROUTER_API_KEY=sk-or-v1-...
+   ```
+   Файл должен существовать и не быть директорией; после правки — `docker compose down && docker compose up -d`.
+
+2. **Через `server/config.yaml`** — добавить секцию:
+   ```yaml
+   openrouter:
+     api_key: "sk-or-v1-..."
+   ```
+   После правки — рестарт контейнера.
+
+Получить ключ: https://openrouter.ai/keys. На стороне OpenRouter биллинг по факту полученных пикселей; нерезультативные запросы (4xx до фолбэка модели) в счёт не идут.
+
+### Видео-генерация — server-side automatic, no API toggle
+
+Yandex Direct автоматически создаёт видео-креативы из текстов и картинок РСЯ-объявления через свой ИИ-видеогенератор. Происходит после старта показов (часы / сутки). **Явного API-флага для включения/выключения нет** в `Campaigns.Settings` или `AdGroupSettings`. Если у объявлений валидные картинки 1:1 и 16:9, видео сгенерируется автоматически. Для проверки готовности — `creatives` MCP-инструмент.
+
 ## Места показа: поиск vs РСЯ
 
 | Параметр | Поиск | РСЯ |

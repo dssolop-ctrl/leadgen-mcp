@@ -36,6 +36,7 @@ func NewServer(
 	direct.RegisterTools(s, resolver, logger)
 	direct.RegisterBenchmarkTools(s, direct.NewClient(logger), metrClient, resolver)
 	direct.RegisterReferenceTools(s)
+	direct.RegisterBlockedPlacementsTools(s, direct.NewClient(logger), resolver)
 
 	// Yandex Metrika (11 tools)
 	metrika.RegisterToolsWithClient(s, metrClient, resolver)
