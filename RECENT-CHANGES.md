@@ -1,9 +1,88 @@
-# Последние изменения (2026-04-24)
+# Последние изменения
 
-> Этот файл — контекст для продолжения работы с другого компьютера.
-> После синхронизации контекста — файл можно удалить.
+> **Постоянный лог.** Этот файл живёт в репо и пополняется новыми пунктами после каждой значимой сессии. Цель — переносить контекст между машинами (работа с двух ПК) и между сессиями Claude/Codex без потерь. **Не удалять.**
+> Формат: пункты пронумерованы по убыванию (свежие — сверху). Каждый пункт = одна сессия / одна логическая волна изменений.
 
 ## Что сделано
+
+### 21. Разделение CLAUDE.md по режимам и иерархии (2026-04-29)
+
+**Контекст.** Параллельно ведём разработку MCP-сервера и скилла `leadgen` (плюс смежные скиллы). Корневой `CLAUDE.md` (144 строки, 11.7 КБ) на 95% содержал runtime-инструкции для агента-пользователя скилла («бюджет — недельный в рублях», «атрибуция — LYDC», «не вызывай resume_campaign» и т. п.). На каждой dev-сессии этот балласт грузился в hot-path, плюс риск применить runtime-правило к dev-задаче.
+
+**Решение.** Раздельные `CLAUDE.md` по уровням + явное разделение режимов **DEV (default)** и **RUNTIME (только по слэш-команде)**.
+
+**W1. Новая структура CLAUDE.md (4 файла)**
+
+- **`CLAUDE.md` (root, переписан)** — DEV-режим по умолчанию, ~80 строк. Объясняет: проект — разработка скилла + MCP, runtime-правила скилла применяются только по `/leadgen`, `/yandex-direct`, `/yandex-metrika`, `/vk-ads`, `/demand-research`, `/serp-monitor`, `/seo`. Без слэш-команды runtime-документы (`METRIKA-ADS-RULES.md`, `VK-ADS-RULES.md`, `LEGAL.md`, `PROJECTS.md`, `agent-*.md`) в контекст не грузить. Карта проекта с явной колонкой «Грузить при старте?». Старт-чеклист: читать последние 1–2 пункта `RECENT-CHANGES.md` первым делом. Двойное дерево скиллов и правило записи в журнал — оставлены здесь.
+- **`server/CLAUDE.md` (новый)** — dev-инструкции MCP-сервера. Структура пакетов (`platform/direct`, `platform/imagegen` и т. д.), build/run/test, как добавить новый MCP-инструмент (с явным шагом «если массив > 10 — делай парный `summarize_*`»), конвенция компактных ответов, конфиг и секреты, SQLite, CI/CD (auto-release при пуше в main). Грузится автоматически только когда cwd в `server/`.
+- **`.claude/skills/leadgen/CLAUDE.md` (новый)** — dev-инструкции скилла. **Явный заголовок: «Загружать только когда работаем над содержимым скилла. При обычной dev-сессии MCP — не загружать. При активации `/leadgen` — также не загружать (грузится `skill.md`).»** Правило двойного дерева, структура файлов скилла с пометками когда грузится в runtime, frontmatter ≤ 50 слов, lazy-load mantra, якоря шагов как стабильный контракт.
+- **`TECHNICAL.md` (новый, ~150 строк)** — технические детали для отладки. **Заголовок: «НЕ ГРУЗИТЬ ПРИ СТАРТЕ СЕССИИ. Открывать только при сбое или поиске специфики API.»** Содержит: MCP runtime-архитектура (SSE, bind-mounts), Yandex Direct quirks (выжимка), VK Ads quirks, Imagegen quirks, поиск vs РСЯ — таблица отличий, известные сбои (5 кейсов: контейнер из старого worktree, `tokens.env` как директория, битые `;C\`-пути, SSE не подхватывает после rebuild, CalloutSetting через SET). Ссылается на `METRIKA-ADS-RULES.md`, `VK-ADS-RULES.md`, `LEGAL.md`, `PROJECTS.md`, `agent-*.md` как на «справочники по требованию».
+
+**W2. Sync `AGENTS.md` для Codex**
+
+`AGENTS.md` переписан под ту же логику: DEV по умолчанию, RUNTIME по слэш-команде, указатели на новые `CLAUDE.md`-уровни и `TECHNICAL.md`. Остался тонким — без дублирования контента.
+
+**W3. Auto-memory обновлена**
+
+В `MEMORY.md` (auto-memory Claude Code) добавлены два пойнтера, чтобы новые сессии моментально знали контекст:
+- `project_history_log.md` — RECENT-CHANGES.md = канонический журнал, читать первым.
+- `project_dev_vs_runtime_modes.md` — DEV/RUNTIME режимы и что не грузить превентивно.
+
+**Эффект.**
+- Hot-path dev-сессии: с ~12 КБ runtime-инструкций до ~3 КБ навигации. Освободилось ~9 КБ контекста под рабочие данные.
+- Mode confusion устранена: dev-задача не подбирает runtime-правила «не вызывай resume_campaign» и т. п. Если они понадобятся — пользователь зовёт `/leadgen` или агент сам грузит `TECHNICAL.md` при поломке.
+- Иерархия каскадирует автоматически: правишь `server/foo.go` — Claude получает root + server-CLAUDE; правишь скилл — root + skill-CLAUDE. Правильные инструкции в нужный момент.
+- Cross-PC синхронизация: всё лежит в репо, новый ПК после `git pull` работает идентично.
+
+**Не тронуто.** `skill.md` всех скиллов, `library/`, `references/`, `branches/`, `flow-steps.md` — это runtime-контент, остался как был. Ссылки на них из root `CLAUDE.md` теперь явно условные («только при активации скилла»).
+
+**Файлы созданы / изменены:**
+- ✏️ `CLAUDE.md` (переписан с нуля)
+- ✏️ `AGENTS.md` (переписан)
+- 🆕 `server/CLAUDE.md`
+- 🆕 `.claude/skills/leadgen/CLAUDE.md`
+- 🆕 `TECHNICAL.md`
+- 🆕 `~/.claude/projects/C--git-leadgen-mcp/memory/project_history_log.md`
+- 🆕 `~/.claude/projects/C--git-leadgen-mcp/memory/project_dev_vs_runtime_modes.md`
+- ✏️ `~/.claude/projects/C--git-leadgen-mcp/memory/MEMORY.md` (добавлены два пойнтера)
+
+### 20. Пересборка MCP + большая уборка корня (2026-04-29)
+
+**Контекст.** Контейнер `leadgen-mcp` крутился из worktree `condescending-lumiere` на коммите `8bceda0` — отставал от `main` (`ab21581`) на 7 коммитов. Не было `summarize_*` инструментов, Network-стратегий РСЯ, `imagegen`. Параллельно — корень основного репо `C:\git\leadgen-mcp\` зарос мусором (34 untracked-объекта).
+
+**W1. Миграция рантайма + пересборка**
+- Остановил старый контейнер. Перенёс рабочие файлы из `condescending-lumiere/server/` в текущий worktree (`intelligent-chatelet-76b590/server/`): `config.yaml`, `filter_values.json`, SQLite — `filters.db` (фильтры посадочных URL) и `change_history.db` (журнал MCP).
+- Создал `tokens.env` из шаблона (старый контейнер тоже работал без секретов в env — всё в `config.yaml`).
+- `docker compose build` + `up -d` из этого worktree. Бинарь `/app/leadgen-mcp` от 2026-04-29, обе БД открылись, `:8080/sse` отвечает 200.
+- Теперь активны: `summarize_campaigns/ads/adgroups/keywords` (−70–90% токенов на обзорах), `add_ad_image`/`delete_ad_images`, `generate_image`/`generate_banner_set`, Network-стратегии (`WB_MAXIMUM_CONVERSION_RATE` / `AVERAGE_CPA` / `WB_MAXIMUM_CLICKS`), `BidCeiling` для авто-стратегий, расширенный `get_ad_images` с `OriginalUrl`/`PreviewUrl`.
+
+**W2. Чистка корня worktree (10 файлов, ~1.5 МБ)**
+
+Удалены файлы без единой входящей ссылки в скиллах / MCP-коде / hot-path-документах:
+- `usecases.md` (52 КБ), `parse_goals.py` (одноразовый, с захардкоженным путём к удалённой `tool-results`), `test_tool.sh`.
+- `docs/tz-get_conversion_values-v2.md` (24 КБ, ТЗ закрытой задачи).
+- `docs/history-architecture.{png,excalidraw}` (960 КБ), `docs/rsya-branch-flow.excalidraw`.
+- `campaigns/omsk_poisk_vtorichka_odnokomnatnye_preview.md` (временный preview-черновик).
+- `docs/setup-*.md` (8 файлов: claude-code, cline, codex, cursor, gemini-cli, openclaw, vscode-copilot, windsurf).
+
+**Сохранены** (на них есть ссылки): `docs/rsya-research/` (упомянут в `rsya_defaults.md:266` как источник анализа 395 РСЯ-кампаний), `docs/skill_improvement_backlog.md` (упомянут в `skill.md`), `docs/project-flow-cjm.excalidraw` (восстановлен после ошибочного удаления), `docs/campaign_previews/` (mount-таргет imagegen). Все hot-path .md (`CLAUDE.md`, `AGENTS.md`, `agent-direct_wordstat.md`, `agent-vk.md`, `LEGAL.md`, `PROJECTS.md`, `METRIKA-ADS-RULES.md`, `VK-ADS-RULES.md`) — на месте.
+
+**W3. Чистка корня основного репо `C:\git\leadgen-mcp\` (34 объекта)**
+
+Корень оброс артефактами старой ad-hoc отладки (15.04.2026):
+- 25 `.mjs`-скриптов: `add_keywords`, `add_negatives`, `analyze_wordstat`, 3× `check_campaign*`, `check_adgroup_detail`, `collect_benchmarks`, `create_campaign`, `debug_labels`, `deploy_groups`, `expand_semantics`, `fix_remaining`, `mcp_call`, `run_flow`, 7× `test_*`, 2× `update_omsk_*`.
+- 1 `.sh`: `test_tool.sh`.
+- 4 JSON-дампа: `semantics_final.json`, `wordstat_omsk_data.json`, `wordstat_round{1,2}_raw.json`.
+- 1 лог: `campaign_creation_log.md`.
+- 3 ломаные docker-артефакт-директории: `tokens.env\` (пустая, создалась когда docker не нашёл файл и сделал bind-mount как директорию), `tokens.env;C\` и `config.yaml;C\` (битые Windows-пути с двоеточием).
+
+Все были untracked в git. Tracked-файлы (`*.md`, `LICENSE`, `.gitignore`, `.mcp.json`, директории) не тронуты — они принадлежат main-ветке (`f8399f2`, отстаёт от обновлённой main; синхронизировать отдельно).
+
+**W4. Решение про лог-файл**
+
+Поначалу удалил `RECENT-CHANGES.md` — старая шапка говорила «после синхронизации можно удалить». Пользователь поправил: файл нужен **постоянно**, как механизм переноса контекста между двумя ПК и между сессиями Claude/Codex. Шапка переписана: «Постоянный лог, не удалять». Дальше каждая значимая сессия добавляет новый пункт сверху.
+
+**Эффект.** MCP работает на свежем коде с экономичными `summarize_*`. Корни обоих рабочих директорий чистые — меньше шума при `ls`, меньше токенов на навигационные команды.
 
 ### 19. Рефакторинг скилла leadgen для экономии контекста (2026-04-24)
 
