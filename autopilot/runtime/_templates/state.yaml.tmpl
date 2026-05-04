@@ -1,0 +1,48 @@
+# state.yaml — операционный источник правды (machine).
+# Schema: ../../schemas/state.schema.json
+# Регенерируется в конце каждого прогона.
+city: "{{ city }}"
+schema_version: 1
+last_run:
+  run_id: "{{ run_id }}"
+  started_at: "{{ started_at }}"
+  ended_at: "{{ ended_at }}"
+  status: "{{ status }}"           # succeeded | failed | halted | in_progress
+  phase: "{{ phase }}"
+  autopilot_version: "{{ autopilot_version }}"
+  skill_version: "{{ skill_version }}"
+  autonomy_mode: "{{ autonomy_mode }}"
+budget:
+  monthly_total_limit: {{ monthly_total_limit }}
+  spent_mtd: {{ spent_mtd }}
+  managed_spend_mtd: {{ managed_spend_mtd }}
+  unmanaged_spend_mtd: {{ unmanaged_spend_mtd }}
+  pacing_ratio: {{ pacing_ratio }}
+  forecast_month_end: {{ forecast_month_end }}
+  pacing_state: "{{ pacing_state }}"   # normal | conservation | emergency | hard_cap
+topics:
+  # <topic_slug>:
+  #   status: active
+  #   budget_used: 0
+  #   budget_limit: 60000
+  #   active_campaign_count: 0
+  #   trend_cpa_7d_pct: 0
+  #   leads_form_7d: 0
+  #   leads_qualified_30d: 0
+campaigns:
+  # - campaign_id: 8765432
+  #   label: "Омск-Вторичка-Поиск"
+  #   ownership: managed              # managed | adoptable | foreign | holdout | released
+  #   status_state: ON
+  #   status_status: ACCEPTED
+  #   topic: vtorichka
+  #   channel: search
+  #   last_action: "bid.increase.within_cap"
+  #   last_action_at: "2026-04-29T10:30:00Z"
+  #   next_action: "watch"
+  #   flags: []
+  #   human_override_until: null
+pending_approvals_count: 0
+open_decisions: []
+last_weekly_rollup: null
+last_monthly_rollup: null

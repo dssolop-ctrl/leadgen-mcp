@@ -67,6 +67,9 @@ docs/*.png
 # Operational state, ledger, snapshots, narrative md, locks — per-machine.
 autopilot/runtime/*
 !autopilot/runtime/.gitkeep
+# But _templates/ are versioned source files (used to render narrative md).
+!autopilot/runtime/_templates/
+!autopilot/runtime/_templates/**
 # Generated reports (HTML).
 autopilot/reports/*
 !autopilot/reports/.gitkeep

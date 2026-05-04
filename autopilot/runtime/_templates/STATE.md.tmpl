@@ -1,0 +1,39 @@
+# STATE — {{ city }} (last update {{ ts }})
+
+## Метаданные
+- run_id: {{ run_id }}
+- autopilot_version: {{ autopilot_version }}
+- autonomy_mode: {{ autonomy_mode }}
+- trust_profile: {{ trust_profile }}
+
+## Бюджет
+- monthly_total_limit: {{ monthly_total_limit }} ₽
+- spent_mtd: {{ spent_mtd }} ₽ ({{ spent_pct }}%)
+  - managed: {{ managed_spend_mtd }} ₽
+  - unmanaged: {{ unmanaged_spend_mtd }} ₽
+- pacing_ratio: {{ pacing_ratio }}
+- forecast_month_end: {{ forecast_month_end }} ₽
+- pacing_state: {{ pacing_state }}
+
+## Активные тематики
+
+| topic | status | budget_used | budget_limit | active_campaigns | trend_cpa_7d |
+|---|---|---|---|---|---|
+{{ topics_table }}
+
+## Активные кампании (managed)
+
+| campaign_id | label | status | last_action | next_action | flags |
+|---|---|---|---|---|---|
+{{ campaigns_table }}
+
+## Указатели в lazy memory
+- кампании, изменённые сегодня: {{ today_changed_campaigns }}
+- последний run: {{ last_run_path }}
+- открытые decisions: {{ open_decisions_paths }}
+
+## Флаги внимания
+{{ attention_flags }}
+
+## Последний weekly rollup: {{ last_weekly_rollup }}
+## Последний monthly rollup: {{ last_monthly_rollup }}

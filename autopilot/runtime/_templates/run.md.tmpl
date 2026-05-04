@@ -1,0 +1,42 @@
+---
+run_id: {{ run_id }}
+started: {{ started_at }}
+ended: {{ ended_at }}
+phase: {{ phase }}
+mode: {{ mode }}
+autonomy: {{ autonomy_mode }}
+---
+
+# Run {{ run_id }}
+
+## Контекст
+- city: {{ city }}
+- trust_profile: {{ trust_profile }}
+- pacing_state: {{ pacing_state }}
+- resolved_permissions_source: см. permissions_resolution секцию ниже
+
+## Метрики
+{{ metrics_section }}
+
+## Сигналы
+{{ signals_section }}
+
+## План действий
+{{ planned_actions }}
+
+## Применённые действия
+{{ applied_actions }}
+
+## Решения (нестандартные)
+{{ decisions }}
+
+## Permissions resolution (срез)
+{{ permissions_resolution }}
+
+## Изменения в памяти
+- updated state.yaml ✓
+- ledger rows: {{ ledger_rows_count }}
+- metrics_snapshots rows: {{ metrics_rows_count }}
+
+## Errors / warnings
+{{ errors }}

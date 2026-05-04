@@ -1,0 +1,21 @@
+---
+tags: [campaign:{{ campaign_id }}] [topic:{{ topic }}] [channel:{{ channel }}] [city:{{ city }}]
+last_action: {{ last_action_at }}
+status: {{ status }}
+ownership: {{ ownership }}
+---
+
+# {{ campaign_name }}
+
+## История изменений (обратный хронологический)
+
+{{ changes_log }}
+
+## Текущие метрики (last 7 full days)
+- spend: {{ spend_7d }} ₽
+- clicks: {{ clicks_7d }}
+- leads_form: {{ leads_form_7d }}
+- cpa_form: {{ cpa_form_7d }} ₽
+
+## Открытые гипотезы
+{{ hypotheses }}
