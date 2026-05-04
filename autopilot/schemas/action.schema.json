@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leadgen-mcp/autopilot/schemas/action.schema.json",
+  "title": "Planned Action",
+  "description": "Single action proposed/applied by autopilot during a run. Used in run logs and ledger entries.",
+  "type": "object",
+  "required": ["action_id", "action_type", "risk_class", "city", "entity_type", "entity_id", "decision_window", "idempotency_key", "signal_id", "reason_code", "confidence", "evidence", "permission_resolved", "permission_source"],
+  "properties": {
+    "action_id": { "type": "string", "description": "ULID/UUID for this action attempt" },
+    "action_type": { "type": "string", "description": "From action_catalog.md (e.g. bid.increase.within_cap)" },
+    "risk_class": { "enum": ["low", "medium", "high", "critical"] },
+    "city": { "type": "string" },
+    "account": { "type": "string" },
+    "entity_type": { "enum": ["campaign", "adgroup", "ad", "keyword", "audience", "retargeting_list", "placement", "negative_set", "topic", "extension", "vcard", "strategy", "feed", "budget"] },
+    "entity_id": { "type": ["integer", "string"] },
+    "decision_window": { "type": "string", "description": "YYYY-MM | YYYY-WNN | YYYY-MM-DD | YYYY-Qn" },
+    "idempotency_key": { "type": "string", "description": "<city>|<account>|<entity_type>|<entity_id>|<action_type>|<desired_value>|<decision_window>" },
+    "desired_value": { "description": "Target value as JSON-serializable (number/string/array/object)" },
+    "before_value": { "description": "Current value before apply" },
+    "before_snapshot_ref": { "type": "string", "description": "Path to before_snapshots/<action_id>.json (only if risk_class>=medium or bulk/replace)" },
+
+    "signal_id": { "type": "string", "description": "From signal_catalog.md" },
+    "reason_code": { "type": "string" },
+    "confidence": { "enum": ["low", "medium", "high"] },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "window": { "type": "string", "description": "e.g. last_7_full_days" },
+        "clicks": { "type": "integer" },
+        "conversions": { "type": "integer" },
+        "spend": { "type": "number" },
+        "cpa_form": { "type": "number" },
+        "target_cpa_form": { "type": "number" },
+        "compare_to": { "enum": ["target", "peer_group", "previous_period"] }
+      },
+      "additionalProperties": true
+    },
+    "expected_effect": { "type": "string", "description": "Required for applied risk>=medium" },
+    "guard_metric": { "type": "string", "description": "Required for applied risk>=medium" },
+    "rollback_trigger": { "type": "string", "description": "Required for high/critical" },
+
+    "permission_resolved": { "enum": ["auto", "auto_with_notify", "review_queue", "block"] },
+    "permission_source": { "type": "string", "description": "trust_profiles/<p>.yaml | cities/<c>.yaml | topics_permissions | runtime_override" },
+
+    "status": { "enum": ["planned", "skipped_idempotent", "skipped_caps", "skipped_cooldown", "skipped_drift", "skipped_human_override", "skipped_block", "queued_approval", "applying", "applied", "failed", "rolled_back"] },
+    "skip_reason": { "type": "string" },
+    "applied_at": { "type": "string", "format": "date-time" },
+    "error": { "type": "string" }
+  }
+}

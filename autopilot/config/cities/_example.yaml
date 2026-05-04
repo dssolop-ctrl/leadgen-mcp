@@ -1,0 +1,135 @@
+# City config example. Copy to <city>.yaml and fill in.
+# Schema: ../schemas/city_config.schema.json
+#
+# Files referenced:
+#   - autopilot/config/caps_defaults.yaml      (numeric caps + thresholds)
+#   - autopilot/config/trust_profiles/<p>.yaml (permissions baseline)
+#   - autopilot/config/secrets.env             (TELEGRAM_BOT_TOKEN, etc.)
+
+# === Идентификация ===
+city: example                              # latin lowercase slug; used in paths
+client_login: ethaji-example               # из MCP get_city_config
+counter_id: 12345678                       # Yandex Metrika counter
+geo_region_id: 65                          # Yandex Direct geo (66 = Yekaterinburg, 65 = Omsk, etc.)
+domain: example.etagi.com
+tier: 2                                    # 1/2/3 — для подбора city_benchmarks
+timezone: Asia/Omsk                        # IANA TZ name; влияет на freshness и pacing windows
+
+# === Autonomy mode ===
+# full_auto      — бот действует сам без approvals (пилотный эксперимент)
+# with_approvals — действия medium+ ставятся в очередь approve через Telegram
+# read_only      — никаких apply, только наблюдение и planning
+autonomy_mode: full_auto
+
+# === Trust profile ===
+# Базовый набор permissions. Точечные city overrides — ниже в `permissions`.
+# pilot_full_auto | conservative | balanced | aggressive | custom
+trust_profile: pilot_full_auto
+
+# === Метрика и цели ===
+metrika:
+  counter_id: 12345678
+  goals:
+    lead_form:
+      id: 100001
+      name: "Заявка форма"
+      attribution: LYDC
+      value_type: leads
+    call:
+      id: 100002
+      name: "Звонок"
+      attribution: LYDC
+      value_type: leads
+    qualified_lead:
+      id: 100004
+      name: "Квал. лид CRM"
+      attribution: LYDC
+      value_type: qualified_leads
+  primary_conversion_goal: lead_form
+  secondary_goals: [call]
+  qualified_goal: qualified_lead
+
+# === Тематики ===
+# Бот работает только с status=active или experimental.
+# Список валидных топиков — см. .claude/skills/leadgen/references/site_structure.md
+topics:
+  vtorichka:
+    status: active                          # candidate | experimental | active | paused | blocked
+    allowed_channels: [search, rsya]
+    monthly_budget: 60000
+    target_cpa_form: 3500
+    target_cpa_call: 2800
+    target_cpa_qualified: 12000
+    notes: "Приоритет — поиск, РСЯ — добивка"
+  novostroyki:
+    status: active
+    allowed_channels: [search, rsya]
+    monthly_budget: 80000
+    target_cpa_form: 5000
+    target_cpa_call: 4000
+    target_cpa_qualified: 15000
+  zagorodka:
+    status: candidate                       # бот может анализировать, не запускать
+    allowed_channels: [search, rsya]
+    monthly_budget: 0
+
+# === Глобальный бюджет ===
+budget:
+  total_monthly_limit: 200000               # суммарный кап (даже если sum(topics) > этого — режется)
+  daily_pacing: linear                      # linear | front_loaded | back_loaded
+  weekend_modifier: 0.8                     # модификатор ставок в выходные (опционально)
+  reserve_pct_for_month_end: 10             # 10% на последние 5 дней
+
+# === Расписание ===
+schedule:
+  daily_runs_per_day: 1                     # 1 | 2 | 3
+  preferred_hours_msk: [10]                 # для 1: [10]; для 2: [10, 22]
+  weekly_rollup_dow: monday
+  monthly_rollup_dom: 1
+
+# === Caps overrides ===
+# null = взять из caps_defaults.yaml
+caps:
+  max_daily_bid_change_pct: null
+  max_daily_budget_change_pct: null
+  cooldown_hours_after_create: null
+  max_actions_per_run: null
+
+# === Permissions overrides ===
+# null = взять из trust_profiles/<trust_profile>.yaml
+# Указывай только то, что хочешь переопределить точечно.
+permissions: {}
+
+# === Topic-level permissions overrides (опционально) ===
+# Если одна тема рискованнее другой, переопредели только для неё.
+# topics_permissions:
+#   novostroyki:
+#     campaign.activate_existing_draft: review_queue
+
+# === Уведомления ===
+notify:
+  telegram_chat_id: -1001234567890         # один чат на этот город
+  daily_summary: true
+  weekly_report: true
+  monthly_report: true
+  alert_thresholds:
+    cpa_jump_pct: 50                        # рост CPA на 50% за день
+    budget_overrun_pct: 110                 # перерасход >10% от плана
+    no_conversions_days: 3
+    impressions_drop_pct: 50
+
+# === Кастомные правила (свободный текст) ===
+# Бот учитывает при анализе и решениях.
+custom_rules:
+  - "Не повышать ставки на vtorichka выше 80₽ на клик (конкуренция в Омске низкая, выше — слив)"
+  - "Не запускать рекламу новостроек до 1 числа месяца (бюджеты ЖК уточняются)"
+
+# === Holdout (опционально) ===
+holdout:
+  enabled: false
+  campaign_ids: []                          # эти campaigns бот пометит label autopilot:holdout, не управляет
+
+# === Холодный старт ===
+# true — первый прогон только собирает state без действий.
+# false — пилотный сценарий "с нуля": сразу onboarding → drafts → activation (если full_auto).
+baseline_mode: false

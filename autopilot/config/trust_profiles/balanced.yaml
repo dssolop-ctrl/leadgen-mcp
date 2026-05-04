@@ -1,0 +1,92 @@
+# balanced — основной рабочий профиль для стабильных городов после первичной валидации.
+# Medium идёт в auto_with_notify, high — в review_queue.
+
+schema_version: 1
+profile: balanced
+description: "Default working profile. Medium → auto_with_notify, high → review_queue."
+
+permissions:
+  # --- Бюджет ---
+  budget.increase.within_cap: auto
+  budget.increase.above_cap: review_queue
+  budget.decrease.within_cap: auto
+  budget.decrease.above_cap: review_queue
+  budget.set_total_monthly: auto_with_notify
+  budget.pause_due_to_overrun: auto_with_notify
+
+  # --- Ставки ---
+  bid.increase.within_cap: auto
+  bid.decrease.within_cap: auto
+  bid.change.above_cap: auto_with_notify
+  bid.adjust_strategy_target_cpa.within_cap: auto_with_notify
+  bid.adjust_strategy_target_cpa.above_cap: review_queue
+
+  # --- Минусы ---
+  negatives.add_from_search_queries: auto
+  negatives.add_global_set: auto
+  negatives.remove: review_queue
+
+  # --- Кампании ---
+  campaign.create_draft.in_existing_topic: auto_with_notify
+  campaign.create_draft.in_new_topic: auto_with_notify
+  campaign.create_draft.outside_config_topics: block
+  campaign.activate_existing_draft: review_queue
+  campaign.pause.low_performance: auto_with_notify
+  campaign.pause.budget_exhausted: auto
+  campaign.resume: auto_with_notify
+  campaign.archive.no_traffic_30days: auto_with_notify
+  campaign.adopt_existing: review_queue
+  campaign.release: review_queue
+  campaign.delete: block
+
+  # --- Группы и объявления ---
+  adgroup.pause.low_ctr: auto_with_notify
+  adgroup.split_by_intent: auto_with_notify
+  ad.add_new_variant: auto
+  ad.pause.low_ctr: auto
+  ad.update_text: auto_with_notify
+  ad.update_image_creative: auto_with_notify
+
+  # --- Ключевые ---
+  keyword.pause.low_performance: auto
+  keyword.add_in_existing_group: auto
+  keyword.add_new_group_in_existing_topic: auto_with_notify
+  keyword.remove: auto_with_notify
+
+  # --- Стратегии ---
+  strategy.change_type: review_queue
+  strategy.adjust_constraint: auto_with_notify
+
+  # --- Площадки РСЯ ---
+  placement.block.low_performing: auto
+  placement.block.from_blacklist: auto
+  placement.unblock: review_queue
+
+  # --- Аудитории ---
+  audience.create: auto
+  audience.adjust_bid_modifier: auto
+  retargeting.create_list: auto
+
+  # --- Регионы ---
+  region.adjust_bid_modifier: auto
+  region.add_to_targeting: review_queue
+  region.remove_from_targeting: review_queue
+
+  # --- Расширения ---
+  extension.add_sitelinks: auto
+  extension.update_sitelinks: auto
+  extension.update_vcard: review_queue
+
+  # --- Креативы ---
+  creative.generate_new_image: auto_with_notify
+  creative.update_text_variant: auto
+
+  # --- Юр-чувствительное ---
+  legal.update_disclaimer: block
+  legal.change_landing_url: review_queue
+  legal.change_company_info: block
+
+  # --- Аккаунт ---
+  account.change_settings: block
+  account.change_billing: block
+  account.close: block

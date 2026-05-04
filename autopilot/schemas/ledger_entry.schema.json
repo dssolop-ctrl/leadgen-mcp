@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leadgen-mcp/autopilot/schemas/ledger_entry.schema.json",
+  "title": "Action Ledger Entry",
+  "description": "One row in autopilot/runtime/<city>/action_ledger.jsonl. Append-only, never edited.",
+  "type": "object",
+  "required": ["ts", "run_id", "city", "action_id", "idempotency_key", "action_type", "status"],
+  "properties": {
+    "ts": { "type": "string", "format": "date-time" },
+    "run_id": { "type": "string" },
+    "city": { "type": "string" },
+    "action_id": { "type": "string" },
+    "idempotency_key": { "type": "string" },
+    "action_type": { "type": "string" },
+    "risk_class": { "enum": ["low", "medium", "high", "critical"] },
+    "entity_type": { "type": "string" },
+    "entity_id": { "type": ["integer", "string"] },
+    "before_value": {},
+    "after_value": {},
+    "before_snapshot_ref": { "type": "string" },
+    "permission_resolved": { "enum": ["auto", "auto_with_notify", "review_queue", "block"] },
+    "permission_source": { "type": "string" },
+    "status": { "enum": ["planned", "skipped_idempotent", "skipped_caps", "skipped_cooldown", "skipped_drift", "skipped_human_override", "skipped_block", "queued_approval", "applying", "applied", "failed", "rolled_back"] },
+    "skip_reason": { "type": "string" },
+    "error": { "type": "string" },
+    "log_change_event_id": { "type": ["integer", "string"], "description": "ID returned from Direct API log_change_event" }
+  }
+}

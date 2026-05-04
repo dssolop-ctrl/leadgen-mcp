@@ -5,6 +5,38 @@
 
 ## Что сделано
 
+### 27. Autopilot W1-W10 — полный каркас автономного агента (2026-05-04)
+
+**Контекст.** После 3 раундов уточнений (PLAN.md → corrections (Codex) → corrections2 (Claude) → corrections3 (Codex) → ответы пользователя) реализованы все 10 волн разработки `/leadgen-autopilot` как единого контура (без промежуточных пилотов). Цель — дать агенту вести новый рекламный аккаунт самостоятельно: эксперимент с `autonomy_mode: full_auto` + `trust_profile: pilot_full_auto`.
+
+**W1 — Каркас.** Структура `autopilot/{config,runtime,reports,learnings,lib,schemas}/`, 7 JSON Schemas (city_config, state, action, approval, ledger_entry, metrics_snapshot, launch_proposal), `.gitignore` для runtime/secrets/reports, `lib/{telegram_send,telegram_send_doc,atomic_write,lock}.sh`, скилл `.claude/skills/leadgen-autopilot/{skill,CLAUDE,flow-steps}.md`, корневой `autopilot/CLAUDE.md`. **Self-check:** lock acquire/release/recovery + atomic_write rotation + полная resolve permissions.
+
+**W2 — Память.** Двухслойная: operational (`state.yaml`, `action_ledger.jsonl`, `metrics_snapshots.jsonl`, `before_snapshots/`) — источник правды; narrative md (`STATE/CURSOR/SUMMARY.md`, `runs/<YYYY-MM>/<HHMM>.md`, `campaigns/<id>.md`, `decisions/*.md`) — для агента, регенерируется. Templates в `runtime/_templates/`. `lib/memory_lookup.sh` для grep по тегам lazy-md. Crash recovery scan по `applying`-без-резолва. **Self-check:** rotation+recovery+ledger+drift+lookup+compression — прошли.
+
+**W3 — Аналитика.** `branches/analyze.md` с daily/weekly/monthly секциями, `branches/onboarding.md` (baseline scan + launch_proposal с auto_apply_in_full_auto), `references/{signal_catalog,action_catalog,decision_priorities,shared_refs,playbook_contract}.md`. `lib/render_html.sh` (pandoc/python markdown/trivial fallback). 30+ сигналов, 57 actions с risk_class и min_evidence.
+
+**W4 — Approval queue.** `branches/approval.md` с lifecycle (pending/approved/rejected/deferred/expired), `lib/telegram_check_replies.sh` с persisted update_offset + allowlist. Expiry: 24h bid/budget, 72h create/adopt. **Self-check:** create+expire+approve+idempotency — прошли.
+
+**W5 — Apply engine.** `branches/decide.md` (signal→action+permissions resolution+caps+cooldown+idempotency+pacing gating) и `branches/apply.md` (pre-apply checks+snapshot+MCP call+log_change_event+ledger). Deterministic idempotency_key `<city>|<account>|<entity_type>|<entity_id>|<action_type>|<desired_value>|<decision_window>`. Ownership через labels `autopilot:managed`. **Self-check:** ownership+idempotency+drift+human_override+hard_block+autonomy modes+pacing gating — все 7 проверок прошли.
+
+**W6 — Reconciliation.** `branches/reconcile_config.md` с config↔state и state↔API дельтами, drift detection, human_override 72h freeze, pacing recalc (`pacing_state: normal|conservation|emergency|hard_cap`). DRAFT-only обязателен. Adoption через onboarding (для будущего масштабирования; на пилоте «с нуля» не используется).
+
+**W7 — Rollups.** Weekly/monthly секции в `analyze.md`: week-over-week, decision precision, rollback rate, budget plan на след. месяц, holdout comparison (опционально), SUMMARY компрессия (>30/>90/>365 дней).
+
+**W8 — Medium/high-risk actions.** Покрыты в action_catalog с обязательным before_snapshot для `risk>=medium`, expected_effect/guard_metric для applied medium/high, rollback_trigger для high/critical.
+
+**W9 — Learnings.** `branches/learnings.md`: proposed → validated (≥3 повтора + 14 дней + scope-стабильно) → monthly digest → ручной PR в `lessons_registry.md`. **Никакого авто-apply.** Negative evidence + expiry 60d.
+
+**W10 — Hardening.** `OPERATOR_GUIDE.md` (550+ строк): полный setup нового города, troubleshooting, telegram команды (approve/reject/defer/rollback/confirm rollback), управление через city.yaml (autonomy_mode/trust_profile), Claude Desktop routine setup, чтение отчётов, экстренные процедуры.
+
+**Эксперимент пилота.** На пилотном городе (новый аккаунт) `pilot_full_auto` + `full_auto`: бот сам создаёт DRAFT-кампании, активирует (`campaign.activate_existing_draft = auto_with_notify`), оптимизирует. Approval-режим (`with_approvals`) — опция в `city.yaml` для возврата под контроль. Hard-blocks нерушимы во всех профилях: `legal.*, account.*, campaign.delete, campaign.create_draft.outside_config_topics`.
+
+**Cross-cutting validation:** все 4 trust profiles покрывают одинаковый набор из 57 actions, hard_blocks присутствуют везде, `_example.yaml` соответствует city_config schema (14 required полей), все 7 JSON Schemas + 6 YAML configs валидны.
+
+**Файлы созданы (54 файла).** `PLAN.md` (полностью переписан, 700+ строк); `PLAN_v1_archive.md` (исходный для истории). `autopilot/{CLAUDE.md, README.md, OPERATOR_GUIDE.md}`. `autopilot/schemas/*.schema.json` (7 файлов). `autopilot/config/{caps_defaults.yaml, secrets.env.example}` + `trust_profiles/{conservative, balanced, aggressive, pilot_full_auto}.yaml` + `cities/_example.yaml`. `autopilot/lib/*.sh` (7 скриптов: telegram_send/send_doc/check_replies, atomic_write, lock, memory_lookup, render_html). `autopilot/runtime/_templates/*.tmpl` (7 шаблонов). `.claude/skills/leadgen-autopilot/{skill,CLAUDE,flow-steps}.md` + `branches/*.md` (10 файлов) + `references/*.md` (5 файлов). `.gitignore` обновлён (autopilot/runtime, reports, secrets.env).
+
+**Что осталось пользователю перед боевым стартом:** создать Telegram бота, заполнить `secrets.env`, создать `cities/<city>.yaml` для пилотного города, smoke run `/leadgen-autopilot city=<city>`, настроить Claude Desktop routine. Полная инструкция — `autopilot/OPERATOR_GUIDE.md`.
+
 ### 26. Тестовый прогон РСЯ #2 (Claude Desktop, opus 4.7): 6 фиксов по результатам (2026-04-29)
 
 **Контекст.** Второй тестовый прогон создания РСЯ-кампании в Claude Desktop с обновлённым скиллом leadgen (после #24, #25). Сессия-лог пользователя зафиксировал 6 проблем итоговой кампании. Половина — Go-код MCP, половина — скилл.

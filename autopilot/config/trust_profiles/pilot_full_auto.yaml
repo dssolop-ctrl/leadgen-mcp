@@ -1,0 +1,105 @@
+# pilot_full_auto — экспериментальный профиль для пилотного города.
+#
+# Идея: дать боту максимум автономии в безопасных границах. Большинство действий
+# выполняются автоматически (auto / auto_with_notify). Approval-цепочка не используется,
+# если в city.yaml выставлено autonomy_mode: full_auto.
+#
+# ВНИМАНИЕ: hard-block actions ниже не обходятся даже в этом профиле:
+#   legal.update_disclaimer, legal.change_company_info,
+#   account.change_settings, account.change_billing, account.close,
+#   campaign.delete, campaign.create_draft.outside_config_topics
+#
+# Если autonomy_mode: with_approvals — auto_with_notify работает как обычное уведомление,
+# review_queue ставит в очередь approve. То же permissions, но другая обработка.
+#
+# Если autonomy_mode: read_only — никакие действия не применяются, всё в plan-only.
+
+schema_version: 1
+profile: pilot_full_auto
+description: "Maximum autonomy with safety brakes. Use only on pilot/experimental city."
+
+permissions:
+  # --- Бюджет ---
+  budget.increase.within_cap: auto
+  budget.increase.above_cap: auto_with_notify
+  budget.decrease.within_cap: auto
+  budget.decrease.above_cap: auto_with_notify
+  budget.set_total_monthly: auto_with_notify
+  budget.pause_due_to_overrun: auto_with_notify
+
+  # --- Ставки ---
+  bid.increase.within_cap: auto
+  bid.decrease.within_cap: auto
+  bid.change.above_cap: auto_with_notify
+  bid.adjust_strategy_target_cpa.within_cap: auto_with_notify
+  bid.adjust_strategy_target_cpa.above_cap: auto_with_notify
+
+  # --- Минусы ---
+  negatives.add_from_search_queries: auto
+  negatives.add_global_set: auto
+  negatives.remove: auto_with_notify
+
+  # --- Кампании ---
+  campaign.create_draft.in_existing_topic: auto_with_notify
+  campaign.create_draft.in_new_topic: auto_with_notify
+  campaign.create_draft.outside_config_topics: block
+  campaign.activate_existing_draft: auto_with_notify   # ⚠ эксперимент пилота
+  campaign.pause.low_performance: auto_with_notify
+  campaign.pause.budget_exhausted: auto
+  campaign.resume: auto_with_notify
+  campaign.archive.no_traffic_30days: auto_with_notify
+  campaign.adopt_existing: auto_with_notify
+  campaign.release: auto_with_notify
+  campaign.delete: block
+
+  # --- Группы и объявления ---
+  adgroup.pause.low_ctr: auto_with_notify
+  adgroup.split_by_intent: auto_with_notify
+  ad.add_new_variant: auto
+  ad.pause.low_ctr: auto
+  ad.update_text: auto_with_notify
+  ad.update_image_creative: auto_with_notify
+
+  # --- Ключевые ---
+  keyword.pause.low_performance: auto
+  keyword.add_in_existing_group: auto
+  keyword.add_new_group_in_existing_topic: auto_with_notify
+  keyword.remove: auto_with_notify
+
+  # --- Стратегии ---
+  strategy.change_type: auto_with_notify
+  strategy.adjust_constraint: auto_with_notify
+
+  # --- Площадки РСЯ ---
+  placement.block.low_performing: auto
+  placement.block.from_blacklist: auto
+  placement.unblock: auto_with_notify
+
+  # --- Аудитории ---
+  audience.create: auto
+  audience.adjust_bid_modifier: auto
+  retargeting.create_list: auto
+
+  # --- Регионы ---
+  region.adjust_bid_modifier: auto
+  region.add_to_targeting: auto_with_notify
+  region.remove_from_targeting: auto_with_notify
+
+  # --- Расширения ---
+  extension.add_sitelinks: auto
+  extension.update_sitelinks: auto
+  extension.update_vcard: auto_with_notify
+
+  # --- Креативы ---
+  creative.generate_new_image: auto_with_notify
+  creative.update_text_variant: auto
+
+  # --- Юр-чувствительное (HARD BLOCKS) ---
+  legal.update_disclaimer: block
+  legal.change_landing_url: auto_with_notify
+  legal.change_company_info: block
+
+  # --- Аккаунт (HARD BLOCKS) ---
+  account.change_settings: block
+  account.change_billing: block
+  account.close: block

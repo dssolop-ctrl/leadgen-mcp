@@ -1,0 +1,73 @@
+# Global default caps and thresholds for autopilot.
+# Override per-city in cities/<city>.yaml.
+# Permissions live in trust_profiles/<profile>.yaml — this file holds NUMERIC caps + alert thresholds only.
+#
+# All values are reference baselines tuned for Yandex Direct автостратегии:
+# - autostrategies need 7-14 days to learn → cooldowns reflect this
+# - search vs RSYA cycle/CPC ranges differ → channel-specific overrides below
+# - safety thresholds (pacing, overrun) are conservative
+
+schema_version: 1
+
+# === Лимиты темпа изменений ===
+max_daily_bid_change_pct: 20             # за прогон не двигать ставку >±20%, иначе ломаем обучение автостратегии
+max_daily_budget_change_pct: 30          # бюджет инкрементальнее ставок
+max_daily_target_cpa_change_pct: 15      # target CPA — самый чувствительный
+
+# === Cooldowns (часы) ===
+cooldown_hours_after_create: 72          # 3 дня после старта — не трогать (первичный набор статистики)
+cooldown_hours_after_bid_change: 24
+cooldown_hours_after_strategy_change: 168  # 7 дней — переучка стратегии
+cooldown_hours_after_budget_change: 24
+cooldown_hours_after_human_change: 72    # human override freeze
+
+# === Пороги статистической значимости (channel-specific) ===
+channels:
+  search:
+    min_clicks_for_decision: 30
+    min_conversions_for_decision: 3
+    min_impressions_for_decision: 500
+    cooldown_hours_after_bid_change: 24
+    learning_period_days: 7
+  rsya:
+    min_clicks_for_decision: 100
+    min_conversions_for_decision: 5
+    min_impressions_for_decision: 5000
+    cooldown_hours_after_bid_change: 48
+    learning_period_days: 14
+
+# === Лимиты на прогон ===
+max_actions_per_run: 50                  # мягкий лимит — не отбрасываем качественные решения
+max_new_campaigns_per_run: 4             # увеличено для onboarding с нуля
+max_pauses_per_run: 10
+max_creative_generations_per_run: 5
+
+# === Бюджетные защитные правила (pacing) ===
+pacing_conservation_ratio: 1.10          # if spent_mtd/expected > 1.10 OR forecast/budget > 1.10 → conservation
+pacing_emergency_ratio: 1.25             # → emergency pause threshold
+budget_overrun_hard_stop_pct: 120        # spent_mtd > 120% of monthly_budget → hard stop
+forecast_emergency_pct: 120              # forecast_month_end > 120% of monthly_budget → emergency
+min_remaining_budget_pct_for_aggressive_actions: 25
+
+# === Пороги уведомлений (city.notify.alert_thresholds может переопределить) ===
+alert_cpa_jump_pct: 50
+alert_budget_overrun_pct: 110
+alert_no_conversions_days: 3
+alert_impressions_drop_pct: 50
+
+# === Lock TTL ===
+running_lock_ttl_minutes: 120
+
+# === Approval expiry (часы) ===
+approval_expiry_hours_bid_budget: 24
+approval_expiry_hours_create_or_adopt: 72
+approval_expiry_hours_default: 48
+
+# === SUMMARY компрессия (дни) ===
+summary_compress_after_days: 30          # >30 → недельные строки
+summary_collapse_after_days: 90          # >90 → месячные строки
+summary_archive_after_days: 365          # >365 → перенос в decisions/historical-<year>.md
+
+# === Default permission for unknown actions ===
+# If an action_type is not listed in any trust_profile, fall back here.
+default_permission: review_queue

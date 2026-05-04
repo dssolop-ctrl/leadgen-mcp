@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leadgen-mcp/autopilot/schemas/approval.schema.json",
+  "title": "Approval Queue Entry",
+  "description": "One pending approval request. Lives in autopilot/runtime/<city>/pending_approvals.yaml as a list.",
+  "type": "object",
+  "required": ["approval_id", "action", "created_at", "expires_at", "status"],
+  "properties": {
+    "approval_id": { "type": "string", "description": "Short numeric or ULID identifier shown in Telegram" },
+    "action": { "$ref": "action.schema.json#" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "status": { "enum": ["pending", "approved", "rejected", "deferred", "expired", "applied", "cancelled"] },
+    "telegram": {
+      "type": "object",
+      "properties": {
+        "chat_id": { "type": ["integer", "string"] },
+        "message_id": { "type": ["integer", "string"] },
+        "sent_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "deferred_until": { "type": "string", "format": "date-time" },
+    "decided_at": { "type": "string", "format": "date-time" },
+    "decided_by": { "type": "string" },
+    "decision_reason": { "type": "string" },
+    "applied_run_id": { "type": "string" }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leadgen-mcp/autopilot/schemas/city_config.schema.json",
+  "title": "City Config",
+  "description": "Per-city autopilot configuration. Lives at autopilot/config/cities/<city>.yaml.",
+  "type": "object",
+  "required": ["city", "client_login", "counter_id", "geo_region_id", "domain", "tier", "timezone", "autonomy_mode", "trust_profile", "metrika", "topics", "budget", "schedule", "notify"],
+  "properties": {
+    "city": { "type": "string", "minLength": 1, "description": "Slug, latin lowercase, used in paths" },
+    "client_login": { "type": "string" },
+    "counter_id": { "type": "integer" },
+    "geo_region_id": { "type": "integer" },
+    "domain": { "type": "string" },
+    "tier": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "timezone": { "type": "string", "description": "IANA TZ name, e.g. Asia/Omsk" },
+    "autonomy_mode": { "enum": ["full_auto", "with_approvals", "read_only"] },
+    "trust_profile": { "enum": ["conservative", "balanced", "aggressive", "pilot_full_auto", "custom"] },
+    "metrika": {
+      "type": "object",
+      "required": ["counter_id", "goals", "primary_conversion_goal"],
+      "properties": {
+        "counter_id": { "type": "integer" },
+        "goals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["id", "name", "attribution", "value_type"],
+            "properties": {
+              "id": { "type": "integer" },
+              "name": { "type": "string" },
+              "attribution": { "enum": ["LYDC", "LSC", "FC"] },
+              "value_type": { "enum": ["leads", "qualified_leads", "revenue", "events"] }
+            }
+          }
+        },
+        "primary_conversion_goal": { "type": "string" },
+        "secondary_goals": { "type": "array", "items": { "type": "string" } },
+        "qualified_goal": { "type": "string" }
+      }
+    },
+    "topics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status", "allowed_channels", "monthly_budget"],
+        "properties": {
+          "status": { "enum": ["candidate", "experimental", "active", "paused", "blocked"] },
+          "allowed_channels": {
+            "type": "array",
+            "items": { "enum": ["search", "rsya"] },
+            "uniqueItems": true
+          },
+          "monthly_budget": { "type": "number", "minimum": 0 },
+          "target_cpa_form": { "type": "number" },
+          "target_cpa_call": { "type": "number" },
+          "target_cpa_qualified": { "type": "number" },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "required": ["total_monthly_limit", "daily_pacing"],
+      "properties": {
+        "total_monthly_limit": { "type": "number", "minimum": 0 },
+        "daily_pacing": { "enum": ["linear", "front_loaded", "back_loaded"] },
+        "weekend_modifier": { "type": "number", "minimum": 0, "maximum": 2 },
+        "reserve_pct_for_month_end": { "type": "number", "minimum": 0, "maximum": 50 }
+      }
+    },
+    "schedule": {
+      "type": "object",
+      "required": ["daily_runs_per_day", "preferred_hours_msk", "weekly_rollup_dow", "monthly_rollup_dom"],
+      "properties": {
+        "daily_runs_per_day": { "type": "integer", "minimum": 1, "maximum": 4 },
+        "preferred_hours_msk": { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 23 } },
+        "weekly_rollup_dow": { "enum": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] },
+        "monthly_rollup_dom": { "type": "integer", "minimum": 1, "maximum": 28 }
+      }
+    },
+    "caps": {
+      "type": "object",
+      "description": "Per-city caps overrides. null = inherit from caps_defaults.yaml.",
+      "additionalProperties": { "type": ["number", "integer", "null"] }
+    },
+    "permissions": {
+      "type": "object",
+      "description": "Per-city permission overrides. null = inherit from trust_profile.",
+      "additionalProperties": { "enum": ["auto", "auto_with_notify", "review_queue", "block", null] }
+    },
+    "topics_permissions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "enum": ["auto", "auto_with_notify", "review_queue", "block", null] }
+      }
+    },
+    "notify": {
+      "type": "object",
+      "required": ["telegram_chat_id"],
+      "properties": {
+        "telegram_chat_id": { "type": ["integer", "string"] },
+        "daily_summary": { "type": "boolean" },
+        "weekly_report": { "type": "boolean" },
+        "monthly_report": { "type": "boolean" },
+        "alert_thresholds": {
+          "type": "object",
+          "properties": {
+            "cpa_jump_pct": { "type": "number" },
+            "budget_overrun_pct": { "type": "number" },
+            "no_conversions_days": { "type": "integer" },
+            "impressions_drop_pct": { "type": "number" }
+          }
+        }
+      }
+    },
+    "custom_rules": { "type": "array", "items": { "type": "string" } },
+    "holdout": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "campaign_ids": { "type": "array", "items": { "type": ["integer", "string"] } }
+      }
+    },
+    "baseline_mode": { "type": "boolean", "default": false }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leadgen-mcp/autopilot/schemas/state.schema.json",
+  "title": "City State (operational)",
+  "description": "Machine source of truth for city state. Lives at autopilot/runtime/<city>/state.yaml. Regenerated each run.",
+  "type": "object",
+  "required": ["city", "schema_version", "last_run", "budget", "topics", "campaigns"],
+  "properties": {
+    "city": { "type": "string" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "last_run": {
+      "type": "object",
+      "required": ["run_id", "started_at", "status", "phase"],
+      "properties": {
+        "run_id": { "type": "string" },
+        "started_at": { "type": "string", "format": "date-time" },
+        "ended_at": { "type": "string", "format": "date-time" },
+        "status": { "enum": ["succeeded", "failed", "halted", "in_progress"] },
+        "phase": { "enum": ["started", "loaded_context", "fetched_metrics", "planned_actions", "approval_checked", "applying", "applied_partial", "memory_written", "notified", "succeeded", "failed", "halted"] },
+        "autopilot_version": { "type": "string" },
+        "skill_version": { "type": "string" },
+        "autonomy_mode": { "enum": ["full_auto", "with_approvals", "read_only"] }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "required": ["monthly_total_limit", "spent_mtd"],
+      "properties": {
+        "monthly_total_limit": { "type": "number" },
+        "spent_mtd": { "type": "number" },
+        "managed_spend_mtd": { "type": "number" },
+        "unmanaged_spend_mtd": { "type": "number" },
+        "pacing_ratio": { "type": "number" },
+        "forecast_month_end": { "type": "number" },
+        "pacing_state": { "enum": ["normal", "conservation", "emergency", "hard_cap"] }
+      }
+    },
+    "topics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": { "enum": ["candidate", "experimental", "active", "paused", "blocked"] },
+          "budget_used": { "type": "number" },
+          "budget_limit": { "type": "number" },
+          "active_campaign_count": { "type": "integer" },
+          "trend_cpa_7d_pct": { "type": "number" },
+          "leads_form_7d": { "type": "integer" },
+          "leads_qualified_30d": { "type": "integer" }
+        }
+      }
+    },
+    "campaigns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["campaign_id", "ownership", "status_state", "topic", "channel"],
+        "properties": {
+          "campaign_id": { "type": ["integer", "string"] },
+          "label": { "type": "string" },
+          "ownership": { "enum": ["managed", "adoptable", "foreign", "holdout", "released"] },
+          "status_state": { "enum": ["ON", "OFF", "SUSPENDED", "ARCHIVED"] },
+          "status_status": { "type": "string", "description": "DRAFT/MODERATION/ACCEPTED/REJECTED" },
+          "topic": { "type": "string" },
+          "channel": { "enum": ["search", "rsya"] },
+          "last_action": { "type": "string" },
+          "last_action_at": { "type": "string", "format": "date-time" },
+          "next_action": { "type": "string" },
+          "flags": { "type": "array", "items": { "type": "string" } },
+          "human_override_until": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "pending_approvals_count": { "type": "integer", "minimum": 0 },
+    "open_decisions": { "type": "array", "items": { "type": "string" } },
+    "last_weekly_rollup": { "type": "string", "format": "date" },
+    "last_monthly_rollup": { "type": "string", "format": "date" }
+  }
+}

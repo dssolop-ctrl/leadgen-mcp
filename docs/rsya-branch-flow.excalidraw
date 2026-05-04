@@ -1,0 +1,152 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "leadgen-mcp",
+  "elements": [
+    {
+      "type": "text",
+      "id": "title",
+      "x": 400,
+      "y": 40,
+      "width": 600,
+      "height": 30,
+      "fontSize": 24,
+      "fontFamily": 2,
+      "text": "Leadgen: ветка R (РСЯ) + OpenRouter генерация",
+      "textAlign": "left",
+      "verticalAlign": "top",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "seed": 1001,
+      "versionNonce": 1,
+      "groupIds": [],
+      "boundElements": [],
+      "updated": 1,
+      "link": null,
+      "locked": false,
+      "isDeleted": false
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "x": 400,
+      "y": 75,
+      "width": 800,
+      "height": 20,
+      "fontSize": 14,
+      "fontFamily": 2,
+      "text": "Старт → Роутер 1 (создание/анализ/оптимизация) → Роутер 2 (канал) → ветка C или R, O-Search или O-RSYA",
+      "strokeColor": "#555555",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "seed": 1002,
+      "versionNonce": 1,
+      "groupIds": [],
+      "boundElements": [],
+      "updated": 1,
+      "link": null,
+      "locked": false,
+      "isDeleted": false
+    },
+
+    {"type":"rectangle","id":"init","x":80,"y":140,"width":140,"height":60,"strokeColor":"#1e1e1e","backgroundColor":"#e7f5ff","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1100,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"init-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"init-text","x":100,"y":160,"width":100,"height":20,"fontSize":14,"fontFamily":2,"text":"INIT\nгород, счётчик, цели","textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1101,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"init","originalText":"INIT\nгород, счётчик, цели"},
+
+    {"type":"rectangle","id":"router1","x":260,"y":140,"width":160,"height":60,"strokeColor":"#1e1e1e","backgroundColor":"#fff3bf","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1102,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"router1-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"router1-text","x":270,"y":155,"width":140,"height":30,"fontSize":14,"fontFamily":2,"text":"Роутер 1\nсоздание / анализ / опт","textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1103,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"router1","originalText":"Роутер 1"},
+
+    {"type":"rectangle","id":"router2","x":460,"y":140,"width":160,"height":60,"strokeColor":"#1e1e1e","backgroundColor":"#ffd8a8","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1104,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"router2-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"router2-text","x":470,"y":155,"width":140,"height":30,"fontSize":14,"fontFamily":2,"text":"Роутер 2\nпоиск / РСЯ","textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1105,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"router2","originalText":"Роутер 2"},
+
+    {"type":"arrow","id":"arr-init-r1","x":220,"y":170,"width":40,"height":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1200,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"startBinding":{"elementId":"init","focus":0,"gap":1},"endBinding":{"elementId":"router1","focus":0,"gap":1},"lastCommittedPoint":null,"startArrowhead":null,"endArrowhead":"arrow","points":[[0,0],[40,0]]},
+    {"type":"arrow","id":"arr-r1-r2","x":420,"y":170,"width":40,"height":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1201,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"startBinding":{"elementId":"router1","focus":0,"gap":1},"endBinding":{"elementId":"router2","focus":0,"gap":1},"lastCommittedPoint":null,"startArrowhead":null,"endArrowhead":"arrow","points":[[0,0],[40,0]]},
+
+    {"type":"rectangle","id":"c-branch","x":700,"y":100,"width":180,"height":60,"strokeColor":"#555555","backgroundColor":"#dee2e6","fillStyle":"solid","strokeWidth":1,"strokeStyle":"dashed","roughness":1,"opacity":100,"seed":1106,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"c-branch-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"c-branch-text","x":710,"y":115,"width":160,"height":30,"fontSize":14,"fontFamily":2,"text":"Ветка C (поиск)\nC1–C10 (существующая)","textAlign":"center","verticalAlign":"middle","strokeColor":"#555555","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1107,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"c-branch","originalText":"Ветка C (поиск)"},
+
+    {"type":"rectangle","id":"r-branch-box","x":700,"y":210,"width":820,"height":400,"strokeColor":"#0b7285","backgroundColor":"#e3fafc","fillStyle":"hachure","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":40,"seed":1108,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"r-branch-title","x":720,"y":220,"width":400,"height":25,"fontSize":18,"fontFamily":2,"text":"Ветка R (РСЯ) — НОВАЯ","strokeColor":"#0b7285","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1109,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false},
+
+    {"type":"arrow","id":"arr-r2-c","x":620,"y":150,"width":80,"height":-20,"strokeColor":"#555555","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"dashed","roughness":1,"opacity":100,"seed":1210,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"endArrowhead":"arrow","points":[[0,0],[80,-20]]},
+    {"type":"arrow","id":"arr-r2-r","x":620,"y":180,"width":80,"height":60,"strokeColor":"#0b7285","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1211,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"endArrowhead":"arrow","points":[[0,0],[80,60]]},
+
+    {"type":"rectangle","id":"R1","x":720,"y":260,"width":110,"height":50,"strokeColor":"#0b7285","backgroundColor":"#c3fae8","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1300,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"R1-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"R1-text","x":730,"y":270,"width":90,"height":30,"fontSize":12,"fontFamily":2,"text":"R1\nпараметры\n+ визуал","textAlign":"center","verticalAlign":"middle","strokeColor":"#0b7285","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1301,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"R1","originalText":"R1"},
+
+    {"type":"rectangle","id":"R2","x":840,"y":260,"width":100,"height":50,"strokeColor":"#0b7285","backgroundColor":"#c3fae8","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1302,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"R2-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"R2-text","x":850,"y":270,"width":80,"height":30,"fontSize":12,"fontFamily":2,"text":"R2\nконфиг\nUTM=рся","textAlign":"center","verticalAlign":"middle","strokeColor":"#0b7285","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1303,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"R2","originalText":"R2"},
+
+    {"type":"rectangle","id":"R3","x":950,"y":260,"width":100,"height":50,"strokeColor":"#0b7285","backgroundColor":"#c3fae8","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1304,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"R3-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"R3-text","x":960,"y":270,"width":80,"height":30,"fontSize":12,"fontFamily":2,"text":"R3\nаналоги\nРСЯ","textAlign":"center","verticalAlign":"middle","strokeColor":"#0b7285","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1305,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"R3","originalText":"R3"},
+
+    {"type":"rectangle","id":"R4","x":1060,"y":260,"width":110,"height":50,"strokeColor":"#0b7285","backgroundColor":"#c3fae8","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1306,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"R4-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"R4-text","x":1070,"y":270,"width":90,"height":30,"fontSize":12,"fontFamily":2,"text":"R4\nсемантика\nширокая","textAlign":"center","verticalAlign":"middle","strokeColor":"#0b7285","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1307,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"R4","originalText":"R4"},
+
+    {"type":"rectangle","id":"R5","x":1180,"y":260,"width":120,"height":50,"strokeColor":"#0b7285","backgroundColor":"#c3fae8","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1308,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"R5-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"R5-text","x":1190,"y":270,"width":100,"height":30,"fontSize":12,"fontFamily":2,"text":"R5 кластеры\nпо аудитории\nLAL / Общие","textAlign":"center","verticalAlign":"middle","strokeColor":"#0b7285","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1309,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"R5","originalText":"R5"},
+
+    {"type":"rectangle","id":"R55","x":1310,"y":260,"width":100,"height":50,"strokeColor":"#0b7285","backgroundColor":"#fff9db","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1310,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"R55-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"R55-text","x":1320,"y":270,"width":80,"height":30,"fontSize":12,"fontFamily":2,"text":"R5.5\npreview\n(review)","textAlign":"center","verticalAlign":"middle","strokeColor":"#0b7285","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1311,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"R55","originalText":"R5.5"},
+
+    {"type":"rectangle","id":"R6","x":720,"y":340,"width":100,"height":50,"strokeColor":"#0b7285","backgroundColor":"#c3fae8","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1312,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"R6-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"R6-text","x":730,"y":350,"width":80,"height":30,"fontSize":12,"fontFamily":2,"text":"R6 контент\nзаголовок\n+ текст","textAlign":"center","verticalAlign":"middle","strokeColor":"#0b7285","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1313,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"R6","originalText":"R6"},
+
+    {"type":"rectangle","id":"R65","x":840,"y":340,"width":150,"height":60,"strokeColor":"#c92a2a","backgroundColor":"#ffe3e3","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1314,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"R65-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"R65-text","x":850,"y":352,"width":130,"height":40,"fontSize":12,"fontFamily":2,"text":"R6.5 генерация\nOpenRouter\nFlux / Gemini\nлимит 20","textAlign":"center","verticalAlign":"middle","strokeColor":"#c92a2a","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1315,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"R65","originalText":"R6.5"},
+
+    {"type":"rectangle","id":"R7","x":1010,"y":340,"width":140,"height":60,"strokeColor":"#0b7285","backgroundColor":"#c3fae8","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1316,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"R7-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"R7-text","x":1020,"y":352,"width":120,"height":40,"fontSize":12,"fontFamily":2,"text":"R7 API\nadd_campaign\n+add_ad_image\n+add_ad x3","textAlign":"center","verticalAlign":"middle","strokeColor":"#0b7285","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1317,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"R7","originalText":"R7"},
+
+    {"type":"rectangle","id":"R8","x":1170,"y":340,"width":110,"height":50,"strokeColor":"#868e96","backgroundColor":"#f1f3f5","fillStyle":"solid","strokeWidth":1,"strokeStyle":"dashed","roughness":1,"opacity":100,"seed":1318,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"R8-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"R8-text","x":1180,"y":350,"width":90,"height":30,"fontSize":12,"fontFamily":2,"text":"R8 аудитории\nLAL/ретаргет\n(опция)","textAlign":"center","verticalAlign":"middle","strokeColor":"#555555","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1319,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"R8","originalText":"R8"},
+
+    {"type":"rectangle","id":"R9","x":1290,"y":340,"width":100,"height":50,"strokeColor":"#0b7285","backgroundColor":"#c3fae8","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1320,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"R9-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"R9-text","x":1300,"y":350,"width":80,"height":30,"fontSize":12,"fontFamily":2,"text":"R9 метки\n+РСЯ","textAlign":"center","verticalAlign":"middle","strokeColor":"#0b7285","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1321,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"R9","originalText":"R9"},
+
+    {"type":"rectangle","id":"R10","x":840,"y":430,"width":130,"height":50,"strokeColor":"#0b7285","backgroundColor":"#c3fae8","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1322,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"R10-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"R10-text","x":850,"y":440,"width":110,"height":30,"fontSize":12,"fontFamily":2,"text":"R10 докс\ntemplate_rsya","textAlign":"center","verticalAlign":"middle","strokeColor":"#0b7285","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1323,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"R10","originalText":"R10"},
+
+    {"type":"rectangle","id":"R11","x":990,"y":430,"width":160,"height":50,"strokeColor":"#0b7285","backgroundColor":"#c3fae8","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1324,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"R11-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"R11-text","x":1000,"y":440,"width":140,"height":30,"fontSize":12,"fontFamily":2,"text":"R11 старт + мониторинг\nread-back + daily summary","textAlign":"center","verticalAlign":"middle","strokeColor":"#0b7285","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1325,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"R11","originalText":"R11"},
+
+    {"type":"rectangle","id":"or-box","x":720,"y":520,"width":800,"height":80,"strokeColor":"#862e9c","backgroundColor":"#f3d9fa","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1400,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"or-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"or-text","x":740,"y":535,"width":760,"height":50,"fontSize":13,"fontFamily":2,"text":"Оптимизация РСЯ (O-RSYA) — после запуска\n\nOR.1 чистка площадок (через 3 дня)   |   OR.2 A/B картинок (CTR<0.3%)   |   OR.3 аудиторные таргеты   |   OR.4 frequency cap   |   OR.5 bid_modifiers","textAlign":"left","verticalAlign":"middle","strokeColor":"#862e9c","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1401,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"or-box","originalText":"O-RSYA"},
+
+    {"type":"rectangle","id":"mcp-box","x":80,"y":260,"width":580,"height":340,"strokeColor":"#1864ab","backgroundColor":"#e7f5ff","fillStyle":"hachure","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":40,"seed":1500,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"mcp-title","x":90,"y":270,"width":400,"height":25,"fontSize":18,"fontFamily":2,"text":"MCP-инструменты (новые)","strokeColor":"#1864ab","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1501,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false},
+
+    {"type":"rectangle","id":"t-genimage","x":100,"y":310,"width":230,"height":60,"strokeColor":"#1864ab","backgroundColor":"#d0ebff","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1502,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"t-genimage-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"t-genimage-text","x":110,"y":322,"width":210,"height":40,"fontSize":13,"fontFamily":2,"text":"generate_image\nOpenRouter POST /chat/completions\nmodalities=[image,text]","textAlign":"center","verticalAlign":"middle","strokeColor":"#1864ab","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1503,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"t-genimage","originalText":"generate_image"},
+
+    {"type":"rectangle","id":"t-banset","x":100,"y":380,"width":230,"height":60,"strokeColor":"#1864ab","backgroundColor":"#d0ebff","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1504,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"t-banset-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"t-banset-text","x":110,"y":392,"width":210,"height":40,"fontSize":13,"fontFamily":2,"text":"generate_banner_set\nпакет: 1 промпт × N форматов\n1:1 + 16:9 для РСЯ","textAlign":"center","verticalAlign":"middle","strokeColor":"#1864ab","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1505,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"t-banset","originalText":"generate_banner_set"},
+
+    {"type":"rectangle","id":"t-addimg","x":360,"y":310,"width":280,"height":60,"strokeColor":"#1864ab","backgroundColor":"#d0ebff","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1506,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"t-addimg-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"t-addimg-text","x":370,"y":322,"width":260,"height":40,"fontSize":13,"fontFamily":2,"text":"add_ad_image\nYandex adimages/add (base64)\n→ AdImageHash","textAlign":"center","verticalAlign":"middle","strokeColor":"#1864ab","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1507,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"t-addimg","originalText":"add_ad_image"},
+
+    {"type":"rectangle","id":"t-delimg","x":360,"y":380,"width":280,"height":60,"strokeColor":"#1864ab","backgroundColor":"#d0ebff","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1508,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"t-delimg-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"t-delimg-text","x":370,"y":395,"width":260,"height":40,"fontSize":13,"fontFamily":2,"text":"delete_ad_images\nget_ad_images (расширен)\n+OriginalUrl +PreviewUrl","textAlign":"center","verticalAlign":"middle","strokeColor":"#1864ab","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1509,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"t-delimg","originalText":"delete_ad_images"},
+
+    {"type":"rectangle","id":"t-addcamp","x":100,"y":450,"width":540,"height":60,"strokeColor":"#1864ab","backgroundColor":"#d0ebff","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1510,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"t-addcamp-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"t-addcamp-text","x":110,"y":462,"width":520,"height":40,"fontSize":13,"fontFamily":2,"text":"add_campaign (доработан)\nNetwork-стратегия: WbMaximumConversionRate / AverageCpa / WbMaximumClicks с вложенной структурой\ndefault StartDate = сегодня (ошибка 5003)","textAlign":"center","verticalAlign":"middle","strokeColor":"#1864ab","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1511,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"t-addcamp","originalText":"add_campaign"},
+
+    {"type":"rectangle","id":"t-files","x":100,"y":525,"width":540,"height":65,"strokeColor":"#5f3dc4","backgroundColor":"#e5dbff","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1512,"versionNonce":1,"groupIds":[],"boundElements":[{"type":"text","id":"t-files-text"}],"updated":1,"link":null,"locked":false,"isDeleted":false},
+    {"type":"text","id":"t-files-text","x":110,"y":538,"width":520,"height":40,"fontSize":12,"fontFamily":2,"text":"Новые файлы скилла:\nreferences/rsya_defaults.md   references/image_prompts.md   library/banner_titles.md   library/banner_texts.md\ncampaigns/template_rsya.md","textAlign":"center","verticalAlign":"middle","strokeColor":"#5f3dc4","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1513,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false,"containerId":"t-files","originalText":"skill files"},
+
+    {"type":"text","id":"legend","x":80,"y":630,"width":1440,"height":70,"fontSize":12,"fontFamily":2,"text":"Цветовая легенда: голубой = ветка R (новая); красный = шаг с генерацией картинок (OpenRouter); жёлтый = human-checkpoint (review mode пропускается в auto); серый = существующая ветка / опциональный шаг; фиолетовый = оптимизация РСЯ или файлы скилла. Синий блок слева — новые MCP-инструменты.","strokeColor":"#555555","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"seed":1600,"versionNonce":1,"groupIds":[],"boundElements":[],"updated":1,"link":null,"locked":false,"isDeleted":false}
+  ],
+  "appState": {
+    "gridSize": null,
+    "viewBackgroundColor": "#ffffff"
+  },
+  "files": {}
+}

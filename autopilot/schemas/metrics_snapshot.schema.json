@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leadgen-mcp/autopilot/schemas/metrics_snapshot.schema.json",
+  "title": "Metrics Snapshot",
+  "description": "Daily metric snapshot row in autopilot/runtime/<city>/metrics_snapshots.jsonl. Used for pacing, decision precision, evidence.",
+  "type": "object",
+  "required": ["date", "city", "scope", "spend"],
+  "properties": {
+    "date": { "type": "string", "format": "date" },
+    "city": { "type": "string" },
+    "run_id": { "type": "string" },
+    "scope": {
+      "type": "object",
+      "description": "What slice this snapshot describes. Can target topic+channel, single campaign, or whole account.",
+      "properties": {
+        "level": { "enum": ["account", "topic", "channel", "campaign", "adgroup"] },
+        "topic": { "type": "string" },
+        "channel": { "enum": ["search", "rsya"] },
+        "campaign_id": { "type": ["integer", "string"] },
+        "adgroup_id": { "type": ["integer", "string"] }
+      },
+      "required": ["level"]
+    },
+    "spend": { "type": "number" },
+    "clicks": { "type": "integer" },
+    "impressions": { "type": "integer" },
+    "ctr": { "type": "number" },
+    "leads_form": { "type": "integer" },
+    "leads_call": { "type": "integer" },
+    "leads_qualified": { "type": "integer" },
+    "cpa_form": { "type": "number" },
+    "cpa_call": { "type": "number" },
+    "cpa_qualified": { "type": "number" },
+    "cpc_avg": { "type": "number" },
+    "active_actions_today": { "type": "array", "items": { "type": "string" } },
+    "data_window": { "type": "string", "description": "e.g. 2026-04-29 (single day) or 2026-04-23..2026-04-29 (rolling)" },
+    "attribution": { "enum": ["LYDC", "LSC", "FC"] }
+  }
+}

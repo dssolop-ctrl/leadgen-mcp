@@ -62,3 +62,23 @@ docs/campaign_previews/
 
 # Rendered exports from excalidraw files — source .excalidraw is canonical.
 docs/*.png
+
+# === Autopilot runtime data ===
+# Operational state, ledger, snapshots, narrative md, locks — per-machine.
+autopilot/runtime/*
+!autopilot/runtime/.gitkeep
+# Generated reports (HTML).
+autopilot/reports/*
+!autopilot/reports/.gitkeep
+# Secrets (Telegram bot token, etc.).
+autopilot/config/secrets.env
+# City configs are versioned, but per-pilot drafts may be local-only.
+# Default: track all city YAMLs. Use *.local.yaml suffix for ignored ones:
+autopilot/config/cities/*.local.yaml
+
+# Rendered HTML version of the operator guide (source: OPERATOR_GUIDE.md).
+autopilot/OPERATOR_GUIDE.html
+
+# Migration bundle: secrets + portable archive for moving between machines.
+# Contains plaintext API tokens — never commit.
+migration/

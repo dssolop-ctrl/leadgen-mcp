@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leadgen-mcp/autopilot/schemas/launch_proposal.schema.json",
+  "title": "Launch Proposal",
+  "description": "Onboarding scan output. Lives at autopilot/runtime/<city>/onboarding/launch_proposal.yaml. Bot's structured plan to start a new city or adopt existing campaigns.",
+  "type": "object",
+  "required": ["city", "generated_at", "account_state", "proposed_launches"],
+  "properties": {
+    "city": { "type": "string" },
+    "run_id": { "type": "string" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "autonomy_mode": { "enum": ["full_auto", "with_approvals", "read_only"] },
+    "trust_profile": { "type": "string" },
+    "account_state": {
+      "type": "object",
+      "required": ["existing_campaign_count"],
+      "properties": {
+        "existing_campaign_count": { "type": "integer" },
+        "metrika_counter_ok": { "type": "boolean" },
+        "goals_present": { "type": "array", "items": { "type": "string" } },
+        "utm_template_ok": { "type": "boolean" },
+        "domain_reachable": { "type": "boolean" },
+        "warnings": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "demand_analysis": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["topic", "channel", "indicative_volume"],
+        "properties": {
+          "topic": { "type": "string" },
+          "channel": { "enum": ["search", "rsya"] },
+          "indicative_volume": { "type": "integer", "description": "Wordstat impressions for top seed phrases" },
+          "competitiveness_hint": { "type": "string" },
+          "comment": { "type": "string" }
+        }
+      }
+    },
+    "proposed_launches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["topic", "channel", "monthly_budget", "target_cpa_form"],
+        "properties": {
+          "topic": { "type": "string" },
+          "channel": { "enum": ["search", "rsya"] },
+          "monthly_budget": { "type": "number" },
+          "target_cpa_form": { "type": "number" },
+          "target_cpa_call": { "type": "number" },
+          "playbook_ref": { "type": "string", "description": "leadgen/branches/<file>.md anchor" },
+          "rationale": { "type": "string" },
+          "risks": { "type": "array", "items": { "type": "string" } },
+          "auto_apply_in_full_auto": { "type": "boolean", "description": "If true and autonomy=full_auto, bot will create draft + activate without asking" }
+        }
+      }
+    },
+    "adoptable_campaigns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["campaign_id", "recommendation"],
+        "properties": {
+          "campaign_id": { "type": ["integer", "string"] },
+          "name": { "type": "string" },
+          "inferred_topic": { "type": "string" },
+          "inferred_channel": { "enum": ["search", "rsya"] },
+          "last_30d": {
+            "type": "object",
+            "properties": {
+              "spend": { "type": "number" },
+              "leads_form": { "type": "integer" },
+              "cpa_form": { "type": "number" }
+            }
+          },
+          "recommendation": { "enum": ["adopt", "leave_readonly", "treat_as_holdout"] },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "foreign_campaign_count": { "type": "integer" }
+  }
+}
