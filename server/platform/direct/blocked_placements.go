@@ -44,26 +44,30 @@ func registerApplyBlockedPlacements(s *mcpserver.MCPServer, client *Client, reso
 			return common.ErrorResult("campaign_id обязателен и должен быть > 0"), nil
 		}
 
+		// ExcludedSites is a campaign-level field in Direct API v5, set via
+		// campaigns.update (NOT a separate /excludedsites service — that
+		// endpoint doesn't exist in v5 and returns 404).
+		// Wire format: {"Campaigns": [{"Id": <id>, "ExcludedSites": {"Items": [...]}}]}
 		params := map[string]any{
-			"SetItems": []any{
+			"Campaigns": []any{
 				map[string]any{
-					"CampaignId":    campaignID,
-					"ExcludedSites": blockedPlacements,
+					"Id":            campaignID,
+					"ExcludedSites": map[string]any{"Items": blockedPlacements},
 				},
 			},
 		}
 
-		raw, err := client.Call(ctx, token, "excludedsites", "set", params, clientLogin)
+		raw, err := client.Call(ctx, token, "campaigns", "update", params, clientLogin)
 		if err != nil {
-			return common.ErrorResult(fmt.Sprintf("excludedsites.set failed: %v", err)), nil
+			return common.ErrorResult(fmt.Sprintf("campaigns.update with ExcludedSites failed: %v", err)), nil
 		}
 
-		// API returns {"result": {"SetResults": [{"Warnings"?, "Errors"?}]}} on success
 		out, _ := json.MarshalIndent(map[string]any{
-			"campaign_id":         campaignID,
-			"applied_count":       len(blockedPlacements),
-			"source":              "Etazhi standard RSYA blacklist (references_data.go)",
-			"api_response":        json.RawMessage(raw),
+			"campaign_id":   campaignID,
+			"applied_count": len(blockedPlacements),
+			"source":        "Etazhi standard RSYA blacklist (references_data.go)",
+			"api_method":    "campaigns.update",
+			"api_response":  json.RawMessage(raw),
 		}, "", "  ")
 		return common.TextResult(string(out)), nil
 	})
@@ -101,23 +105,25 @@ func registerSetExcludedSites(s *mcpserver.MCPServer, client *Client, resolver *
 			return common.ErrorResult(fmt.Sprintf("sites: %d > 1000 — превышен лимит API. Сократи список.", len(sites))), nil
 		}
 
+		// Same wire format as apply_blocked_placements — see comment there.
 		params := map[string]any{
-			"SetItems": []any{
+			"Campaigns": []any{
 				map[string]any{
-					"CampaignId":    campaignID,
-					"ExcludedSites": sites,
+					"Id":            campaignID,
+					"ExcludedSites": map[string]any{"Items": sites},
 				},
 			},
 		}
 
-		raw, err := client.Call(ctx, token, "excludedsites", "set", params, clientLogin)
+		raw, err := client.Call(ctx, token, "campaigns", "update", params, clientLogin)
 		if err != nil {
-			return common.ErrorResult(fmt.Sprintf("excludedsites.set failed: %v", err)), nil
+			return common.ErrorResult(fmt.Sprintf("campaigns.update with ExcludedSites failed: %v", err)), nil
 		}
 
 		out, _ := json.MarshalIndent(map[string]any{
 			"campaign_id":   campaignID,
 			"applied_count": len(sites),
+			"api_method":    "campaigns.update",
 			"api_response":  json.RawMessage(raw),
 		}, "", "  ")
 		return common.TextResult(string(out)), nil

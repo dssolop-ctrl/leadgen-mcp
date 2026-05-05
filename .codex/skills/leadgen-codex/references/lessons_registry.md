@@ -207,6 +207,77 @@ MCP-параметр `daily_budget_amount` — на самом деле неде
 - Считай оценочно ДО запуска: `N_unique_scenes × 2 (форматы) ≤ 20`. С учётом регенераций — закладывай ≤ 16.
 - Переиспользование scene между группами (через `AdImageHash`) НЕ тратит лимит дважды — это всё ещё одна генерация.
 
+### 25. Yandex Direct API v5 не имеет сервиса `excludedsites`
+
+**Симптом (тест 2026-05-05):** `apply_blocked_placements(client_login, campaign_id)` → `excludedsites.set failed: API error 404`. ~400 площадок не применены, ручной фикс через UI.
+
+**Причина:** в API v5 (`https://api.direct.yandex.com/json/v5/<service>`) сервиса `excludedsites` не существует. ExcludedSites — это **поле уровня кампании**, обновляется через `campaigns.update`.
+
+**Как применять:**
+- MCP-инструменты `apply_blocked_placements` и `set_excluded_sites` теперь вызывают `campaigns.update` с `Campaigns: [{Id, ExcludedSites: {Items: [...]}}]`. После rebuild контейнера 404 пропадёт.
+- Если кто-то снова напишет `client.Call(ctx, token, "excludedsites", "set", ...)` — это регресс, вернуть на campaigns.update.
+
+### 26. `add_labels` `campaign_id` через GetStringSlice — баг
+
+**Симптом (тест 2026-05-05):** `add_labels(campaign_id=709631976, ...)` → «campaign_id: укажи ID кампании» при валидном числе. Метки не навешены.
+
+**Причина:** параметр был объявлен `WithString` и парсился через `GetStringSlice + parseIntIDs`. Когда клиент передаёт integer JSON-side, slice пустой, валидация падает. Все остальные tools используют `WithNumber + GetInt` для одиночного `campaign_id`.
+
+**Как применять:**
+- MCP `add_labels` теперь `WithNumber("campaign_id")` + `GetInt`. Backward-compat: legacy string slice пробуется, если `GetInt` вернул 0.
+- При добавлении новых tools с одиночным campaign_id — всегда WithNumber, не WithString.
+
+### 27. Wordstat-ответ раздут SearchedWith/SearchedAlso
+
+**Симптом (тест 2026-05-05):** `check_search_volume` для 8 фраз → ответ 140 КБ, обрезан до первых 8 КБ (`MaxResponseSize`). Агент видит только 1 фразу.
+
+**Причина:** Wordstat для каждой фразы возвращает 50+ элементов в `SearchedWith` и `SearchedAlso`. На 8 фраз — суммарно ~140 КБ, при глобальном лимите 8 КБ.
+
+**Как применять:**
+- MCP `check_search_volume` теперь по умолчанию возвращает **только** `Phrase + Shows` (компрессия ×164: 75 КБ → 0.5 КБ для 8 фраз).
+- Параметр `include_related=true` — top-5 SearchedWith/SearchedAlso (~9 КБ для 8 фраз, всё ещё может обрезаться, но top-5 хватает для расширения семантики).
+- В `branches/create-rsya.md` R4 — рекомендация: запрашивать без `include_related` для базовой проверки частотности; включать только если нужны рекомендации для расширения семантики.
+
+### 28. Yandex Direct ratio-checker строже ±2%
+
+**Симптом (тест 2026-05-05):** 16:9 формат с фактическим ratio 1.792 (отклонение 0.8% от целевых 1.778) → `add_ad_image` отклонил с ошибкой 5004 «Размер изображения некорректен».
+
+**Причина:** документация скилла говорила о ±2% допуске, но API применяет строгую проверку — близко к точному соответствию или ±0.5%.
+
+**Как применять:**
+- Серверный auto-crop в `generate_image` / `generate_banner_set` теперь даёт **точные** ratio: 1:1 = квадрат, 16:9 = 1024×576 (1.7778), 4:3 = 1024×768, 3:2 = 1620×1080.
+- НЕ нужен локальный PIL-ресайз — auto-crop точный.
+- Если хочешь использовать **другие размеры** (1080×607, 1920×1080) — резай сам через PIL до точных значений; ratio 1.7778 ровно.
+
+### 29. Контейнерные пути file_path и base64-загрузка
+
+**Симптом (тест 2026-05-05):** (a) попытка чтения base64-файла >256 КБ через `Read` → лимит Read нарушен; (b) попытка передать локальный путь Windows в `add_ad_image` → «no such file or directory».
+
+**Причина:** MCP-сервер работает в Docker с bind-mount `./docs/campaign_previews:/app/previews`. `generate_image` возвращает контейнерный путь (`/app/previews/...`), он же видит файл. `Read` не читает большие base64.
+
+**Как применять:**
+- `file_path` из `generate_image` / `generate_banner_set` использовать as-is в `add_ad_image` — путь уже совместим (контейнерный).
+- Параметр `image_base64` у `add_ad_image` практически неприменим — base64 PNG > 200×200 превышает 256 КБ-лимит инструмента `Read`. **Использовать только `file_path`.**
+
+### 30. RSYA budget HARD GATE по min_floor
+
+**Симптом (тест 2026-05-05):** пользователь запросил 10 000 ₽/мес (~2 500 ₽/нед), `get_default_budgets` вернул `min_floor: 3000`. Кампания обучается медленно.
+
+**Причина:** R1 не имел жёсткого гейта проверки бюджета через `get_default_budgets` до создания.
+
+**Как применять:**
+- В `branches/create-rsya.md` R1 п.4 теперь HARD GATE: после `get_default_budgets` сравнить user-budget/4 (недельный) с `min_floor`. Если ниже — STOP, спросить пользователя (поднять до floor или принять как риск).
+- Записать в файл кампании: `user_budget_weekly`, `min_floor`, решение.
+
+### 31. GoalId=13 в read-back — нормально
+
+**Симптом:** после создания кампании `get_campaigns` показывает `GoalId: 13` в `WbMaximumConversionRate`, не передаваемые `priority_goals`.
+
+**Причина:** при передаче нескольких целей API ставит `GoalId=13` (системная цель «любое целевое действие»), а `priority_goals` хранятся отдельно и не возвращаются без `field_names="..., PriorityGoals"`.
+
+**Как применять:**
+- Это нормальное поведение, не ошибка. При read-back для проверки `priority_goals` — добавить `unified_campaign_field_names="PriorityGoals"` или `text_campaign_field_names="PriorityGoals"`.
+
 ### 24. R5 без закрытого R4 = регресс
 
 **Симптом (повторяющийся):** агент формирует группы по сегментам, упомянутым пользователем («1-комн», «2-комн»), не вызывая `check_search_volume` для семантики. Получаются группы из 3-4 фраз «из головы», статистика wordstat игнорируется.

@@ -87,7 +87,7 @@ func registerAddLabels(s *mcpserver.MCPServer, client *Client, resolver *auth.Ac
 				"Нужен campaign_id (для каталога) и banner_ids (для назначения)."),
 		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("client_login", mcp.Description("Логин клиента-города"), mcp.Required()),
-		mcp.WithString("campaign_id", mcp.Description("ID кампании (для каталога меток)"), mcp.Required()),
+		mcp.WithNumber("campaign_id", mcp.Description("ID кампании (число, не строка) — для каталога меток. Передавай как integer."), mcp.Required()),
 		mcp.WithString("banner_ids", mcp.Description("ID объявлений через запятую (метки назначаются на них)"), mcp.Required()),
 		mcp.WithString("labels", mcp.Description("Метки через запятую. Пример: Лидген,Вторичка,Покупатель"), mcp.Required()),
 	)
@@ -99,11 +99,23 @@ func registerAddLabels(s *mcpserver.MCPServer, client *Client, resolver *auth.Ac
 		}
 		clientLogin := common.GetString(req, "client_login")
 
-		campaignIDs := parseIntIDs(common.GetStringSlice(req, "campaign_id"))
-		if len(campaignIDs) == 0 {
-			return common.ErrorResult("campaign_id: укажи ID кампании"), nil
+		// campaign_id — single integer (not a comma-separated string).
+		// Previously declared as WithString and parsed via GetStringSlice →
+		// when the client passed a number JSON-side, it produced an empty
+		// slice and the tool errored with "укажи ID кампании". 2026-05-05 fix.
+		campaignIDInt := common.GetInt(req, "campaign_id")
+		if campaignIDInt <= 0 {
+			// Backward-compat: fall back to legacy string slice parsing in case
+			// some older clients still pass it as a comma string.
+			legacy := parseIntIDs(common.GetStringSlice(req, "campaign_id"))
+			if len(legacy) > 0 {
+				campaignIDInt = int(legacy[0])
+			}
 		}
-		campaignID := campaignIDs[0]
+		if campaignIDInt <= 0 {
+			return common.ErrorResult("campaign_id: укажи ID кампании (число, > 0)"), nil
+		}
+		campaignID := int64(campaignIDInt)
 
 		bannerIDs := parseIntIDs(common.GetStringSlice(req, "banner_ids"))
 		if len(bannerIDs) == 0 {

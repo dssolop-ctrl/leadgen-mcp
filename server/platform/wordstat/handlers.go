@@ -31,12 +31,14 @@ const wordstatPhraseLimit = 10
 
 func registerCheckSearchVolume(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("check_search_volume",
-		mcp.WithDescription("Частотность фраз через Вордстат: запросы/месяц + похожие фразы. "+
-			"API-лимит — 10 фраз за один отчёт; этот инструмент авто-чанкит более длинные списки на батчи по 10 и склеивает результаты. "+
-			"Можно передавать любое разумное количество фраз (рекомендуется до 100 за вызов)."),
+		mcp.WithDescription("Частотность фраз через Вордстат: запросы/месяц. "+
+			"API-лимит 10 фраз за отчёт; авто-чанкинг на батчи по 10, склейка результатов. Можно передавать до ~100 фраз. "+
+			"По умолчанию ответ сжат: Phrase+Shows для каждой фразы, без SearchedWith/SearchedAlso (140 КБ → 2 КБ). "+
+			"Если нужны связанные запросы — include_related=true (top-5 рекомендованных + top-5 «вместе ищут»)."),
 		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("phrases", mcp.Description("Фразы через запятую. Операторы: \"точная фраза\", [точный порядок]. Авто-чанкинг при > 10."), mcp.Required()),
 		mcp.WithString("region_ids", mcp.Description("ID регионов через запятую (опционально)")),
+		mcp.WithBoolean("include_related", mcp.Description("Включить SearchedWith/SearchedAlso (top-5 каждого). Default false — только Phrase+Shows.")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -47,6 +49,7 @@ func registerCheckSearchVolume(s *mcpserver.MCPServer, client *Client, resolver 
 
 		phrases := common.GetStringSlice(req, "phrases")
 		regions := common.GetStringSlice(req, "region_ids")
+		includeRelated := common.GetBool(req, "include_related")
 
 		if len(phrases) == 0 {
 			return common.ErrorResult("phrases пустой"), nil
@@ -74,14 +77,67 @@ func registerCheckSearchVolume(s *mcpserver.MCPServer, client *Client, resolver 
 			return common.ErrorResult(fmt.Sprintf("все чанки упали: %s", strings.Join(errors, "; "))), nil
 		}
 
-		// Merge aggregated chunks. Each chunk is a JSON array of phrase results — concatenate.
+		// Merge aggregated chunks, then compress to keep response small.
+		// Without compression: 8 phrases × ~17 KB SearchedWith/SearchedAlso each ≈ 140 KB → truncated at 8 KB.
+		// With compression: ~2 KB total (or ~5 KB if include_related=true).
 		merged := mergeWordstatChunks(aggregated)
-		if len(errors) > 0 {
-			// Partial success: include error notes in response.
-			return common.SafeTextResult(fmt.Sprintf("%s\n/* partial errors: %s */", merged, strings.Join(errors, "; "))), nil
+		compressed, comprErr := compressWordstatResponse(merged, includeRelated)
+		if comprErr != nil {
+			// Fallback to merged raw on compression error.
+			compressed = merged
 		}
-		return common.SafeTextResult(merged), nil
+
+		if len(errors) > 0 {
+			return common.SafeTextResult(fmt.Sprintf("%s\n/* partial errors: %s */", compressed, strings.Join(errors, "; "))), nil
+		}
+		return common.SafeTextResult(compressed), nil
 	})
+}
+
+// compressWordstatResponse strips heavyweight SearchedWith/SearchedAlso fields
+// to keep the response under MaxResponseSize (8 KB) for typical batches.
+//
+// Default (includeRelated=false): keep only Phrase+Shows per item.
+// Extended (includeRelated=true): also keep top-5 of SearchedWith/SearchedAlso
+// (instead of full lists which can be 50+ items each).
+func compressWordstatResponse(merged string, includeRelated bool) (string, error) {
+	var items []map[string]any
+	if err := json.Unmarshal([]byte(merged), &items); err != nil {
+		return merged, err
+	}
+
+	const relatedLimit = 5
+	out := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		row := map[string]any{}
+		if v, ok := item["Phrase"]; ok {
+			row["Phrase"] = v
+		}
+		if v, ok := item["Shows"]; ok {
+			row["Shows"] = v
+		}
+		if includeRelated {
+			if sw, ok := item["SearchedWith"].([]any); ok && len(sw) > 0 {
+				if len(sw) > relatedLimit {
+					sw = sw[:relatedLimit]
+				}
+				row["SearchedWith"] = sw
+			}
+			if sa, ok := item["SearchedAlso"].([]any); ok && len(sa) > 0 {
+				if len(sa) > relatedLimit {
+					sa = sa[:relatedLimit]
+				}
+				row["SearchedAlso"] = sa
+			}
+		}
+		out = append(out, row)
+	}
+
+	data, err := json.Marshal(out)
+	if err != nil {
+		return merged, err
+	}
+	return string(data), nil
 }
 
 // fetchWordstatChunk requests a single Wordstat report for up to 10 phrases and returns the data field.
