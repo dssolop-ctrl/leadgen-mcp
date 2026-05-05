@@ -296,11 +296,20 @@ test -f autopilot/runtime/<city>/locks/RUNNING.lock && echo "WARN: lock not rele
 
 ---
 
-## 6. Настройка Claude Desktop routine
+## 6. Настройка автоматического запуска
 
-После успешного ручного прогона — ставим автоматику.
+После успешного ручного прогона — ставим автоматику. **Два варианта**, оба рабочих:
 
-### 6.1. Создать routine
+| Вариант | Когда выбирать |
+|---|---|
+| **6A. Claude Desktop Routines** | Простой single-city, операторы привыкли к Desktop UI. Минус: зависит от того, что Desktop запущен. |
+| **6B. Claude Code CLI + планировщик** ⭐ | Production-режим, multi-city, нужны логи/observability/robustness. Не зависит от UI-сессии. |
+
+Качество выполнения работы автопилотом **в обоих вариантах идентичное** (одна модель, тот же контекст, те же MCP/skills/hooks). Разница только в обвязке запуска.
+
+### 6A. Claude Desktop routine
+
+#### 6A.1. Создать routine
 
 1. Claude Desktop → Settings → Routines (или аналог; зависит от версии).
 2. Создать новую routine:
@@ -311,11 +320,149 @@ test -f autopilot/runtime/<city>/locks/RUNNING.lock && echo "WARN: lock not rele
 
 3. Если городов несколько — создать отдельную routine для каждого. Staggered times (omsk в 10:00, kemerovo в 10:30, ...).
 
-### 6.2. Watchdog (опционально)
+#### 6A.2. Watchdog
 
 Чтобы знать, если routine не отработала:
 - Создать вторую routine на 18:00 МСК: `Если за сегодня нет run для <city>, прислать alert в Telegram`.
 - Или добавить cron-проверку через scheduled-tasks MCP, если установлен.
+
+### 6B. Claude Code CLI + Windows Task Scheduler ⭐
+
+Headless-mode CLI работает идентично Desktop по качеству, но независим от UI и даёт structured logs. Рекомендуется для production.
+
+#### 6B.1. Команда headless-запуска
+
+```bash
+claude -p "/leadgen-autopilot city=<city>" \
+  --dangerously-skip-permissions \
+  --output-format json \
+  --max-turns 80 \
+  --max-budget-usd 5
+```
+
+Что важно:
+- **`-p`** (print mode) — запускает один промпт, выходит после завершения. Auto-discover скиллов (`.claude/skills/leadgen-autopilot/`), MCP (`.mcp.json`), hooks (`.claude/settings.json`).
+- **НЕ используйте `--bare`** — он отключает auto-discovery, нам нужны skills и MCP.
+- **`--dangerously-skip-permissions`** обязателен для unattended: без него `-p` зависнет на любом permission prompt (например, при первом вызове bash). Альтернатива — заполнить `permissions.allow` в `.claude/settings.json` со whitelist всех MCP tools и Bash, но это десятки строк.
+- **`--output-format json`** — structured лог (`{run_id, total_cost_usd, num_turns, ...}`) для парсинга / observability.
+- **`--max-turns N`** — кап на число итераций (защита от зацикливания).
+- **`--max-budget-usd N`** — кап на стоимость одного прогона.
+
+#### 6B.2. Batch-обёртка
+
+Создать `C:\scripts\run-autopilot-<city>.bat`:
+
+```batch
+@echo off
+REM Batch-обёртка для unattended-запуска leadgen-autopilot.
+REM Логи: autopilot/runtime/_global/cli-runs.log
+
+cd /d C:\git\leadgen-mcp
+
+set LOG=C:\git\leadgen-mcp\autopilot\runtime\_global\cli-runs.log
+if not exist "C:\git\leadgen-mcp\autopilot\runtime\_global" mkdir "C:\git\leadgen-mcp\autopilot\runtime\_global"
+
+echo. >> "%LOG%"
+echo === %DATE% %TIME% — start city=<city> === >> "%LOG%"
+
+REM Optional: pre-flight check that MCP server is alive
+curl -sf http://localhost:8080/sse -o NUL --max-time 5
+if errorlevel 1 (
+  echo [ERROR] MCP server localhost:8080 not reachable, aborting >> "%LOG%"
+  exit /b 1
+)
+
+claude -p "/leadgen-autopilot city=<city>" ^
+  --dangerously-skip-permissions ^
+  --output-format json ^
+  --max-turns 80 ^
+  --max-budget-usd 5 ^
+  >> "%LOG%" 2>&1
+
+set RC=%errorlevel%
+echo === %DATE% %TIME% — end rc=%RC% === >> "%LOG%"
+exit /b %RC%
+```
+
+Заменить `<city>` на пилотный город (пример: `omsk`).
+
+#### 6B.3. Windows Task Scheduler
+
+1. `Win+R` → `taskschd.msc` → Create Task (не Create Basic Task — нужны полные настройки).
+2. **General:**
+   - Name: `Autopilot — <city>`
+   - "Run whether user is logged on or not" ✓
+   - "Hidden" ✓ (без всплывающего окна)
+   - "Configure for: Windows 10/11"
+3. **Triggers:** New → Daily → 10:00 (МСК), Recur every 1 day.
+4. **Actions:** New → Start a program:
+   - Program: `C:\scripts\run-autopilot-<city>.bat`
+   - Start in: `C:\git\leadgen-mcp` (это важно — иначе bash скрипты могут не найти относительные пути)
+5. **Settings:**
+   - "Allow task to be run on demand" ✓
+   - "Run task as soon as possible after a scheduled start is missed" ✓
+   - "If the running task does not end when requested, force it to stop" ✓
+   - "If the task is already running, then the following rule applies: **Do not start a new instance**" ✓ (двойная защита поверх нашего `RUNNING.lock`)
+
+При создании задачи Windows запросит пароль учётки — нужно ввести (для запуска без login session).
+
+#### 6B.4. Альтернативные планировщики (с UI)
+
+Windows Task Scheduler работает, но UI древний и неудобный для нескольких задач. Альтернативы:
+
+| Сервис | Плюсы | Минусы |
+|---|---|---|
+| **[Cronicle](https://github.com/jhuckaby/Cronicle)** ⭐ | Open-source, web UI на `localhost:3012`, dashboard со всеми задачами, history, retry policy, email/Slack уведомления, plugin system, multi-server scaling. Работает на Node.js. | Нужно развернуть Node.js |
+| **[System Scheduler (Splinterware)](https://www.splinterware.com/products/scheduler.html)** | Бесплатный для personal use, простой Windows UI, лог-консоль на каждую задачу. | Только Windows, нет web UI |
+| **[Z-Cron](https://www.z-cron.com/)** | Бесплатный, классический Windows UI, cron-syntax. | UI устаревший |
+| **[VisualCron](https://www.visualcron.com/)** | Мощный workflow engine, free trial, корпоративный уровень. | Платный после trial |
+| **[n8n](https://n8n.io/) (self-hosted)** | Low-code, web UI, можно строить целые pipeline вокруг прогона (pre-checks → запуск → post-processing). | Overkill для одной задачи |
+| **WSL + cron** | Линуксовский cron, минималистичный, надёжный. | Нет UI, нужен WSL |
+
+**Рекомендация для пилота на 1 город:** Windows Task Scheduler (встроенный) или System Scheduler (если хочется UI попроще).
+**Для масштабирования на 5+ городов:** Cronicle — даёт dashboard со всеми job-ами, history по каждому прогону, легко добавлять/удалять города.
+
+#### 6B.5. Мини-инструкция: Cronicle на Windows
+
+```powershell
+# 1. Установить Node.js LTS https://nodejs.org/
+# 2. Установить Cronicle:
+npm install -g cronicle
+cronicle --setup
+cronicle start
+
+# 3. Открыть http://localhost:3012 (login admin/admin при первом входе, сменить пароль).
+# 4. Schedule → Add Event:
+#    Title: Autopilot — omsk
+#    Category: Production
+#    Plugin: Shell Script
+#    Schedule: 0 7 * * * (UTC, 10:00 МСК)
+#    Script: C:\scripts\run-autopilot-omsk.bat
+#    Resource Limits: CPU/Memory caps (опционально)
+#    Notifications: email/Slack/Telegram при failure
+```
+
+Cronicle сохраняет stdout/stderr каждого run-а в свою БД, показывает в UI, поддерживает retry policy и chained jobs.
+
+#### 6B.6. Watchdog для unattended
+
+Task Scheduler / Cronicle сами отслеживают exit code. Дополнительная страховка через Telegram:
+
+Создать вторую задачу на 18:00:
+```batch
+@echo off
+REM Watchdog: проверить, был ли успешный run за последние 26 часов.
+REM Если нет — отправить alert.
+cd /d C:\git\leadgen-mcp
+powershell -NoProfile -Command "
+  $log = 'autopilot\runtime\_global\cli-runs.log';
+  $cutoff = (Get-Date).AddHours(-26);
+  $lastSuccess = Select-String -Path $log -Pattern 'rc=0' -SimpleMatch | Select-Object -Last 1;
+  if ($null -eq $lastSuccess -or (Get-Item $log).LastWriteTime -lt $cutoff) {
+    'No successful autopilot run in 26h' | bash autopilot/lib/telegram_send.sh -1003957360112 -;
+  }
+"
+```
 
 ---
 
@@ -482,12 +629,22 @@ holdout:
 | Pacing emergency | Смотреть `state.yaml.budget.{spent_mtd,pacing_ratio,forecast_month_end,pacing_state}`. Возможно, плохо настроены `target_cpa_*` или `monthly_budget`. |
 | Кампания не активировалась | Проверить `state.campaigns[<id>].status_status` — может быть на модерации (DRAFT/MODERATION). Активация происходит, только когда `ACCEPTED`. |
 | HTML отчёт без форматирования | Установить `pandoc` (Windows: choco/scoop) или `pip install markdown`. |
+| **CLI зависает на permission prompt** | В Task Scheduler `.bat` забыт `--dangerously-skip-permissions`. Без него `claude -p` ждёт ввода stdin вечно. |
+| **Task Scheduler exit code 0, но run не отработал** | Открыть `autopilot/runtime/_global/cli-runs.log` — там stdout от `--output-format json`. Возможно MCP server упал (`curl localhost:8080/sse`). |
+| **Двойной запуск через CLI** | Task Scheduler настройка "Do not start a new instance" + наш `RUNNING.lock` дают двойную защиту. Если оба обходятся — проверить TTL lock в `caps_defaults.yaml.running_lock_ttl_minutes`. |
+| **CLI не видит скилл `/leadgen-autopilot`** | Запуск из неправильного cwd. В Task Scheduler "Start in:" должен быть `C:\git\leadgen-mcp`. Проверка: `cd C:\git\leadgen-mcp && claude -p "list available skills"`. |
+| **MCP не подключается** | Pre-flight check в `.bat`: `curl -sf http://localhost:8080/sse`. Если падает — Docker container `leadgen-mcp` не запущен или нет network. |
 
 ### 9.1. Логи
 
-Все шаги прогона — в `runtime/<city>/narrative/runs/<YYYY-MM>/<HHMM>.md`. Phases lifecycle: `started → loaded_context → fetched_metrics → planned_actions → applying → applied_partial → memory_written → notified → succeeded`.
+**Все шаги прогона** — в `runtime/<city>/narrative/runs/<YYYY-MM>/<HHMM>.md`. Phases lifecycle: `started → loaded_context → fetched_metrics → planned_actions → applying → applied_partial → memory_written → notified → succeeded`.
 
 Если phase застрял в `applying` — был crash. Recovery — в следующем прогоне через ledger.
+
+**При CLI-режиме** дополнительные логи:
+- `autopilot/runtime/_global/cli-runs.log` — stdout/stderr Task Scheduler (включая `--output-format json` ответ).
+- `~/.claude/projects/<hashed-path>/transcripts/` — полные транскрипты сессий Claude Code (если не отключено `--no-session-persistence`).
+- Cronicle UI (если используется) — таб History с filter по job-у, retention 30 дней по умолчанию.
 
 ---
 
