@@ -62,6 +62,14 @@ var minWeeklyFloor = map[string]int{
 	"vk":     2000,
 }
 
+// MinWeeklyBudgetFloor returns the minimum weekly budget (in rubles) for the
+// given channel. Returns 0 if channel is unknown (caller treats 0 as "no floor").
+// Used by add_campaign to validate before burning an API call on a campaign
+// that won't train.
+func MinWeeklyBudgetFloor(channel string) int {
+	return minWeeklyFloor[strings.ToLower(strings.TrimSpace(channel))]
+}
+
 // roundToStep rounds an int to the nearest multiple of step (step > 0).
 func roundToStep(v int, step int) int {
 	if step <= 0 {

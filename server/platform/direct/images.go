@@ -32,13 +32,16 @@ func RegisterImageTools(s *mcpserver.MCPServer, client *Client, resolver *auth.A
 
 func registerAddAdImage(s *mcpserver.MCPServer, client *Client, resolver *auth.AccountResolver) {
 	tool := mcp.NewTool("add_ad_image",
-		mcp.WithDescription("Загрузить изображение в Яндекс Директ (для РСЯ-объявлений). Источник: url, file_path или base64. Возвращает AdImageHash для использования в add_ad. Перед отправкой в Директ выполняется локальная валидация: формат (JPG/PNG/GIF), вес (10 KB — 10 MB), пиксели и соотношение сторон (1:1 ≥ 450×450 или 16:9 ≥ 1080×607, ±2%). При несоответствии — ошибка с явной причиной до похода в API."),
+		mcp.WithDescription("Загрузить изображение в Яндекс Директ (для РСЯ-объявлений). "+
+			"Источник: url или file_path. file_path принимает И контейнерный путь (/app/previews/...), И хост-путь (docs/campaign_previews/...) — резолвится автоматически через bind-mount. "+
+			"Возвращает AdImageHash для использования в add_ad. "+
+			"Перед отправкой в Директ — локальная валидация: формат (JPG/PNG/GIF), вес (10 KB — 10 MB), пиксели и aspect (1:1 ≥ 450×450 или 16:9 ≥ 1080×607, точные ratio после auto-crop из generate_image)."),
 		mcp.WithString("account", mcp.Description("Аккаунт")),
 		mcp.WithString("client_login", mcp.Description("Логин клиента-города"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Имя изображения (до 100 символов, для ориентировки в кабинете)")),
 		mcp.WithString("url", mcp.Description("HTTPS URL изображения — скачается и будет загружено в Директ")),
-		mcp.WithString("file_path", mcp.Description("Локальный путь к JPG/PNG файлу (альтернатива url)")),
-		mcp.WithString("image_base64", mcp.Description("Base64 содержимое изображения (альтернатива url/file_path). БЕЗ data:image/... префикса.")),
+		mcp.WithString("file_path", mcp.Description("Путь к JPG/PNG файлу. Принимаются оба формата: контейнерный (/app/previews/<slug>/...) и хост (docs/campaign_previews/<slug>/...). Используй ответ generate_image.file_path как есть.")),
+		mcp.WithString("image_base64", mcp.Description("(DEPRECATED) Base64 содержимое. Не используй — параметр Read имеет лимит 256 KB, что меньше base64 PNG > 200×200. Используй file_path вместо этого.")),
 		mcp.WithBoolean("skip_validation", mcp.Description("Не проверять размеры локально — отправить в Директ как есть (дефолт false). Включай только для отладки.")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -59,7 +62,10 @@ func registerAddAdImage(s *mcpserver.MCPServer, client *Client, resolver *auth.A
 		var rawData []byte
 		switch {
 		case b64 != "":
-			// Strip data URL prefix if user accidentally included it.
+			// Backward-compat path. New skill instructions tell the agent to
+			// avoid this — base64 of any reasonable PNG (200×200+) exceeds
+			// the Read tool's 256 KB cap, breaking the read→pass chain.
+			// Still functional for tiny images / programmatic callers.
 			if idx := strings.Index(b64, "base64,"); idx >= 0 {
 				b64 = b64[idx+len("base64,"):]
 			}
@@ -69,9 +75,14 @@ func registerAddAdImage(s *mcpserver.MCPServer, client *Client, resolver *auth.A
 			}
 			rawData = decoded
 		case filePath != "":
-			data, err := os.ReadFile(filePath)
+			// Resolve host paths to container paths via known bind-mounts
+			// (see docker-compose.yml — ./docs/campaign_previews:/app/previews).
+			// generate_image returns container paths already; this only kicks
+			// in when the agent passes a host-style path like "docs/campaign_previews/...".
+			resolvedPath := resolveImageHostPath(filePath)
+			data, err := os.ReadFile(resolvedPath)
 			if err != nil {
-				return common.ErrorResult(fmt.Sprintf("read file_path=%s: %v", filePath, err)), nil
+				return common.ErrorResult(fmt.Sprintf("read file_path=%s (resolved=%s): %v — путь должен быть либо контейнерным (/app/previews/...) либо хост-стилем (docs/campaign_previews/...)", filePath, resolvedPath, err)), nil
 			}
 			rawData = data
 		case url != "":
@@ -81,7 +92,7 @@ func registerAddAdImage(s *mcpserver.MCPServer, client *Client, resolver *auth.A
 			}
 			rawData = data
 		default:
-			return common.ErrorResult("нужен один из: url, file_path, image_base64"), nil
+			return common.ErrorResult("нужен один из: url, file_path (рекомендуется). image_base64 deprecated."), nil
 		}
 
 		if len(rawData) == 0 {
@@ -244,6 +255,46 @@ func validateAdImage(data []byte) error {
 			got, w, h, aspectTolerance*100)
 	}
 	return nil
+}
+
+// resolveImageHostPath translates host-side paths (Windows/Linux working tree)
+// into container-side paths via known bind-mounts.
+//
+// Background: docker-compose.yml mounts ./docs/campaign_previews → /app/previews.
+// When the skill agent runs locally (no Docker) this is a no-op. When it
+// runs in Claude Code talking to a containerized MCP server, host paths
+// like "docs/campaign_previews/<slug>/foo.png" don't exist inside the
+// container — the same file is at "/app/previews/<slug>/foo.png".
+//
+// Rules (applied in order, first match wins):
+//  1. If path already starts with "/app/" — leave as is.
+//  2. Normalize Windows backslashes → forward slashes.
+//  3. Strip leading "./" if present.
+//  4. If path starts with "docs/campaign_previews/" → swap to "/app/previews/".
+//  5. If path is an absolute Windows path containing "docs/campaign_previews/" →
+//     extract the suffix and swap to "/app/previews/...".
+//  6. Otherwise return the path unchanged (caller's os.ReadFile will error
+//     and the message will include the resolved path for debugging).
+func resolveImageHostPath(p string) string {
+	if p == "" {
+		return p
+	}
+	if strings.HasPrefix(p, "/app/") {
+		return p
+	}
+	// Normalize backslashes (Windows hosts).
+	p = strings.ReplaceAll(p, "\\", "/")
+	// Strip "./".
+	p = strings.TrimPrefix(p, "./")
+	// Direct match: relative host path.
+	if strings.HasPrefix(p, "docs/campaign_previews/") {
+		return "/app/previews/" + strings.TrimPrefix(p, "docs/campaign_previews/")
+	}
+	// Absolute host path (Linux: /home/.../docs/campaign_previews/...; Windows: C:/.../docs/campaign_previews/...)
+	if idx := strings.Index(p, "/docs/campaign_previews/"); idx >= 0 {
+		return "/app/previews/" + p[idx+len("/docs/campaign_previews/"):]
+	}
+	return p
 }
 
 // downloadImage fetches an image URL and returns its bytes.

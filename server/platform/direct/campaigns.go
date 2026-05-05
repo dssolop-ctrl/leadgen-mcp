@@ -128,6 +128,7 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 		mcp.WithString("negative_keywords", mcp.Description("Минус-фразы через запятую")),
 		mcp.WithString("settings", mcp.Description("Настройки JSON: [{\"option\":\"ENABLE_AREA_OF_INTEREST_TARGETING\",\"value\":false}]")),
 		mcp.WithString("tracking_params", mcp.Description("UTM-метки на уровне кампании. Наследуется всеми группами. Рекомендуется вместо per-group. Вид: utm_source=yandex&utm_medium=cpc&utm_campaign={campaign_id}&...")),
+		mcp.WithBoolean("force_low_budget", mcp.Description("Override недельного min_floor (search=5000, rsya=3000, vk=2000 ₽). Default false — сервер откажет в создании кампании ниже floor. Включай только если сознательно идёшь на риск с обучением автостратегии.")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -148,6 +149,29 @@ func registerAddCampaign(s *mcpserver.MCPServer, client *Client, resolver *auth.
 		networkStrategy := common.GetString(req, "network_strategy")
 		if networkStrategy == "" {
 			networkStrategy = "SERVING_OFF"
+		}
+
+		// HARD GATE: budget must clear the channel's min_floor or auto-strategies won't train.
+		// Channel determined by which strategy is active (not SERVING_OFF). Search wins ties.
+		// Override via force_low_budget=true (logged in error message for transparency).
+		if budgetAmount > 0 {
+			channel := ""
+			if searchStrategy != "" && searchStrategy != "SERVING_OFF" {
+				channel = "search"
+			} else if networkStrategy != "" && networkStrategy != "SERVING_OFF" {
+				channel = "rsya"
+			}
+			if channel != "" {
+				floor := MinWeeklyBudgetFloor(channel)
+				if floor > 0 && budgetAmount < floor && !common.GetBool(req, "force_low_budget") {
+					return common.ErrorResult(fmt.Sprintf(
+						"weekly budget %d ₽ ниже min_floor=%d ₽ для канала=%s. "+
+							"Автостратегия не обучится стабильно (нужно ≥ %d конверсий/нед × ≥ 7 дней). "+
+							"Варианты: (а) поднять daily_budget_amount до %d; "+
+							"(б) передать force_low_budget=true и принять риск долгого обучения / нестабильности.",
+						budgetAmount, floor, channel, floor/1000, floor)), nil
+				}
+			}
 		}
 
 		// Build campaign object. Default StartDate to today when the caller omits it —
