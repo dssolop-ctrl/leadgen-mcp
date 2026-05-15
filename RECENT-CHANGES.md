@@ -5,6 +5,33 @@
 
 ## Что сделано
 
+### 28. MCP: remove_labels + set_banner_labels — закрытие гейта на чистку меток объявлений (2026-05-15)
+
+**Контекст.** В MCP-сервере был только `add_labels` (идемпотентное добавление). Убрать конкретную метку с объявления через API было нельзя — оставались только UI Директа или ручные curl-вызовы `bannerphrases.UpdateBannersTags`. После Lesson #32 (autopilot ставил лишние internal-метки `topic:vtorichka`, `channel:search`/`channel:rsya` в `campaign.create_draft.*`, дублирующие бизнес-метки `Вторичка` / `Поиск`/`РСЯ`) на пилотном городе porg-ul2dqvcs накопилось 26 ad-ов (campaign 709914995 + 709915110) с лишними метками. Lesson #32 закрыл утечку **в будущих** кампаниях, но уже созданные ad-ы без инструмента в MCP не вычистить — приходилось бы оператору руками в UI.
+
+**Фикс — два новых tool в `platform/direct/labels.go`.**
+
+- **`remove_labels(client_login, banner_ids, labels)`** — убирает только указанные метки, остальные сохраняет. Не трогает каталог кампании, **campaign_id не нужен**: имена резолвятся case-insensitively из текущих меток баннеров (GetBannersTags → фильтр → UpdateBannersTags с уменьшенным TagIDS на каждый затронутый banner). До 2000 banner_ids за вызов. Возвращает `{banners_processed, banners_changed, removed_count, changes: [{banner_id, removed: [...]}], errors_per_banner}`.
+- **`set_banner_labels(client_login, campaign_id, banner_ids, labels)`** — **полная замена** набора меток (всё текущее → указанный набор). Требует `campaign_id` для каталога (создаёт недостающие метки через UpdateCampaignsTags, как `add_labels`). Пустая строка `labels` = очистить. Возвращает `{campaign_id, banner_ids, assigned, tag_ids, removed_diff: {banner_id: [old_label, ...]}}`.
+
+Обa используют единый retry (3 раза, exponential backoff) и envelope-handler v4 Live из `common.APIClient` + `client.CallV4`. Токен в логах не появляется — `httpclient.go` логирует только URL при ретрае, тело запроса не пишется.
+
+**Helper для тестов.** Pure-функция `computeRemovedTagIDs([]v4TagObj, removeSet) → (newTagIDs, removedNames)` вынесена отдельно — 5 юнит-тестов в `labels_test.go` (базовый case, case-insensitive, пустой набор удаления, remove-all, nil вход). `go test ./platform/direct/...` ✓, `go vet ./...` ✓.
+
+**Документация.** `.claude/skills/leadgen/config/labels.md` и Codex-зеркало `.codex/skills/leadgen-codex/config/labels.md` — таблица инструментов расширена с 3 до 4, добавлена секция «Когда какой инструмент» и пример очистки лишних internal-меток для post-fix Lesson #32. Снят TODO «`set_campaign_labels` заменяет все текущие» (он не был реализован в MCP — заменён на `set_banner_labels` с честным описанием уровня действия).
+
+**Lesson #32 — closed.** Текстовые правила скилла + сам MCP-инструмент. Дальше — применение к двум кампаниям porg-ul2dqvcs (709914995 search, 709915110 rsya) через `remove_labels(labels="topic:vtorichka,channel:search")` и `remove_labels(labels="topic:vtorichka,channel:rsya")` соответственно. После — verify через `get_labels(banner_ids=...)`.
+
+**Файлы изменены:**
+- ✏️ `server/platform/direct/labels.go` (+265 строк: 2 регистратора, helper `resolveOrCreateCampaignTagIDs`, helper `computeRemovedTagIDs`, типы `v4BannerTagsResponse`/`v4BannerTags`)
+- ✏️ `server/platform/direct/tools.go` (комментарий: `// 2 tools` → `// 4 tools`)
+- 🆕 `server/platform/direct/labels_test.go` (5 кейсов на чистый helper)
+- ✏️ `.claude/skills/leadgen/config/labels.md` (новые tools + пример)
+- ✏️ `.codex/skills/leadgen-codex/config/labels.md` (зеркало)
+- ✏️ `RECENT-CHANGES.md` (этот пункт)
+
+**Что осталось — деплой и применение.** `docker compose build && docker compose up -d` + рестарт SSE-клиента (Claude/Codex), затем `remove_labels` к двум указанным кампаниям.
+
 ### 27. Autopilot W1-W10 — полный каркас автономного агента (2026-05-04)
 
 **Контекст.** После 3 раундов уточнений (PLAN.md → corrections (Codex) → corrections2 (Claude) → corrections3 (Codex) → ответы пользователя) реализованы все 10 волн разработки `/leadgen-autopilot` как единого контура (без промежуточных пилотов). Цель — дать агенту вести новый рекламный аккаунт самостоятельно: эксперимент с `autonomy_mode: full_auto` + `trust_profile: pilot_full_auto`.
