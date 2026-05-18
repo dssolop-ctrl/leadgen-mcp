@@ -56,7 +56,32 @@ get_criteria_stats(...)  # для placement performance
 
 См. `branches/decide.md` (ленивая загрузка только если есть signals → actions).
 
-### D7-D8: см. `branches/apply.md` и `branches/memory_write.md`, `branches/notify.md`.
+### D7-D8: см. `branches/apply.md` и `branches/notify.md`, `branches/memory_write.md`.
+
+---
+
+## Daily dynamics table — единый формат
+
+> Применяется ко всем режимам (daily/weekly/monthly) и ко всем артефактам (`runs/<HHMM>.md`, weekly/monthly HTML, Telegram-вложения).
+
+**Правило:** «Дневная динамика» = **одна строка на день**, агрегация по всем managed-кампаниям. **НЕ разбивать на search/rsya** (поиск и РСЯ суммируются в общие колонки). Разбивка по каналам/кампаниям живёт в отдельной таблице «за период» (см. выше «Метрики недели»), не дублируется в дневной.
+
+Колонки таблицы дневной динамики (минимальный набор):
+
+```markdown
+| Дата | Imp | Clicks | Spend ₽ | CTR | CPC ₽ | Form | Calls | CPA_form | CPA_call |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 2026-05-15 | 4 232 | 188 | 764 | 4.44% | 4.06 | 0 | 0 | — | — |
+| 2026-05-16 | 6 099 | 385 | 2 128 | 6.31% | 5.53 | 0 | 4 | — | 532 |
+| 2026-05-17 | 10 778 | 519 | 2 541 | 4.82% | 4.90 | 1 | 0 | 2 541 | — |
+| **Итого** | 21 109 | 1 092 | 5 433 | 5.17% | 4.98 | 1 | 4 | 5 433 | 1 358 |
+```
+
+Допустимые расширения: колонка `Note` для краткого комментария по дню (старт, инциденты, операторские правки). НЕ добавлять колонки `Канал` / `Кампания` — это ломает «один день — одна строка».
+
+Если managed-кампаний нет вовсе (baseline_mode или новый город) — таблица не выводится; вместо неё текст-абзац «Дневная динамика недоступна — нет управляемых кампаний».
+
+---
 
 ## Weekly mode
 
@@ -77,12 +102,30 @@ get_criteria_stats(...)  # для placement performance
 
 ### W4: Weekly HTML report
 
-`reports/<city>/<YYYY-MM>/week-<NN>.html`. Через `lib/render_html.sh`.
+`reports/<city>/<YYYY-MM>/week-<NN>.html`. Через `lib/render_html.sh` — обязательно с YAML frontmatter по конвенции из `branches/notify.md` § 1.1.
 
-Содержание:
-- Заголовок: `Weekly — <city>, неделя N (<from>..<to>)`.
-- Сводка KPI (таблица).
-- Графики (matplotlib png inline или ASCII): дневной spend / leads / CPA.
+Структура md:
+```yaml
+---
+title: "Weekly — <city>, неделя <NN>"
+date: "<YYYY-MM-DD конца недели>"
+city: <city>
+mode: weekly
+status: { label: "<тренд недели в 2-3 словах>", kind: success|warn|danger }
+kpi:
+  cards:
+    - { label: "Spend неделя", value: "<X>", suffix: "/ <Y> ₽", foot: "<Δ vs prev_week>" }
+    - { label: "Leads (form+call)", value: "<N>", foot: "<Δ vs prev_week>" }
+    - { label: "CPA неделя", value: "<C>", suffix: "₽", foot: "target <T> ₽", kind: warn|alert? }
+    - { label: "Decision precision", value: "<%>", foot: "<applied non-rollback>" }
+    - { label: "Open decisions", value: "<N>", foot: "<context>" }
+---
+```
+
+Содержание body:
+- `## TL;DR` — 3-4 строки.
+- Таблица KPI per topic/channel.
+- **Таблица дневной динамики** по правилу выше («Daily dynamics table — единый формат»): одна строка на день, агрегация всех РК, без колонок «Канал»/«Кампания».
 - Список применённых actions за неделю.
 - Сравнение с прошлой неделей.
 - Открытые вопросы.
@@ -128,9 +171,31 @@ proposed_budget_<YYYY-MM>:
 
 ### M6: Monthly HTML report + Telegram push
 
-`reports/<city>/<YYYY-MM>/month-<MM>.html`.
-Содержание:
+`reports/<city>/<YYYY-MM>/month-<MM>.html` — обязательно с YAML frontmatter по конвенции из `branches/notify.md` § 1.1.
+
+Структура frontmatter:
+```yaml
+---
+title: "Monthly — <city>, <YYYY-MM>"
+date: "<YYYY-MM-DD конца месяца>"
+city: <city>
+mode: monthly
+status: { label: "<резюме месяца>", kind: success|warn|danger }
+kpi:
+  cards:
+    - { label: "Spend месяц", value: "<X>", suffix: "/ <Y> ₽", foot: "<Δ vs prev_month>" }
+    - { label: "Qualified leads", value: "<N>", foot: "<Δ vs prev_month>" }
+    - { label: "CPA топ-темы", value: "<C>", suffix: "₽", foot: "target <T> ₽" }
+    - { label: "Rollback rate", value: "<%>", foot: "<count> / <total>", kind: alert? }
+    - { label: "Pacing accuracy", value: "<%>", foot: "forecast_eom vs actual" }
+    - { label: "Holdout Δ", value: "<+X%>", foot: "managed vs holdout CPA" }
+---
+```
+
+Содержание body:
+- `## TL;DR` — 3-4 строки.
 - KPI месяца + сравнение с предыдущим.
+- **Таблица дневной динамики** по правилу из daily-секции («Daily dynamics table — единый формат»): одна строка на день за весь месяц, без разбивки на каналы/РК.
 - Quality metrics автопилота.
 - Budget plan на следующий месяц (proposed).
 - Learnings digest.

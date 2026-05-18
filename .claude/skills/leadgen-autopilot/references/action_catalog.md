@@ -180,6 +180,7 @@
   min_evidence: {topic_status_active: true, launch_proposal_approved: true}
   mcp_tools: [add_campaign, add_adgroup, add_ad, add_keywords, add_labels]
   playbook_ref: "leadgen/branches/create-{search,rsya}.md"
+  notes: "add_labels вызывается ТОЛЬКО с бизнес-метками Этажей (Лидген, тематика, направление, канал). Internal-метки автопилота не ставятся. Ownership-маркер — запись в state.yaml.campaigns."
 
 - action_type: campaign.create_draft.outside_config_topics
   risk_class: critical
@@ -234,15 +235,37 @@
   cooldown_hours: 0
   idempotency_window: YYYY-Qn
   min_evidence: {launch_proposal_recommendation: adopt, owner_approved: true}
-  mcp_tools: [add_labels]
-  notes: "Метим autopilot:managed, city:<>, topic:<>, channel:<>"
+  mcp_tools: []                              # operational write в state.yaml, никаких API-вызовов на метки
+  notes: |
+    Adoption — это запись `state.yaml.campaigns.append({campaign_id, ownership: managed, topic, channel, client_login, created_by_autopilot: false, adopted_at})`.
+    Никаких internal-меток в Директе автопилот не ставит:
+    - autopilot:managed / autopilot:holdout / autopilot:released — запрещены (засоряют каталог Этажей и ломают статистику)
+    - city:<city> — запрещена (один автопилот = один client_login)
+    - topic:<topic>, channel:<channel> — запрещены (дублируют бизнес-метки и BiddingStrategy)
+    Бизнес-метки Этажей (Лидген, тематика, направление, канал) автопилот **не модифицирует**, оставляет как стоят.
+    Если на adopted-кампании уже есть устаревшие internal-метки от старого автопилота — снять через remove_labels (см. campaign.cleanup_internal_labels).
 
 - action_type: campaign.release
   risk_class: medium
   snapshot_required: true
   cooldown_hours: 0
-  mcp_tools: [add_labels]                   # autopilot:released; remove_labels если поддерживается
-  notes: "Ownership predicate: managed && !released"
+  mcp_tools: []                              # operational: state.yaml.campaigns[<id>].ownership = released
+  notes: "Release = запись в state.yaml (ownership: released). Ownership predicate теперь: state.campaigns[<id>].ownership == managed."
+
+- action_type: campaign.cleanup_internal_labels
+  risk_class: low
+  snapshot_required: false                   # before/after хранится в ledger row через before_labels + after_labels
+  cooldown_hours: 0
+  idempotency_window: YYYY-MM-DD
+  min_evidence: {has_legacy_internal_labels: true}
+  mcp_tools: [get_ads, get_labels, remove_labels]
+  notes: |
+    Одноразовая чистка устаревших internal-меток с adopted/managed-кампаний. Снимает с banner-ids кампании любые метки, попадающие под паттерны:
+      - autopilot:managed | autopilot:holdout | autopilot:released
+      - city:<*>
+      - topic:<*>, channel:<*>
+    Не трогает бизнес-метки Этажей (Лидген, Вторичка, Покупатель, Поиск, РСЯ, …) — они в whitelist `leadgen/config/labels.md`.
+    Применяется автоматически на adopt + однократным cleanup-прогоном по существующему городу. После завершения — запись в state.yaml.campaigns[<id>].flags: ["legacy_internal_labels_cleared_<ISO>"].
 
 - action_type: campaign.delete
   risk_class: critical

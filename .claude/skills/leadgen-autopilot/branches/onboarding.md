@@ -9,11 +9,14 @@
 - `metrika_get_counter(counter_id)` — проверка доступа.
 - `metrika_get_goals(counter_id)` — список целей; сверка с `city.metrika.goals`.
 - `metrika_get_traffic_sources(...)` — наличие direct/utm трафика.
-- `get_campaigns(client_login)` с filter по labels — отделить:
-  - `owned`: имеют label `autopilot:managed` (для пилота с нуля — пусто).
-  - `adoptable`: без label, в разрешённых тематиках (`active`/`experimental`/`candidate`).
-  - `foreign`: вне разрешённых тематик (read-only forever).
-  - `holdout`: имеют label `autopilot:holdout`.
+- `get_campaigns(client_login, states=["ON","SUSPENDED"])` — без фильтра по меткам. Разнесение по ownership делается **по state + config**, не по меткам в Директе:
+  - `owned`: `campaign_id` присутствует в `state.yaml.campaigns` с `ownership == managed` (для пилота с нуля — пусто).
+  - `holdout`: `campaign_id` в `city.yaml.holdout.campaign_ids[]`.
+  - `released`: `campaign_id` в `state.yaml.campaigns` с `ownership == released` (read-only, история).
+  - `adoptable`: всё остальное, что попадает в разрешённые тематики (`active`/`experimental`/`candidate`) по mapping бизнес-метка → topic (см. `leadgen/config/labels.md`) и по конвенции имени `<Город> | <Канал> | <Тематика> | …`.
+  - `foreign`: всё остальное (вне разрешённых тематик) — read-only forever.
+
+> **Не вызывать `add_labels` / `set_banner_labels` / `remove_labels` на этапе inventory.** Метки на стороне Директа автопилот вообще не пишет — это правило сквозное (см. `skill.md` §3.4).
 
 ### 2. Demand analysis (для `active` и `experimental` тем)
 
@@ -88,7 +91,8 @@ foreign_campaign_count: 0
 - Прочитать playbook `leadgen/branches/<playbook_ref>` (через `playbook_contract.md`).
 - Применить шаги 1-10 playbook. **Шаг 11** (DRAFT-only финиш) обязателен.
 - Получить `campaign_id` от `add_campaign`.
-- Вызвать `add_labels(campaign_id, ["autopilot:managed", "city:<city>", "topic:<topic>", "channel:<channel>"])`.
+- Вызвать `add_labels(campaign_id, <бизнес-метки из leadgen/config/labels.md>)`. **Только бизнес-метки** (`Лидген`, `<Тематика>`, `<Направление>`, `<Канал>`). Никаких `autopilot:*` / `city:*` / `topic:*` / `channel:*` — см. `skill.md` §3.4.
+- Записать в `state.yaml.campaigns` запись `{campaign_id, ownership: managed, topic, channel, client_login, created_by_autopilot: true, adopted_at: <ISO>}` — это и есть ownership-маркер.
 - Записать в ledger строки для каждого MCP-вызова с `idempotency_key`.
 
 ### 6. Activation (если разрешено)
@@ -128,7 +132,9 @@ adoptable_campaigns:
 - `autonomy=with_approvals` → review_queue.
 
 Action `campaign.adopt_existing`:
-- `add_labels(campaign_id, ["autopilot:managed", "city:<city>", "topic:<inferred>", "channel:<inferred>"])`.
+- **Не вызывать `add_labels` для internal-меток.** Adoption — это операционная запись в `state.yaml`, не пометка в Директе.
+- `state.yaml.campaigns.append({campaign_id, ownership: "managed", topic: <inferred>, channel: <inferred>, client_login: <login>, created_by_autopilot: false, adopted_at: <ISO>})`.
+- Если на кампании уже стоят старые internal-метки (`autopilot:*`, `city:*`, `topic:*`, `channel:*`) — снять их через `remove_labels` на banner_ids кампании (cleanup-проход, см. lesson #33). Бизнес-метки (`Лидген`, тематика, канал, направление) — не трогать.
 
 Если в каталоге есть кампания, не вписывающаяся ни в одну `active`/`experimental` тематику — `recommendation: leave_readonly`. Никаких действий.
 

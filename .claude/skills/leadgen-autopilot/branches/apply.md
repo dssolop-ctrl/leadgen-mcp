@@ -73,7 +73,24 @@ match action.action_type:
         # 2. add_adgroup
         # 3. add_keywords
         # 4. add_ad
-        # 5. add_labels(["autopilot:managed", f"city:{city}", f"topic:{topic}", f"channel:{channel}"])
+        # 5. add_labels(business_labels)  # ТОЛЬКО бизнес-метки из leadgen/config/labels.md
+        #    Например ["Лидген", "Вторичка", "Покупатель", "РСЯ"].
+        #
+        #    ⚠️ HARD RULE (см. lesson #32 + lesson о state-based ownership):
+        #    Автопилот НЕ ставит и НЕ читает internal-метки в Директе:
+        #    - autopilot:managed / autopilot:holdout / autopilot:released
+        #    - city:<city>
+        #    - topic:<topic>, channel:<channel>
+        #    Они засоряют каталог Этажей и ломают агрегацию статистики.
+        #    Ownership резолвится через state.yaml.campaigns[<id>] и
+        #    city.yaml.holdout.campaign_ids (см. skill.md §3.4).
+        #
+        # 6. state.yaml.campaigns.append({
+        #        campaign_id: <new_id>, ownership: "managed",
+        #        topic: <topic>, channel: <channel>,
+        #        client_login: <login>, created_by_autopilot: true,
+        #        adopted_at: <ISO>
+        #    })
         result = ...
     case "campaign.activate_existing_draft":
         result = mcp.resume_campaign(campaign_id=action.entity_id)

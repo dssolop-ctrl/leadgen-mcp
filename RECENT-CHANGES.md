@@ -5,6 +5,31 @@
 
 ## Что сделано
 
+### 29. Autopilot: state-based ownership, чистка internal-меток, унификация таблицы дневной динамики, русский Telegram (2026-05-18)
+
+**Контекст.** Три доработки автопилота по обратной связи оператора с пилота Новосибирск-ии.
+
+**W1 — Таблица дневной динамики.** В `branches/analyze.md` зафиксировано единое правило для daily/weekly/monthly отчётов: дневная динамика — **одна строка на день**, агрегация всех managed-кампаний. Колонки `Канал`/`Кампания` запрещены в этой таблице (разбивка по каналам — отдельная таблица «за период»). Это исправляет weekly/monthly HTML-отчёты, где раньше каждый день дублировался на search/rsya.
+
+**W2 — Telegram только на русском.** В `branches/notify.md` добавлен HARD RULE на язык всех Telegram-сообщений (daily summary, per-action notify, approvals, алерты, инциденты). Англоязычные fragments из MCP/ошибок API должны локализоваться перед отправкой. Идентификаторы, имена полей API, коды ошибок и URL — допустимое исключение.
+
+**W3 — Ownership через state.yaml, internal-метки запрещены.** Источник правды управления кампаниями переехал с меток в Директе (`autopilot:managed`, `city:<>`, `topic:<>`, `channel:<>`) на `state.yaml.campaigns[]` (allowlist) + `city.yaml.holdout.campaign_ids[]`. Internal-метки **ломали статистику** Этажей (попадали в каталог как отдельные «направления» и плодили дубликаты в Метрике). Изменения:
+- `skill.md` §3.4 переписан: предикат ownership по state + holdout.
+- `branches/{apply,onboarding}.md`: убраны вызовы `add_labels(autopilot:*)`; inventory не фильтрует по меткам.
+- `references/action_catalog.md`: `campaign.adopt_existing`/`campaign.release` стали operational записями в state без API; добавлен `campaign.cleanup_internal_labels` (через `remove_labels` / `set_banner_labels` из #28).
+- `.claude/skills/leadgen/config/labels.md` + Codex-зеркало: HARD RULE — автопилот ставит **только** бизнес-метки Этажей, никаких служебных. Mapping business label → internal topic/channel остаётся (для reconcile).
+- `lessons_registry.md` (Claude + Codex): новая запись `−1. Автопилот: ownership через state.yaml, internal-метки запрещены.` Поглощает lesson #32 (дубликаты topic/channel) — правило сильнее.
+
+**Тестовый прогон.** Снято всё лишнее с 32 ad-ов (`porg-ul2dqvcs`):
+- РК 709914995 (Поиск, 18 ads): осталось `Лидген, Покупатель, Вторичка`.
+- РК 709915110 (РСЯ, 14 ads): осталось `Лидген, Покупатель, Вторичка, РСЯ`.
+- Удалены: `autopilot:managed`, `city:novosibirsk-ai`, `topic:vtorichka`, `channel:search`/`channel:rsya` — 4 метки × 32 ad-а.
+- Snapshot до изменения: `autopilot/runtime/novosibirsk-ai/before_snapshots/labels-cleanup-2026-05-18/snapshot.json`. Ledger строки добавлены.
+- Использован `set_banner_labels` (полная замена) — на момент теста `remove_labels` из #28 возвращал `removed_count: 0` (либо контейнер из старого образа, либо баг парсинга `GetBannersTags`: API отдаёт `TagIDS:[int]`, Go-структура ждёт `Tags:[{Tag,TagID}]`). Перепроверить после `docker compose build`.
+- Каталог кампании всё ещё содержит **неназначенные** определения служебных меток — в Метрику/сводки Этажей не попадают, но засоряют UI Директа. Cleanup каталога требует отдельного MCP-tool (`delete_campaign_tag`, низкий приоритет — в `spawned_tasks_carryover`).
+
+**Эффект.** Каждая managed-кампания пилота теперь читается из state как единое направление; Метрика/сводки Этажей агрегируют статистику корректно; UI Директа на banner-уровне чист. Новые adoption / draft create идут без internal-меток с первой же сессии.
+
 ### 28. MCP: remove_labels + set_banner_labels — закрытие гейта на чистку меток объявлений (2026-05-15)
 
 **Контекст.** В MCP-сервере был только `add_labels` (идемпотентное добавление). Убрать конкретную метку с объявления через API было нельзя — оставались только UI Директа или ручные curl-вызовы `bannerphrases.UpdateBannersTags`. После Lesson #32 (autopilot ставил лишние internal-метки `topic:vtorichka`, `channel:search`/`channel:rsya` в `campaign.create_draft.*`, дублирующие бизнес-метки `Вторичка` / `Поиск`/`РСЯ`) на пилотном городе porg-ul2dqvcs накопилось 26 ad-ов (campaign 709914995 + 709915110) с лишними метками. Lesson #32 закрыл утечку **в будущих** кампаниях, но уже созданные ad-ы без инструмента в MCP не вычистить — приходилось бы оператору руками в UI.

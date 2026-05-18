@@ -23,19 +23,79 @@
 - **Хочу убрать одну/несколько меток, остальные сохранить** → `remove_labels` (быстрее, безопаснее — не трогает каталог).
 - **Нужно жёстко выставить итоговый набор (например, после миграции схемы меток)** → `set_banner_labels`.
 
-### Пример очистки лишних internal-меток
+> 🚨 **HARD RULE (поглощает lesson #32): автопилот НЕ ставит internal-меток.**
+>
+> Полный набор для autopilot-кампаний = **только бизнес-метки** из таблицы ниже. Никаких служебных меток.
+>
+> Запрещены к установке (через любой `add_labels` / `set_banner_labels`):
+> - `autopilot:managed`, `autopilot:holdout`, `autopilot:released`
+> - `city:<city>`
+> - `topic:<topic>`, `channel:<channel>`
+>
+> Использование `remove_labels` / `set_banner_labels` для **очистки** этих меток — разрешено и поощряется (см. `campaign.cleanup_internal_labels` в `.claude/skills/leadgen-autopilot/references/action_catalog.md`).
+>
+> **Почему:** internal-метки появляются как отдельные «направления» в каталоге Этажей и Метрике, ломают агрегацию статистики (директ-репорт показывает кампанию в нескольких категориях одновременно), засоряют фильтры в UI Директа.
+>
+> **Откуда автопилот берёт ownership/topic/channel вместо меток:**
+> 1. **Ownership** — `state.yaml.campaigns[<id>].ownership` (managed/released) + `city.yaml.holdout.campaign_ids[]`. См. `.claude/skills/leadgen-autopilot/skill.md` §3.4.
+> 2. **Topic / channel** — `state.yaml.campaigns[<id>].{topic,channel}` (operational). При adoption выводится: channel из `BiddingStrategy`, topic из бизнес-меток через mapping ниже + из имени кампании.
 
-После Lesson #32 кампании, созданные старым автопилотом до фикса, могут иметь дубли (`topic:vtorichka`, `channel:search`/`channel:rsya`) поверх бизнес-меток. Чистим:
+### Mapping: business label → internal topic / channel
+
+При reconcile автопилот выводит `topic` и `channel` из бизнес-меток через таблицу:
+
+| Бизнес-метка | Internal topic |
+|---|---|
+| Вторичка | `vtorichka` |
+| Новостройки | `novostroyki` |
+| Загородка | `zagorodka` |
+| Ипотека | `ipoteka` |
+| Аренда | `arenda` |
+| Коммерческая | `commerce` |
+| Агентства | `agency` |
+| Бренд | `brand` |
+| Конкуренты | `competitors` |
+| Межрег | `mezhreg` |
+| Страхование | `insurance` |
+| Другое | `other` |
+| HR | `hr` |
+| Имидж | `imidzh` |
+
+| Бизнес-метка | Internal channel |
+|---|---|
+| Поиск | `search` |
+| РСЯ | `rsya` |
+| Мастер | `master_campaigns` (UNIFIED_CAMPAIGN с ML) |
+| Динамика | `dynamic` |
+| Медийная | `cpm` |
+
+> Канал также можно вывести из `BiddingStrategy` кампании (Search/Network OFF) — без меток.
+> Темa также выводима из `<Тематика>` в имени кампании (по конвенции `<Город> | <Канал> | <Тематика> | <Детали> | [<посадка>]`).
+
+### Пример очистки лишних internal-меток (legacy)
+
+На кампаниях, созданных старым автопилотом (до перехода на state-based ownership 2026-05-18), могут лежать дубли `topic:vtorichka` / `channel:search` / `channel:rsya` поверх бизнес-меток + `autopilot:managed` / `city:<>`. Однократная миграция:
 
 ```
 remove_labels(
   client_login="porg-ul2dqvcs",
   banner_ids="17718834386,17718834387,...",
-  labels="topic:vtorichka,channel:search"
+  labels="topic:vtorichka,channel:search,autopilot:managed,city:novosibirsk-ai"
 )
 ```
 
 Возвращает `{banners_processed, banners_changed, removed_count, changes: [{banner_id, removed: [...]}]}`.
+
+Если `remove_labels` возвращает `removed_count: 0` при заведомо назначенных метках — workaround через `set_banner_labels` с явным **целевым** набором бизнес-меток:
+
+```
+set_banner_labels(
+  client_login="porg-ul2dqvcs",
+  campaign_id=709914995,
+  banner_ids="17718834386,...",
+  labels="Лидген,Покупатель,Вторичка"   # только бизнес-метки, всё остальное снимется
+)
+```
 
 ---
 

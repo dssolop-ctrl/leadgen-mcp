@@ -86,7 +86,24 @@ description: "Автономный агент для управления рек
 
 ### 3.4. Ownership
 
-Бот трогает только campaigns с label `autopilot:managed`. Foreign campaigns — read-only. Холдоут (`autopilot:holdout`) — read-only.
+> 🚨 **Источник правды — `state.yaml`, не метки в Директе.** Internal-метки автопилота (`autopilot:managed`, `autopilot:holdout`, `autopilot:released`, `city:<city>`, `topic:<topic>`, `channel:<channel>`) **больше не ставятся** — они засоряют каталог Этажей и ломают агрегацию статистики. На existing-кампаниях такие метки снимаются однократным cleanup-прогоном.
+
+Резолюция ownership (reconcile, decide, apply — везде одинаково):
+
+| Где числится | Ownership |
+|---|---|
+| `state.yaml.campaigns[<id>].ownership == "managed"` | `managed` — бот свободно действует |
+| `state.yaml.campaigns[<id>].ownership == "released"` | `released` — бот не действует, метаданные хранятся для истории |
+| `city.yaml.holdout.campaign_ids[]` содержит `<id>` | `holdout` — read-only forever |
+| API возвращает кампанию, нет ни в state, ни в holdout | `foreign` — read-only |
+
+**Adoption:** добавление в `state.yaml.campaigns` через action `campaign.adopt_existing` (operational write, без вызова `add_labels` на стороне Директа). Запись содержит `topic`, `channel`, `client_login`, `ownership: managed`, `adopted_at`.
+
+**Release:** меняем `state.yaml.campaigns[<id>].ownership = released` (или удаляем запись — равноценно для предиката ownership; запись лучше оставлять для аудита).
+
+**Где живут topic / channel:** в `state.yaml.campaigns[<id>].{topic,channel}`. Если кампания adopted и значения неизвестны — выводятся: (1) channel из `BiddingStrategy` (Search/Network OFF), (2) topic из имени кампании по конвенции `<Город> | <Канал> | <Тематика> | <Детали> | [<посадка>]` через mapping в `.claude/skills/leadgen/config/labels.md` (business label → internal topic). Метки `topic:*` / `channel:*` для этого больше не нужны.
+
+**Бизнес-метки Этажей (`Лидген`, `Вторичка`, `Покупатель`, `Поиск`, `РСЯ`, …) — НЕ трогаем.** Их ставит человек по правилам `leadgen/config/labels.md`. Автопилот их **только читает** для mapping, никогда не модифицирует и никогда не создаёт через `add_labels`/`set_banner_labels`.
 
 ### 3.5. DRAFT-only
 
@@ -117,18 +134,20 @@ description: "Автономный агент для управления рек
 
 ---
 
-## 5. Self-check (W1 hello)
+## 5. Smoke / debug режим (опциональный)
 
-В W1 (текущая фаза разработки) скилл умеет:
+Полный контур (W1-W10) **реализован** — см. RECENT-CHANGES.md #27 (2026-05-04). Все branches в `branches/` — рабочие, не заглушки.
+
+Для отладки можно сделать «hello-only» прогон без onboarding/analyze/apply, передав в команде флаг `mode=hello`. Поведение:
 - прочитать city config;
 - проверить HALT;
 - взять lock;
-- сформировать `Hello from autopilot, city=<city>, run_id=<run_id>` сообщение;
-- отправить через `autopilot/lib/telegram_send.sh`;
-- release lock;
-- exit с кодом 0.
+- отправить `Hello from autopilot, city=<city>, run_id=<run_id>` через `autopilot/lib/telegram_send.sh`;
+- release lock; exit 0.
 
-Все остальные branches — заглушки до соответствующих волн.
+Без явного `mode=hello` запуск проходит **полный цикл** по таблице в секции 2 (роутер режим + onboarding если `state.yaml` пуст, analyze, decide, apply, memory_write, notify).
+
+**Защита первого прогона:** новый город по умолчанию запускается с `baseline_mode: true` в `city.yaml` — `branches/onboarding.md` тогда собирает baseline state + формирует `launch_proposal.{md,yaml}` + шлёт в Telegram, **без создания кампаний**. После ревью оператора и снятия `baseline_mode` следующий прогон создаёт DRAFT-кампании и активирует их (если профиль это разрешает).
 
 ---
 
